@@ -8,9 +8,9 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] Backend: FastAPI setup, Pydantic config models, LiteLLM client.
 - [x] Backend: `/v1/chat/completions` route with SSE Streaming.
 - [x] Frontend: Next.js basic chat UI.
-- [ ] Desktop: Electron shell + API connection.
+- [x] Desktop: Electron shell + API connection.
 - [ ] Integration: End-to-end streaming chat test.
-*Notes: Backend foundation, LiteLLM adapter (clean adapter pattern), and SSE streaming route completed and approved. Frontend SSE streaming and Chat UI completed (clean native fetch implementation). Desktop shell in progress.*
+*Notes: Backend foundation, LiteLLM adapter (clean adapter pattern), and SSE streaming route completed and approved. Frontend SSE streaming and Chat UI completed (clean native fetch implementation). Electron shell completed with robust child process management, cross-platform Python detection, and secure webPreferences.*
 
 ### Phase 2: The Hands (Coding Agent & Terminal) - [ ]
 - [ ] Integrate OpenHands SDK as the coding agent.

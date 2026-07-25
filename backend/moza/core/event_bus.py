@@ -1,12 +1,16 @@
 import asyncio
 from collections import defaultdict
 
+from loguru import logger
+
+from moza.core.event_recorder import get_recorder
 from moza.core.models import Event
 
 
 class EventBus:
     def __init__(self) -> None:
         self._queues: dict[str, list[asyncio.Queue[Event | None]]] = defaultdict(list)
+        self._recorder = get_recorder()
 
     def subscribe(self, session_id: str) -> asyncio.Queue[Event | None]:
         queue: asyncio.Queue[Event | None] = asyncio.Queue()
@@ -20,6 +24,10 @@ class EventBus:
                 del self._queues[session_id]
 
     async def publish(self, session_id: str, event: Event) -> None:
+        try:
+            self._recorder.record(event)
+        except Exception as e:
+            logger.warning(f"EventBus: recorder failed for event {event.id}: {e}")
         for queue in self._queues.get(session_id, []):
             await queue.put(event)
 

@@ -1,19 +1,15 @@
-import os
+import time
 from pathlib import Path
 from typing import Any
 
 from loguru import logger
 from pydantic import Field
 
+from moza.core.models import ToolResultPayload
 from moza.tools.registry import BaseTool, ToolParameter
 
 
 class FilesystemTool(BaseTool):
-    """
-    Filesystem operations: read, write, list directory contents.
-
-    Write operations are marked destructive and require user confirmation.
-    """
     name: str = "filesystem"
     description: str = "Read, write, and list files in the workspace."
     version: str = "1.0.0"
@@ -47,40 +43,66 @@ class FilesystemTool(BaseTool):
     ])
 
     async def execute(self, **kwargs: Any) -> Any:
+        start = time.monotonic()
         action = kwargs.get("action")
         path = kwargs.get("path")
         content = kwargs.get("content")
 
         if not action or not path:
-            return {"error": "'action' and 'path' are required."}
+            return ToolResultPayload.error(
+                "'action' and 'path' are required.",
+                duration_ms=(time.monotonic() - start) * 1000,
+            ).model_dump()
 
         target = Path(path)
 
         if action == "read":
             if not target.exists():
-                return {"error": f"Path does not exist: {path}"}
+                return ToolResultPayload.error(
+                    f"Path does not exist: {path}",
+                    duration_ms=(time.monotonic() - start) * 1000,
+                ).model_dump()
             if not target.is_file():
-                return {"error": f"Path is not a file: {path}"}
-            logger.debug(f"FilesystemTool: read {path}")
-            return {"content": target.read_text(encoding="utf-8"), "path": path}
+                return ToolResultPayload.error(
+                    f"Path is not a file: {path}",
+                    duration_ms=(time.monotonic() - start) * 1000,
+                ).model_dump()
+            text = target.read_text(encoding="utf-8")
+            elapsed = (time.monotonic() - start) * 1000
+            logger.debug(f"FilesystemTool: read {path} ({len(text)} chars, {elapsed:.0f}ms)")
+            return ToolResultPayload.ok(
+                stdout=text,
+                duration_ms=elapsed,
+                metadata={"path": path, "bytes": len(text)},
+            ).model_dump()
 
         if action == "write":
             if not content:
-                return {"error": "'content' is required for write action."}
+                return ToolResultPayload.error(
+                    "'content' is required for write action.",
+                    duration_ms=(time.monotonic() - start) * 1000,
+                ).model_dump()
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
-            logger.warning(f"FilesystemTool: wrote {path} ({len(content)} chars)")
-            return {
-                "status": "written",
-                "path": path,
-                "bytes": len(content),
-            }
+            elapsed = (time.monotonic() - start) * 1000
+            logger.warning(f"FilesystemTool: wrote {path} ({len(content)} chars, {elapsed:.0f}ms)")
+            return ToolResultPayload.ok(
+                stdout=f"Written {len(content)} bytes to {path}",
+                duration_ms=elapsed,
+                metadata={"path": path, "bytes": len(content)},
+            ).model_dump()
 
         if action == "list":
             if not target.exists():
-                return {"error": f"Path does not exist: {path}"}
+                return ToolResultPayload.error(
+                    f"Path does not exist: {path}",
+                    duration_ms=(time.monotonic() - start) * 1000,
+                ).model_dump()
             if not target.is_dir():
-                return {"error": f"Path is not a directory: {path}"}
+                return ToolResultPayload.error(
+                    f"Path is not a directory: {path}",
+                    duration_ms=(time.monotonic() - start) * 1000,
+                ).model_dump()
             entries = []
             for entry in sorted(target.iterdir()):
                 entries.append({
@@ -88,7 +110,15 @@ class FilesystemTool(BaseTool):
                     "is_dir": entry.is_dir(),
                     "size": entry.stat().st_size if entry.is_file() else None,
                 })
-            logger.debug(f"FilesystemTool: listed {path} ({len(entries)} entries)")
-            return {"entries": entries, "path": path}
+            elapsed = (time.monotonic() - start) * 1000
+            logger.debug(f"FilesystemTool: listed {path} ({len(entries)} entries, {elapsed:.0f}ms)")
+            return ToolResultPayload.ok(
+                stdout="\n".join(e["name"] for e in entries),
+                duration_ms=elapsed,
+                metadata={"path": path, "entries": entries, "count": len(entries)},
+            ).model_dump()
 
-        return {"error": f"Unknown action: {action}"}
+        return ToolResultPayload.error(
+            f"Unknown action: {action}",
+            duration_ms=(time.monotonic() - start) * 1000,
+        ).model_dump()

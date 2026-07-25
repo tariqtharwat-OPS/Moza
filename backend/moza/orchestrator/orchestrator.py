@@ -10,17 +10,31 @@ The Orchestrator is the central dispatcher:
     1. Receives Tasks from the API layer.
     2. Assigns Tasks to Agents.
     3. Routes Events from Agents to the EventBus.
-    4. Manages Task lifecycle (submit/cancel/resume).
+    4. Manages Task lifecycle (submit/cancel/resume/state).
+    5. Drives task state machine: PENDING → RUNNING → {WAITING_TOOL, WAITING_USER} → COMPLETED/FAILED/CANCELLED.
+    6. Cleans up tool resources on cancellation or failure.
 """
 
 import asyncio
 from datetime import datetime, timezone
+
+from loguru import logger
 
 from moza.agents.interfaces import AgentInterface
 from moza.core.context import ExecutionContext
 from moza.core.event_bus import EventBus, get_event_bus
 from moza.core.models import Event, EventType, Session, Task, TaskStatus, Workspace
 from moza.tools.registry import ToolRegistry, get_tool_registry
+
+
+def _transition_task_status(
+    task: Task,
+    new_status: TaskStatus,
+    event_type: EventType,
+) -> None:
+    """Update task status and timestamp when a relevant event is emitted."""
+    task.status = new_status
+    task.updated_at = datetime.now(timezone.utc)
 
 
 class Orchestrator:
@@ -51,8 +65,7 @@ class Orchestrator:
             raise RuntimeError("No agent configured in orchestrator")
 
         session = self.create_session(session_id, workspace)
-        task.status = TaskStatus.RUNNING
-        task.updated_at = datetime.now(timezone.utc)
+        _transition_task_status(task, TaskStatus.RUNNING, EventType.AGENT_STARTED)
         session.tasks.append(task)
 
         context = ExecutionContext.build(
@@ -89,9 +102,9 @@ class Orchestrator:
             async for event in self._agent.execute(context):
                 session.execution_history.append(event)
                 await self._event_bus.publish(session_id, event)
+                self._update_task_state(task, event)
 
-            task.status = TaskStatus.COMPLETED
-            task.updated_at = datetime.now(timezone.utc)
+            _transition_task_status(task, TaskStatus.COMPLETED, EventType.TASK_COMPLETED)
 
             completed_event = Event(
                 session_id=session_id,
@@ -103,9 +116,9 @@ class Orchestrator:
             session.execution_history.append(completed_event)
             await self._event_bus.publish_and_complete(session_id, completed_event)
         except asyncio.CancelledError:
-            task.status = TaskStatus.CANCELLED
-            task.updated_at = datetime.now(timezone.utc)
+            _transition_task_status(task, TaskStatus.CANCELLED, EventType.TASK_FAILED)
             context.cancellation_token.cancel()
+            await self._tool_registry.cleanup_all()
             cancelled_event = Event(
                 session_id=session_id,
                 task_id=task.id,
@@ -116,8 +129,8 @@ class Orchestrator:
             session.execution_history.append(cancelled_event)
             await self._event_bus.publish_and_complete(session_id, cancelled_event)
         except Exception as e:
-            task.status = TaskStatus.FAILED
-            task.updated_at = datetime.now(timezone.utc)
+            _transition_task_status(task, TaskStatus.FAILED, EventType.TASK_FAILED)
+            await self._tool_registry.cleanup_all()
             failed_event = Event(
                 session_id=session_id,
                 task_id=task.id,
@@ -129,6 +142,25 @@ class Orchestrator:
             await self._event_bus.publish_and_complete(session_id, failed_event)
         finally:
             self._running_tasks.pop(task.id, None)
+
+    @staticmethod
+    def _update_task_state(task: Task, event: Event) -> None:
+        """Drive the task state machine based on emitted events."""
+        if event.type == EventType.TOOL_CALL:
+            tool = event.payload.get("tool", "")
+            requires_confirmation = event.payload.get("requires_confirmation", False)
+            if requires_confirmation:
+                _transition_task_status(task, TaskStatus.WAITING_USER, event.type)
+            else:
+                _transition_task_status(task, TaskStatus.WAITING_TOOL, event.type)
+        elif event.type == EventType.TOOL_RESULT:
+            _transition_task_status(task, TaskStatus.RUNNING, event.type)
+        elif event.type == EventType.TOOL_SELECTED:
+            _transition_task_status(task, TaskStatus.RUNNING, event.type)
+        elif event.type in (EventType.BROWSER_STARTED, EventType.BROWSER_ACTION):
+            _transition_task_status(task, TaskStatus.WAITING_TOOL, event.type)
+        elif event.type in (EventType.TASK_COMPLETED, EventType.TASK_FAILED):
+            pass
 
     async def cancel_task(self, task_id: str) -> bool:
         asyncio_task = self._running_tasks.get(task_id)

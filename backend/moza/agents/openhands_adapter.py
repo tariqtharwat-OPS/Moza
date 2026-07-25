@@ -2,22 +2,25 @@
 OpenHands Agent Adapter for MOZA AI Operating System.
 
 Maps OpenHands Actions/Observations to MOZA Event schema.
-Preserves the Golden Rule: agents use tools via ToolRegistry,
-all mutations flow through Event Emission.
+Preserves the Golden Rule via monitoring: all observed file operations
+are mapped to structured TOOL_CALL/TOOL_RESULT events.
+Adapter NEVER writes to the filesystem directly — the simulation
+fallback routes all operations through context.tool_registry.execute().
 
 OpenHands Action → MOZA Event mapping:
   CmdRunAction          → TOOL_CALL (tool: "terminal")
-  CmdOutputObservation  → TOOL_RESULT (tool: "terminal")
+  CmdOutputObservation  → TOOL_RESULT (tool: "terminal", ToolResultPayload)
   FileReadAction        → TOOL_CALL (tool: "filesystem", action: "read")
-  FileReadObservation   → TOOL_RESULT (tool: "filesystem")
+  FileReadObservation   → TOOL_RESULT (tool: "filesystem", ToolResultPayload)
   FileWriteAction       → TOOL_CALL (tool: "filesystem", action: "write")
   BrowseAction          → TOOL_CALL (tool: "browser")
-  BrowserOutputObservation → TOOL_RESULT (tool: "browser")
+  BrowserOutputObservation → TOOL_RESULT (tool: "browser", ToolResultPayload)
   MessageAction         → AGENT_THINKING
   AgentStateChanged     → AGENT_STARTED / TASK_COMPLETED / TASK_FAILED
 """
 
 import asyncio
+import time
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -25,7 +28,7 @@ from loguru import logger
 
 from moza.agents.interfaces import AgentInterface
 from moza.core.context import ExecutionContext
-from moza.core.models import Event, EventType
+from moza.core.models import Event, EventType, ToolResultPayload
 
 try:
     from openhands.sdk import Agent as OH_Agent, Conversation, LLM, Workspace
@@ -91,37 +94,40 @@ def _map_openhands_action(action: Any) -> dict | None:
     return None
 
 
-def _map_openhands_observation(obs: Any) -> dict | None:
-    """Maps a detected OpenHands Observation to MOZA result payload."""
-    obs_name = type(obs).__name__
-
+def _obs_to_tool_result(obs: Any) -> ToolResultPayload | None:
+    """Maps an OpenHands Observation to a ToolResultPayload."""
     if isinstance(obs, CmdOutputObservation):
-        return {
-            "tool": "terminal",
-            "observation_type": obs_name,
-            "result": {
-                "stdout": getattr(obs, "content", ""),
-                "exit_code": getattr(obs, "exit_code", None),
-            },
-        }
+        return ToolResultPayload(
+            success=getattr(obs, "exit_code", 0) == 0,
+            duration_ms=0,
+            exit_code=getattr(obs, "exit_code", 0),
+            stdout=getattr(obs, "content", ""),
+            metadata={"observation_type": type(obs).__name__},
+        )
     elif isinstance(obs, FileReadObservation):
-        return {
-            "tool": "filesystem",
-            "observation_type": obs_name,
-            "result": {"content": getattr(obs, "content", "")},
-        }
+        return ToolResultPayload(
+            success=True,
+            duration_ms=0,
+            exit_code=0,
+            stdout=getattr(obs, "content", ""),
+            metadata={"observation_type": type(obs).__name__},
+        )
     elif isinstance(obs, BrowserOutputObservation):
-        return {
-            "tool": "browser",
-            "observation_type": obs_name,
-            "result": {"content": getattr(obs, "content", "")},
-        }
+        return ToolResultPayload(
+            success=True,
+            duration_ms=0,
+            exit_code=0,
+            stdout=getattr(obs, "content", ""),
+            metadata={"observation_type": type(obs).__name__},
+        )
     elif isinstance(obs, ErrorObservation):
-        return {
-            "tool": "system",
-            "observation_type": obs_name,
-            "result": {"error": getattr(obs, "content", "Unknown error")},
-        }
+        return ToolResultPayload(
+            success=False,
+            duration_ms=0,
+            exit_code=-1,
+            stderr=getattr(obs, "content", "Unknown error"),
+            metadata={"observation_type": type(obs).__name__},
+        )
     return None
 
 
@@ -179,13 +185,14 @@ class OpenHandsAdapter(AgentInterface):
             payload={"description": description, "sdk_version": "1.11.0"},
         )
 
+        last_tool: str | None = None
         for oh_event in conversation.events:
             context.cancellation_token.raise_if_cancelled()
 
             action_payload = _map_openhands_action(oh_event)
-            obs_payload = _map_openhands_observation(oh_event)
 
             if action_payload:
+                last_tool = action_payload.get("tool", "unknown")
                 yield Event(
                     session_id=session.id,
                     task_id=task_id,
@@ -194,13 +201,14 @@ class OpenHandsAdapter(AgentInterface):
                     payload=action_payload,
                 )
 
-            if obs_payload:
+            result_payload = _obs_to_tool_result(oh_event)
+            if result_payload is not None:
                 yield Event(
                     session_id=session.id,
                     task_id=task_id,
                     type=EventType.TOOL_RESULT,
                     source="openhands_adapter",
-                    payload=obs_payload,
+                    payload={"tool": last_tool or "unknown", **result_payload.model_dump()},
                 )
 
             if isinstance(oh_event, MessageAction):
@@ -255,13 +263,21 @@ class OpenHandsAdapter(AgentInterface):
             await asyncio.sleep(0.2)
 
             try:
-                result = await registry.execute_tool(tool.name, action="read", path=".")
+                start = time.monotonic()
+                raw = await registry.execute_tool(tool.name, action="read", path=".")
+                elapsed = (time.monotonic() - start) * 1000
+                if isinstance(raw, dict) and "success" in raw:
+                    result_payload = ToolResultPayload(**raw)
+                else:
+                    result_payload = ToolResultPayload.ok(
+                        stdout=str(raw), duration_ms=elapsed
+                    )
                 yield Event(
                     session_id=session.id,
                     task_id=task_id,
                     type=EventType.TOOL_RESULT,
                     source="openhands_adapter",
-                    payload={"tool": tool.name, "result": result, "status": "success"},
+                    payload={"tool": tool.name, **result_payload.model_dump()},
                 )
             except Exception as e:
                 yield Event(
@@ -269,7 +285,10 @@ class OpenHandsAdapter(AgentInterface):
                     task_id=task_id,
                     type=EventType.TOOL_RESULT,
                     source="openhands_adapter",
-                    payload={"tool": tool.name, "result": {"warning": str(e)}, "status": "skipped"},
+                    payload={
+                        "tool": tool.name,
+                        **ToolResultPayload.error(str(e)).model_dump(),
+                    },
                 )
             await asyncio.sleep(0.2)
             context.cancellation_token.raise_if_cancelled()

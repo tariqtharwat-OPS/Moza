@@ -1,18 +1,36 @@
+import asyncio
 from dataclasses import dataclass, field
 
 
 @dataclass
 class ResourceManager:
     """
-    Manages workspace resources: git state, file watching, and vector indexing.
+    Manages workspace resources: git state, file watching, vector indexing,
+    and concurrent-access locking.
 
-    Currently a STUB — placeholder methods to be implemented when
-    real Git/watchers/embeddings are integrated.
+    The `workspace_lock` prevents concurrent agent modifications to the
+    workspace (filesystem writes, terminal commands). Agents MUST acquire
+    this lock before executing any destructive tool operation.
+
+    Currently a STUB in parts — git/watchers/embeddings to be fully
+    implemented when real Git/watchers/embeddings are integrated.
     """
     workspace_path: str = ""
     git_branch: str | None = None
     _watchers: dict = field(default_factory=dict)
     _index: dict = field(default_factory=dict)
+    _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+
+    @property
+    def workspace_lock(self) -> asyncio.Lock:
+        """
+        Concurrency lock for the workspace.
+
+        Acquire before any destructive tool operation:
+            async with resource_manager.workspace_lock:
+                result = await tool.execute(...)
+        """
+        return self._lock
 
     async def git_status(self) -> dict:
         """Returns current git status of the workspace."""

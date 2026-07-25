@@ -45,18 +45,16 @@ function ToolCallBlock({ event }: { event: MozaEvent }) {
 }
 
 function ToolResultBlock({ event }: { event: MozaEvent }) {
-  const result = event.payload.result as
-    | Record<string, unknown>
-    | string
-    | undefined;
-  const isError = event.payload.status === "skipped";
+  const success = event.payload.success as boolean | undefined;
+  const stdout = event.payload.stdout as string | undefined;
+  const stderr = event.payload.stderr as string | undefined;
+  const exitCode = event.payload.exit_code as number | null | undefined;
+  const isError = success === false;
 
-  let content = "";
-  if (typeof result === "string") {
-    content = result;
-  } else if (result) {
-    content = JSON.stringify(result, null, 2);
-  }
+  const content = stdout || stderr || "(empty)";
+  const exitInfo = exitCode !== null && exitCode !== undefined
+    ? `exit code: ${exitCode}`
+    : null;
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-700/30 bg-zinc-900/30">
@@ -67,11 +65,16 @@ function ToolResultBlock({ event }: { event: MozaEvent }) {
           }`}
         />
         <span className="text-xs font-medium text-zinc-400">
-          {isError ? "Skipped" : "Output"}
+          {isError ? "Failed" : "Output"}
         </span>
+        {exitInfo && (
+          <span className="ml-auto font-mono text-xs text-zinc-500">
+            {exitInfo}
+          </span>
+        )}
       </div>
       <pre className="overflow-x-auto px-4 py-3 font-mono text-xs leading-relaxed text-zinc-300">
-        {content || "(empty)"}
+        {content}
       </pre>
     </div>
   );

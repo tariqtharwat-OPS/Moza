@@ -79,17 +79,16 @@ export default function TerminalComponent({ events }: Props) {
           term.writeln(`\r\n\x1b[32m$\x1b[0m ${command}`);
         }
       } else if (event.type === "tool_result") {
-        const result = event.payload.result as
-          | { stdout?: string; exit_code?: number }
-          | undefined;
-        if (result?.stdout) {
-          const lines = result.stdout.replace(/\n$/, "").split("\n");
+        const stdout = event.payload.stdout as string | undefined;
+        const exitCode = event.payload.exit_code as number | null | undefined;
+        if (stdout) {
+          const lines = stdout.replace(/\n$/, "").split("\n");
           for (const line of lines) {
             term.writeln(line);
           }
         }
-        if (result?.exit_code !== undefined && result.exit_code !== 0) {
-          term.writeln(`\x1b[31mexit code: ${result.exit_code}\x1b[0m`);
+        if (exitCode !== undefined && exitCode !== null && exitCode !== 0) {
+          term.writeln(`\x1b[31mexit code: ${exitCode}\x1b[0m`);
         }
       }
     }

@@ -27,11 +27,15 @@ class BaseTool(ABC):
 
     async def on_load(self) -> None:
         """Called when the tool is loaded into the registry."""
-        pass
 
     async def on_unload(self) -> None:
         """Called when the tool is removed from the registry."""
-        pass
+
+    async def cleanup(self) -> None:
+        """
+        Release resources held by this tool (subprocesses, temp files, etc.).
+        Called by the Orchestrator when a task is cancelled or fails.
+        """
 
 
 class ToolRegistry:
@@ -71,6 +75,14 @@ class ToolRegistry:
         if tool is None:
             raise KeyError(f"Tool not found in registry: {name}")
         return await tool.execute(**kwargs)
+
+    async def cleanup_all(self) -> None:
+        """Call cleanup on every registered tool (used on task cancel/fail)."""
+        for tool in self._tools.values():
+            try:
+                await tool.cleanup()
+            except Exception as e:
+                logger.warning(f"cleanup failed for tool {tool.name}: {e}")
 
     def get_capabilities(self) -> dict[str, list[str]]:
         return {

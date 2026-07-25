@@ -1,11 +1,12 @@
 import asyncio
+import time
 from collections.abc import AsyncGenerator
 
 from loguru import logger
 
 from moza.agents.interfaces import AgentInterface
 from moza.core.context import ExecutionContext
-from moza.core.models import Event, EventType
+from moza.core.models import Event, EventType, ToolResultPayload
 
 
 class MockAgent(AgentInterface):
@@ -81,21 +82,32 @@ class MockAgent(AgentInterface):
             context.cancellation_token.raise_if_cancelled()
 
             try:
-                result = await registry.execute_tool(
+                tool_start = time.monotonic()
+                raw = await registry.execute_tool(
                     tool.name,
                     action="read",
                     path=".",
                 )
+                elapsed = (time.monotonic() - tool_start) * 1000
+                if isinstance(raw, dict):
+                    result_payload = ToolResultPayload(
+                        success=raw.get("success", True),
+                        duration_ms=raw.get("duration_ms", elapsed),
+                        exit_code=raw.get("exit_code", 0),
+                        stdout=raw.get("stdout", ""),
+                        stderr=raw.get("stderr", ""),
+                        metadata={"raw": raw},
+                    )
+                else:
+                    result_payload = ToolResultPayload.ok(
+                        stdout=str(raw), duration_ms=elapsed
+                    )
                 yield Event(
                     session_id=session.id,
                     task_id=task_id,
                     type=EventType.TOOL_RESULT,
                     source="mock_agent",
-                    payload={
-                        "tool": tool.name,
-                        "result": result,
-                        "status": "success",
-                    },
+                    payload={"tool": tool.name, **result_payload.model_dump()},
                 )
             except Exception as e:
                 logger.warning(f"MockAgent: tool {tool.name} execution skipped: {e}")
@@ -106,8 +118,7 @@ class MockAgent(AgentInterface):
                     source="mock_agent",
                     payload={
                         "tool": tool.name,
-                        "result": {"warning": str(e)},
-                        "status": "skipped",
+                        **ToolResultPayload.error(str(e)).model_dump(),
                     },
                 )
             await asyncio.sleep(0.2)

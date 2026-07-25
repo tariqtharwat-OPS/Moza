@@ -43,6 +43,21 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] Agent streaming UI (structured events display in frontend).
 *Notes: Phase 2 vertical slice complete — TerminalComponent renders real-time tool_call/tool_result (tool="terminal") output in xterm.js with GitHub Dark theme. Electron IPC bridge (terminal:write) provides input passthrough path. ChatInterface filters terminal events from normal blocks and renders TerminalComponent inline for live terminal visualization.*
 
+### Phase 2.5: Core Hardening (Task State, Standardized Tool Results, Execution Recorder, Workspace Lock) - [x]
+- [x] Task state machine: PENDING → RUNNING → {WAITING_TOOL, WAITING_USER} → COMPLETED/FAILED/CANCELLED.
+- [x] `ToolResultPayload` Pydantic model: strict schema for all TOOL_RESULT event payloads (`success`, `duration_ms`, `exit_code`, `stdout`, `stderr`, `artifacts`, `metadata`).
+- [x] `Artifact.version` field for file diff/rollback tracking.
+- [x] `BaseTool.cleanup()` + `ToolRegistry.cleanup_all()` on cancel/fail to prevent zombie processes.
+- [x] `TerminalTool` fully stateless (no UI knowledge) with active subprocess tracking and cleanup.
+- [x] `FilesystemTool` returning `ToolResultPayload`-compliant structured results.
+- [x] `ResourceManager.workspace_lock` (`asyncio.Lock`) for concurrent workspace access prevention.
+- [x] `EventRecorder` persists every event as JSONL to `sessions/{session_id}/tasks/{task_id}/events.jsonl`.
+- [x] EventBus integrated with EventRecorder — all published events recorded automatically.
+- [x] Orchestrator drives task state machine based on emitted event types.
+- [x] OpenHandsAdapter uses `ToolResultPayload` for TOOL_RESULT events; simulation fallback routes through `tool_registry.execute()`.
+- [x] Frontend `ToolResultBlock` and `TerminalComponent` read flat `ToolResultPayload` fields (`stdout`/`stderr`/`exit_code`/`success`).
+*Notes: Phase 2 vertical slice hardened. All tool results conform to ToolResultPayload. Events auto-persist to JSONL for replay. Tools self-clean on cancel. Workspace locked against concurrent access. Ready for Phase 3 (Browser/Playwright).*
+
 ### Phase 3: The Senses (Browser & Vision) - [ ]
 - [ ] Integrate Browser-Use agent.
 - [ ] Visual feedback for browser actions in UI.

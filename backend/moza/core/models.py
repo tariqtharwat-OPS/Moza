@@ -1,3 +1,4 @@
+import time
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
@@ -11,6 +12,8 @@ from moza.core.resource_manager import ResourceManager
 class TaskStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
+    WAITING_TOOL = "waiting_tool"
+    WAITING_USER = "waiting_user"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
@@ -39,12 +42,31 @@ class ArtifactType(str, Enum):
     LOG = "log"
 
 
+class ToolResultPayload(BaseModel):
+    """Strict schema for TOOL_RESULT event payloads."""
+    success: bool
+    duration_ms: float
+    exit_code: int | None = None
+    stdout: str = ""
+    stderr: str = ""
+    artifacts: list["Artifact"] = Field(default_factory=list)
+    metadata: dict = Field(default_factory=dict)
+
+    @classmethod
+    def error(cls, message: str, duration_ms: float = 0, exit_code: int = 1) -> "ToolResultPayload":
+        return cls(success=False, duration_ms=duration_ms, exit_code=exit_code, stderr=message)
+
+    @classmethod
+    def ok(cls, stdout: str = "", duration_ms: float = 0, exit_code: int = 0, **kw: Any) -> "ToolResultPayload":
+        return cls(success=True, duration_ms=duration_ms, exit_code=exit_code, stdout=stdout, **kw)
+
+
 class Workspace(BaseModel):
     """
     Represents a project workspace with root path and resource management.
 
     The `resource_manager` field is excluded from Pydantic serialization
-    because it manages runtime state (file watchers, git connections).
+    because it manages runtime state (file watchers, git connections, locks).
     """
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -67,6 +89,7 @@ class Artifact(BaseModel):
     task_id: str
     type: ArtifactType
     path: str
+    version: int = 1
     metadata: dict = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

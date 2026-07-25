@@ -173,14 +173,24 @@ This report documents which architectural layers were exercised by the Phase 2.1
 | **Capability** | Capability Manager | ✗ | Not exercised (all tools allowed by default) |
 | **Replay API** | SessionManager + replay endpoints | ✓ | Phase 2.14 adds coverage; benchmark data replayable via API |
 
-### Phase 3: The Senses (Browser & Vision) - [≈]
+### Phase 3.0: Browser Refactor & Engine Abstraction - [x]
+**Exit Criteria:**
+- [x] `BrowserEngine` ABC defines core interface (navigate, click, type_text, extract_text, screenshot, scroll, go_back, go_forward, get_url, execute_js, close).
+- [x] `PlaywrightEngine` implements `BrowserEngine` using actual Playwright (121 lines).
+- [x] `BrowserTool` split into focused modular components under `browser/` package: `navigation.py` (29 lines), `dom.py` (13), `screenshot.py` (15), `forms.py` (6), `utils.py` (12). No single file exceeds ~250 lines.
+- [x] `BrowserTool` delegates all execution to the `PlaywrightEngine` instance (128 lines, thin wrapper).
+- [x] External API of `BrowserTool` (ToolRegistry + LLM) is exactly the same — 7 unit tests pass with zero modifications.
+- [x] All 81 existing tests pass.
+*Notes: Monolithic 379-line browser_tool.py split into 8 files: engine ABC, Playwright implementation, 5 modular components, and thin tool wrapper. Max file size: 128 lines (browser_tool.py). Constructor signature `BrowserTool(headless=True, screenshots_dir=None)` unchanged. Legacy test attributes `_browser`, `_page` preserved via properties. 0 regression.*
+
+### Phase 3.1: The Senses (Browser E2E Testing) - [≈]
 - [x] Create `BrowserTool` wrapping Playwright with 11 actions (navigate, click, type, extract_text, screenshot, scroll, back, forward, get_url, execute_js, close).
 - [x] Register BrowserTool in tool registry at startup.
 - [x] `BrowserVisualizer` React component with screenshot display, URL/title bar, action log.
 - [x] Wire BrowserVisualizer into ChatInterface (browser events routed to dedicated component).
 - [x] 7 unit tests for BrowserTool (registry, metadata, validation, lifecycle, cleanup).
 - [ ] End-to-end browser automation test with real Playwright browser.
-*Notes: BrowserTool uses Playwright directly (headless Chromium, 1280x720 viewport). Screenshots returned as base64 data URIs in event payload metadata. `requires_confirmation: True` for safety. Dependency: `playwright>=1.50.0`. Run `playwright install chromium` after pip install.*
+*Notes: Phase 3.0 refactor completed first. BrowserTool uses PlaywrightEngine (headless Chromium, 1280x720 viewport). Screenshots returned as base64 data URIs in event payload metadata. `requires_confirmation: True` for safety. Dependency: `playwright>=1.50.0`. Run `playwright install chromium` after pip install.*
 
 ### Phase 4: The Brain (Memory & RAG) - [ ]
 - [ ] Integrate Mem0 for long/short-term memory.

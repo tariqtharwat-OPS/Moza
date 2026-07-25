@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 
@@ -27,7 +27,7 @@ function startBackend(): void {
 
   pythonProcess = spawn(pythonCmd, ["-m", "moza.main"], {
     cwd: backendDir,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["pipe", "pipe", "pipe"],
     env: { ...process.env, PYTHONUNBUFFERED: "1" },
   });
 
@@ -94,6 +94,12 @@ async function createWindow(): Promise<void> {
     mainWindow = null;
   });
 }
+
+ipcMain.handle("terminal:write", (_event, input: string) => {
+  if (pythonProcess && pythonProcess.stdin) {
+    pythonProcess.stdin.write(input + "\n");
+  }
+});
 
 app.whenReady().then(async () => {
   startBackend();

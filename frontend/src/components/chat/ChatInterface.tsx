@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, type FormEvent } from "react";
 import { streamTask, type MozaEvent } from "@/lib/api";
+import TerminalComponent from "@/components/terminal/TerminalComponent";
 
 function ThinkingDots() {
   return (
@@ -161,6 +162,7 @@ export default function ChatInterface() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [finalMessage, setFinalMessage] = useState("");
+  const [terminalEvents, setTerminalEvents] = useState<MozaEvent[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -175,6 +177,7 @@ export default function ChatInterface() {
     setInput("");
     setStreaming(true);
     setEvents([]);
+    setTerminalEvents([]);
     setStreamingContent("");
     setFinalMessage("");
 
@@ -195,6 +198,12 @@ export default function ChatInterface() {
           const content = event.payload.content as string;
           setFinalMessage(content || "");
           setStreamingContent("");
+          scrollToBottom();
+        } else if (
+          (event.type === "tool_call" || event.type === "tool_result") &&
+          event.payload.tool === "terminal"
+        ) {
+          setTerminalEvents((prev) => [...prev, event]);
           scrollToBottom();
         } else {
           setEvents((prev) => [...prev, event]);
@@ -264,6 +273,9 @@ export default function ChatInterface() {
         )}
         <div className="mx-auto flex max-w-3xl flex-col gap-3">
           {events.map((ev, i) => renderEvent(ev, i))}
+          {terminalEvents.length > 0 && (
+            <TerminalComponent events={terminalEvents} />
+          )}
           {streamingContent && <StreamingMessage content={streamingContent} />}
           {finalMessage && <FinalMessage content={finalMessage} />}
         </div>

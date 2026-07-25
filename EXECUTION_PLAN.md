@@ -1,5 +1,9 @@
 # MOZA Execution Plan & Tracker
 
+## Project Rules
+**Every phase must begin with clearly defined Exit Criteria. A phase is complete ONLY when those criteria pass through reproducible end-to-end tests.**
+No mocks in the execution path for completion verification.
+
 ## Core Philosophy
 USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 
@@ -88,10 +92,26 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] **Bugfix: Agent overwrite in route handler** — route now checks `if orchestrator.agent is None` before setting agent, allowing tests to pre-configure custom agents.
 *Notes: Backend proven flawless — zero-errors in SSE stream, all Event schema validated, approval flow verified, EventRecorder writes match streamed events. Ready for Phase 3 (Browser).*
 
-### Phase 3: The Senses (Browser & Vision) - [ ]
-- [ ] Integrate Browser-Use agent.
-- [ ] Visual feedback for browser actions in UI.
-*Notes:*
+### Phase 2.9: Real Autonomous Execution Loop - [x]
+**Exit Criteria:**
+- [x] Task creation via API.
+- [x] Real LiteLLM invocation (Groq `llama-3.3-70b-versatile`).
+- [x] Tool selection through ToolRegistry.
+- [x] Real tool execution (FilesystemTool write + read).
+- [x] Event streaming through EventBus.
+- [x] Task completion with final summary.
+- [x] Event recording and replay (`events.jsonl` — 7 events recorded).
+- [x] NO MOCKS in the execution path.
+*Notes: Groq LLM autonomously: (1) called filesystem write to create `moza_live_test.txt`, (2) called filesystem read to verify content, (3) responded with final summary. 7 events, 22s end-to-end. Approval Service excluded per scope. Verified with `backend/tests/live/test_real_agent_e2e.py`.*
+
+### Phase 3: The Senses (Browser & Vision) - [≈]
+- [x] Create `BrowserTool` wrapping Playwright with 11 actions (navigate, click, type, extract_text, screenshot, scroll, back, forward, get_url, execute_js, close).
+- [x] Register BrowserTool in tool registry at startup.
+- [x] `BrowserVisualizer` React component with screenshot display, URL/title bar, action log.
+- [x] Wire BrowserVisualizer into ChatInterface (browser events routed to dedicated component).
+- [x] 7 unit tests for BrowserTool (registry, metadata, validation, lifecycle, cleanup).
+- [ ] End-to-end browser automation test with real Playwright browser.
+*Notes: BrowserTool uses Playwright directly (headless Chromium, 1280x720 viewport). Screenshots returned as base64 data URIs in event payload metadata. `requires_confirmation: True` for safety. Dependency: `playwright>=1.50.0`. Run `playwright install chromium` after pip install.*
 
 ### Phase 4: The Brain (Memory & RAG) - [ ]
 - [ ] Integrate Mem0 for long/short-term memory.

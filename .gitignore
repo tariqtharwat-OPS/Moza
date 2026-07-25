@@ -37,3 +37,6 @@ logs/
 # Build
 build/
 desktop/out/
+
+# Sessions (runtime test artifacts)
+sessions/

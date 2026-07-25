@@ -166,7 +166,7 @@ class OpenHandsAdapter(AgentInterface):
     ) -> AsyncGenerator[Event, None]:
         session = context.session
         logger.info(f"Starting OpenHands agent for task: {description[:80]}")
-        ws = Workspace(root_path=context.workspace.root_path)
+        ws = Workspace(root_path=context.environment.filesystem.root_path)
 
         self._agent = OH_Agent(
             model=LLM(),

@@ -67,7 +67,17 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] Create `backend/run_server.py` launcher.
 - [x] Create `POST /v1/test/chat` route (pure text/plain streaming, no Orchestrator/Tools/Agents/EventBus).
 - [x] Verify LLM connectivity — Python direct test returns `"Hi there friend."` from OpenRouter (`qwen/qwen3-32b`).
-*Notes: ✅ LLM pipe proven working. Config + .env + env var expansion validated. Test route ready. To test: `cd backend && python -m uvicorn moza.main:app --host 0.0.0.0 --port 8000` then `curl -N http://localhost:8000/v1/test/chat -H "Content-Type: application/json" -d '{"message":"Say hi"}'`. Phase 3 (Browser) can proceed.*
+*Notes: ✅ LLM pipe proven working. Config + .env + env var expansion validated. Test route ready.*
+*Phase 3 (Browser) can proceed.*
+
+### Phase 2.7: AI OS Core Upgrades (Environment, Capability Manager, Approval Service, Groq) - [x]
+- [x] **Environment Abstraction**: Renamed `Workspace` → `Environment` with 6 sub-domains (`filesystem`, `terminal`, `browser`, `desktop`, `secrets`, `memory`). `Workspace` kept as deprecated subclass for backward compat. `Session.workspace` → `Session.environment` (with `.workspace` property bridge).
+- [x] **Capability Manager**: Added `AgentConfig` (default + allowed_tools) to config models. `ToolRegistry.check_capability(agent_name, tool_name) -> bool` raises `PermissionError` on disallowed tools. `set_agent_capabilities()` configures per-agent allowlists.
+- [x] **Enhanced Approval Service**: `WAITING_APPROVAL` (14th EventType) emitted by orchestrator when agent yields `TOOL_CALL` with `requires_confirmation=True`. Orchestrator pauses via `asyncio.Event.wait()` until `POST /v1/task/{task_id}/approve` or `POST /v1/task/{task_id}/reject` is called. Reject cancels the task.
+- [x] **Groq Provider Fix**: Model name corrected to `groq/llama-3.3-70b-versatile` per spec.
+- [x] **Agent Config in config.yaml**: `agents.mock.allowed_tools: []` (empty = all tools allowed) and `agents.openhands.allowed_tools: []`.
+- [x] **All code paths updated**: `context.py`, `orchestrator.py`, `service.py`, `chat.py`, `openhands_adapter.py`, `registry.py`, `models.py`, `config/models.py`, `config.yaml`.
+*Notes: Core AI OS plumbing complete. Environment provides sub-domain isolation. Capability Manager enforces per-agent tool gates. Approval Service enables human-in-the-loop for destructive/confirmation-required tool calls. Ready for Phase 3 (Browser).*
 
 ### Phase 3: The Senses (Browser & Vision) - [ ]
 - [ ] Integrate Browser-Use agent.

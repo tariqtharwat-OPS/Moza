@@ -32,6 +32,7 @@ class EventType(str, Enum):
     LLM_FINISHED = "llm_finished"
     TASK_COMPLETED = "task_completed"
     TASK_FAILED = "task_failed"
+    WAITING_APPROVAL = "waiting_approval"
 
 
 class ArtifactType(str, Enum):
@@ -61,9 +62,34 @@ class ToolResultPayload(BaseModel):
         return cls(success=True, duration_ms=duration_ms, exit_code=exit_code, stdout=stdout, **kw)
 
 
-class Workspace(BaseModel):
+class _FilesystemState(BaseModel):
+    root_path: str = ""
+    git_branch: str | None = None
+
+
+class _TerminalState(BaseModel):
+    cwd: str = ""
+    environment_vars: dict[str, str] = Field(default_factory=dict)
+    shell_type: str = ""
+
+
+class _BrowserState(BaseModel):
+    active_tabs: list[str] = Field(default_factory=list)
+    headless_mode: bool = True
+
+
+class _DesktopState(BaseModel):
+    active_windows: list[str] = Field(default_factory=list)
+    clipboard: str = ""
+
+
+class Environment(BaseModel):
     """
-    Represents a project workspace with root path and resource management.
+    Represents the full execution environment for an AI OS session.
+
+    Subsumes the old Workspace concept and expands to cover all
+    domains an AI agent can interact with: filesystem, terminal,
+    browser, desktop, secrets, and memory.
 
     The `resource_manager` field is excluded from Pydantic serialization
     because it manages runtime state (file watchers, git connections, locks).
@@ -71,17 +97,29 @@ class Workspace(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     id: str = Field(default_factory=lambda: uuid4().hex[:12])
-    root_path: str = ""
-    git_branch: str | None = None
+    filesystem: _FilesystemState = Field(default_factory=_FilesystemState)
+    terminal: _TerminalState = Field(default_factory=_TerminalState)
+    browser: _BrowserState = Field(default_factory=_BrowserState)
+    desktop: _DesktopState = Field(default_factory=_DesktopState)
+    secrets: dict[str, str] = Field(default_factory=dict)
+    memory: dict[str, Any] = Field(default_factory=dict)
     resource_manager: Any = Field(default=None, exclude=True)
 
     def ensure_resource_manager(self) -> ResourceManager:
         if not isinstance(self.resource_manager, ResourceManager):
             self.resource_manager = ResourceManager(
-                workspace_path=self.root_path,
-                git_branch=self.git_branch,
+                workspace_path=self.filesystem.root_path,
+                git_branch=self.filesystem.git_branch,
             )
         return self.resource_manager
+
+
+class Workspace(Environment):
+    """
+    DEPRECATED: Use Environment instead.
+    Kept for backward compatibility. Will be removed in a future release.
+    """
+    pass
 
 
 class Artifact(BaseModel):
@@ -117,7 +155,12 @@ class Event(BaseModel):
 
 class Session(BaseModel):
     id: str = Field(default_factory=lambda: uuid4().hex[:12])
-    workspace: Workspace
+    environment: Environment = Field(default_factory=Environment)
     tasks: list[Task] = Field(default_factory=list)
     execution_history: list[Event] = Field(default_factory=list)
     artifacts: list[Artifact] = Field(default_factory=list)
+
+    @property
+    def workspace(self) -> Environment:
+        """Deprecated: use .environment instead."""
+        return self.environment

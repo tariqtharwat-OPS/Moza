@@ -41,6 +41,21 @@ class BaseTool(ABC):
 class ToolRegistry:
     def __init__(self) -> None:
         self._tools: dict[str, BaseTool] = {}
+        self._capabilities: dict[str, list[str]] = {}
+
+    def set_agent_capabilities(self, agent_name: str, allowed_tools: list[str]) -> None:
+        self._capabilities[agent_name] = allowed_tools
+
+    def check_capability(self, agent_name: str, tool_name: str) -> bool:
+        allowed = self._capabilities.get(agent_name)
+        if allowed is None or len(allowed) == 0:
+            return True
+        if tool_name not in allowed:
+            raise PermissionError(
+                f"Agent '{agent_name}' is not allowed to use tool '{tool_name}'. "
+                f"Allowed tools: {allowed}"
+            )
+        return True
 
     async def load(self, tool: BaseTool) -> None:
         logger.info(f"Loading tool: {tool.name} v{tool.version}")

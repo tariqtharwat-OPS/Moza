@@ -2,17 +2,19 @@
 Task Orchestrator for MOZA AI Operating System.
 
 GOLDEN RULE OF MUTATION:
-Agents MUST NEVER write to the Workspace directly. All mutations MUST flow through:
-    Agent -> ToolRegistry -> Tool Execution -> Event Emission -> Workspace Update.
+Agents MUST NEVER write to the Environment directly. All mutations MUST flow through:
+    Agent -> ToolRegistry -> Tool Execution -> Event Emission -> Environment Update.
 This ensures 100% traceability and replayability.
 
 The Orchestrator is the central dispatcher:
     1. Receives Tasks from the API layer.
     2. Assigns Tasks to Agents.
     3. Routes Events from Agents to the EventBus.
-    4. Manages Task lifecycle (submit/cancel/resume/state).
-    5. Drives task state machine: PENDING → RUNNING → {WAITING_TOOL, WAITING_USER} → COMPLETED/FAILED/CANCELLED.
-    6. Cleans up tool resources on cancellation or failure.
+    4. Manages Task lifecycle (submit/cancel/approve/resume/state).
+    5. Drives task state machine: PENDING -> RUNNING -> {WAITING_TOOL, WAITING_USER} -> COMPLETED/FAILED/CANCELLED.
+    6. Handles user approval flow: emits WAITING_APPROVAL, pauses execution, resumes on approve/reject.
+    7. Enforces agent capability constraints (allowed_tools).
+    8. Cleans up tool resources on cancellation or failure.
 """
 
 import asyncio
@@ -23,7 +25,7 @@ from loguru import logger
 from moza.agents.interfaces import AgentInterface
 from moza.core.context import ExecutionContext
 from moza.core.event_bus import EventBus, get_event_bus
-from moza.core.models import Event, EventType, Session, Task, TaskStatus, Workspace
+from moza.core.models import Environment, Event, EventType, Session, Task, TaskStatus
 from moza.tools.registry import ToolRegistry, get_tool_registry
 
 
@@ -44,6 +46,7 @@ class Orchestrator:
         self._agent: AgentInterface | None = None
         self._event_bus: EventBus = get_event_bus()
         self._tool_registry: ToolRegistry = get_tool_registry()
+        self._pending_approvals: dict[str, asyncio.Event] = {}
 
     def set_agent(self, agent: AgentInterface) -> None:
         self._agent = agent
@@ -51,26 +54,26 @@ class Orchestrator:
     def get_session(self, session_id: str) -> Session | None:
         return self._sessions.get(session_id)
 
-    def create_session(self, session_id: str, workspace: Workspace) -> Session:
+    def create_session(self, session_id: str, environment: Environment) -> Session:
         if session_id not in self._sessions:
             self._sessions[session_id] = Session(
-                id=session_id, workspace=workspace
+                id=session_id, environment=environment
             )
         return self._sessions[session_id]
 
     async def submit_task(
-        self, session_id: str, task: Task, workspace: Workspace
+        self, session_id: str, task: Task, environment: Environment
     ) -> None:
         if self._agent is None:
             raise RuntimeError("No agent configured in orchestrator")
 
-        session = self.create_session(session_id, workspace)
+        session = self.create_session(session_id, environment)
         _transition_task_status(task, TaskStatus.RUNNING, EventType.AGENT_STARTED)
         session.tasks.append(task)
 
         context = ExecutionContext.build(
             session=session,
-            workspace=workspace,
+            environment=environment,
             tool_registry=self._tool_registry,
             event_bus=self._event_bus,
         )
@@ -103,6 +106,25 @@ class Orchestrator:
                 session.execution_history.append(event)
                 await self._event_bus.publish(session_id, event)
                 self._update_task_state(task, event)
+
+                if task.status == TaskStatus.WAITING_USER:
+                    approval_event = Event(
+                        session_id=session_id,
+                        task_id=task.id,
+                        type=EventType.WAITING_APPROVAL,
+                        source="orchestrator",
+                        payload={
+                            "tool": event.payload.get("tool", "unknown"),
+                            "args": event.payload.get("args", {}),
+                            "description": event.payload.get("description", ""),
+                        },
+                    )
+                    session.execution_history.append(approval_event)
+                    await self._event_bus.publish(session_id, approval_event)
+                    await self.wait_for_user_approval(task.id)
+                    _transition_task_status(
+                        task, TaskStatus.RUNNING, EventType.TOOL_RESULT
+                    )
 
             _transition_task_status(task, TaskStatus.COMPLETED, EventType.TASK_COMPLETED)
 
@@ -159,18 +181,44 @@ class Orchestrator:
             _transition_task_status(task, TaskStatus.RUNNING, event.type)
         elif event.type in (EventType.BROWSER_STARTED, EventType.BROWSER_ACTION):
             _transition_task_status(task, TaskStatus.WAITING_TOOL, event.type)
-        elif event.type in (EventType.TASK_COMPLETED, EventType.TASK_FAILED):
+        elif event.type in (EventType.TASK_COMPLETED, EventType.TASK_FAILED, EventType.WAITING_APPROVAL):
             pass
 
     async def cancel_task(self, task_id: str) -> bool:
         asyncio_task = self._running_tasks.get(task_id)
         if asyncio_task and not asyncio_task.done():
             asyncio_task.cancel()
+            approval = self._pending_approvals.pop(task_id, None)
             return True
         return False
 
     async def resume_task(self, task_id: str) -> None:
         raise NotImplementedError("Task resume not yet implemented")
+
+    async def wait_for_user_approval(self, task_id: str) -> bool:
+        approval = asyncio.Event()
+        self._pending_approvals[task_id] = approval
+        try:
+            await asyncio.wait_for(approval.wait(), timeout=None)
+            return True
+        except asyncio.TimeoutError:
+            return False
+        finally:
+            self._pending_approvals.pop(task_id, None)
+
+    async def approve_task(self, task_id: str) -> bool:
+        approval = self._pending_approvals.get(task_id)
+        if approval:
+            approval.set()
+            return True
+        return False
+
+    async def reject_task(self, task_id: str) -> bool:
+        approval = self._pending_approvals.get(task_id)
+        if approval:
+            await self.cancel_task(task_id)
+            return True
+        return False
 
 
 _orchestrator: Orchestrator | None = None

@@ -121,7 +121,7 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] All existing 75+ tests still pass.
 *Notes: `ContextBuilder.build_context()` returns a structured text block with 7 sections. Injected into `messages[0]` (system prompt) before each LLM call in the ReAct loop. Handles gracefully: empty workspace, no git repo, no events yet, PermissionError on dir walk. 9 unit tests cover all sections, empty states, and edge cases.*
 
-### Phase 2.12: Recovery Loop - [x]
+### Phase 2.12: Recovery Loop (Graceful Tool Failure Handling) - [x]
 **Exit Criteria:**
 - [x] Tool execution failure returns structured `ToolResultPayload` with `success=False` and clear `error_message` (not unhandled exception).
 - [x] ReAct loop catches failure, emits `TOOL_RESULT` event with `success=False`, feeds error back to LLM as tool result in message history.
@@ -129,6 +129,17 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] Live E2E test proves recovery: agent reads non-existent file → gets `success=False` → autonomously creates file → reads it successfully → completes task.
 - [x] All 75+ existing tests still pass.
 *Notes: Agent received `success=False` on read of `will_not_exist.txt` (stderr: "Path does not exist"), autonomously switched to `filesystem write` creating `recovered.txt` with "The agent recovered from the error!", then read it back successfully. 3 tool calls, TASK_COMPLETED. No code changes needed — error handling was already built into the ReAct loop from Phase 2.10, just needed the live E2E test to prove it. Verified with `backend/tests/live/test_recovery_loop.py`.*
+
+### Phase 2.13: Software Engineer Benchmark (Strict Anti-Cheat) - [x]
+**Exit Criteria:**
+- [x] Pre-seeds buggy `calculator.py` (integer division `//` instead of `/`).
+- [x] Agent autonomously writes tests, runs pytest, reads failure traceback, fixes code, re-runs, passes.
+- [x] Test validates exact 6-event sequence A-F from events: (A) first pytest call, (B) result with `success=False`, (C) filesystem write to fix `calculator.py`, (D) second pytest call, (E) result with `success=True`, (F) `TASK_COMPLETED`.
+- [x] Anti-cheat: verifies `calculator.py` was modified (not test file), `divide(5,2)==2.5` mathematically, test file integrity preserved (all 6 keywords: add/subtract/multiply/divide/2.5/assert).
+- [x] Full execution record persisted: `prompt.txt`, `context.json`, `tool_calls.jsonl`, `tool_results.jsonl`, `trace.log`, `events.jsonl`.
+- [x] All 75+ existing tests still pass.
+- [x] Framework is scenario-parameterised via `BugScenario` dataclass — new bug types (off-by-one, syntax error, wrong import, etc.) added by instantiation, no test rewrites.
+*Notes: Agent executed full fail→read→fix→pass cycle autonomously in 12.4s: wrote test_calculator.py, ran pytest (1 failed: integer division bug), read calculator.py, wrote fixed version with `return a / b`, ran pytest (4 passed), completed with summary. Event sequence validation passed all 10 checks, anti-cheat passed all 9 checks. 14 events recorded. Verified with `backend/tests/live/test_software_engineer_benchmark.py`. This benchmark is now the quality gate for all future engineering tasks.*
 
 ### Phase 3: The Senses (Browser & Vision) - [≈]
 - [x] Create `BrowserTool` wrapping Playwright with 11 actions (navigate, click, type, extract_text, screenshot, scroll, back, forward, get_url, execute_js, close).

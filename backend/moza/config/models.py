@@ -42,6 +42,7 @@ class LoggingConfig(BaseModel):
 class AgentConfig(BaseModel):
     default: str = "mock"
     allowed_tools: list[str] = Field(default_factory=list)
+    max_steps: int = 15
 
 
 class MOZAConfig(BaseSettings):

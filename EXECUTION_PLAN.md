@@ -104,6 +104,15 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] NO MOCKS in the execution path.
 *Notes: Groq LLM autonomously: (1) called filesystem write to create `moza_live_test.txt`, (2) called filesystem read to verify content, (3) responded with final summary. 7 events, 22s end-to-end. Approval Service excluded per scope. Verified with `backend/tests/live/test_real_agent_e2e.py`.*
 
+### Phase 2.10: Executive Mind (Agent Loop Upgrade — ReAct Pattern) - [x]
+**Exit Criteria:**
+- [x] Agent runs in a `while` loop until task completion, max_steps, or fatal error.
+- [x] `max_steps` is configurable (default: 15) and enforced.
+- [x] Agent knows NOTHING about specific tools — only ToolRegistry, Events, and ExecutionContext.
+- [x] Agent executes 3+ tool calls in a single task (write file → write file → read file → read file → summarize).
+- [x] All existing 66+ tests still pass.
+*Notes: Refactored `LiteLLMToolAgent.execute()` to true ReAct loop with `steps_count` counter. Agent made 4 autonomous tool calls (write step1.txt, write step2.txt, read step1.txt, read step2.txt) in one loop iteration, then summarized — 12 events, 27.8s. Added `max_steps` field to `AgentConfig`. Verified with `backend/tests/live/test_multi_step_agent.py`.*
+
 ### Phase 3: The Senses (Browser & Vision) - [≈]
 - [x] Create `BrowserTool` wrapping Playwright with 11 actions (navigate, click, type, extract_text, screenshot, scroll, back, forward, get_url, execute_js, close).
 - [x] Register BrowserTool in tool registry at startup.

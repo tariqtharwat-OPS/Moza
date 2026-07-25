@@ -14,6 +14,22 @@ _TYPE_MAP = {"string": "string", "enum": "string", "integer": "integer", "number
 
 
 class LiteLLMToolAgent(AgentInterface):
+    """
+    ReAct (Reason + Act) agent powered by LiteLLM.
+    
+    The agent knows NOTHING about specific tools (Filesystem, Terminal, Browser, etc.).
+    It operates solely through:
+      - ToolRegistry  — to discover available tools and execute them
+      - Events        — to stream structured progress to the EventBus
+      - ExecutionContext — for session, cancellation, and environment data
+    
+    Loop: while steps_count < max_steps:
+      1. Call LLM with system prompt + task + conversation + tool schemas
+      2. If LLM returns tool_calls: execute each, append results, steps_count += 1
+      3. If LLM returns final text (no tool_calls): emit COMPLETED, break
+      4. If steps_count >= max_steps: emit FAILED (max_steps reached), break
+    """
+
     def __init__(
         self,
         config,
@@ -23,6 +39,8 @@ class LiteLLMToolAgent(AgentInterface):
         self._config = config
         self._provider_name = provider_name
         self._max_steps = max_steps
+
+    # ── tool schema construction ──────────────────────────────────────────
 
     @staticmethod
     def _build_tool_schema(registry: ToolRegistry) -> list[dict]:
@@ -76,9 +94,13 @@ class LiteLLMToolAgent(AgentInterface):
             "When the task is complete, respond with a final summary."
         )
 
+    # ── provider resolution ───────────────────────────────────────────────
+
     @property
     def _provider(self):
         return self._config.get_provider(self._provider_name)
+
+    # ── ReAct loop ────────────────────────────────────────────────────────
 
     async def execute(self, context: ExecutionContext) -> AsyncGenerator[Event, None]:
         import litellm
@@ -103,10 +125,12 @@ class LiteLLMToolAgent(AgentInterface):
             payload={"content": f"Task received. {len(tools)} tools available."},
         )
 
-        for step in range(1, self._max_steps + 1):
+        steps_count = 0
+
+        while steps_count < self._max_steps:
             context.cancellation_token.raise_if_cancelled()
 
-            logger.info(f"[LiteLLMToolAgent] step {step}/{self._max_steps} — {len(messages)} messages")
+            logger.info(f"[LiteLLMToolAgent] step {steps_count + 1}/{self._max_steps} — {len(messages)} messages")
 
             kwargs: dict = {
                 "model": provider.model,
@@ -136,6 +160,7 @@ class LiteLLMToolAgent(AgentInterface):
 
             tool_calls = getattr(msg, "tool_calls", None) or []
 
+            # ── No tool calls → task is complete ──────────────────────────
             if not tool_calls:
                 yield Event(
                     session_id=sid, task_id=task_id,
@@ -143,8 +168,15 @@ class LiteLLMToolAgent(AgentInterface):
                     source="litellm_tool_agent",
                     payload={"content": content},
                 )
+                yield Event(
+                    session_id=sid, task_id=task_id,
+                    type=EventType.TASK_COMPLETED,
+                    source="litellm_tool_agent",
+                    payload={"task_id": task_id},
+                )
                 return
 
+            # ── Tool calls present → execute them ─────────────────────────
             assistant_msg: dict = {"role": "assistant", "content": msg.content}
             tc_list = []
             for tc in tool_calls:
@@ -175,7 +207,7 @@ class LiteLLMToolAgent(AgentInterface):
                     payload={
                         "tool": fn_name,
                         "args": fn_args,
-                        "description": f"Step {step}: {fn_name}",
+                        "description": f"Step {steps_count + 1}: {fn_name}",
                         "requires_confirmation": False,
                     },
                 )
@@ -188,7 +220,6 @@ class LiteLLMToolAgent(AgentInterface):
                     result = {"success": False, "stderr": str(e)}
 
                 result_str = json.dumps(result) if isinstance(result, dict) else str(result)
-
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": result_str})
 
                 payload: dict = {"tool": fn_name}
@@ -206,9 +237,19 @@ class LiteLLMToolAgent(AgentInterface):
                     payload=payload,
                 )
 
+            steps_count += 1
+
+        # ── Max steps reached without task completion ─────────────────────
+        logger.warning(f"[LiteLLMToolAgent] max_steps ({self._max_steps}) reached — terminating")
         yield Event(
             session_id=sid, task_id=task_id,
             type=EventType.LLM_FINISHED,
             source="litellm_tool_agent",
-            payload={"content": "Task completed (max steps reached)."},
+            payload={"content": "Task exceeded maximum steps."},
+        )
+        yield Event(
+            session_id=sid, task_id=task_id,
+            type=EventType.TASK_FAILED,
+            source="litellm_tool_agent",
+            payload={"error": "max_steps reached", "task_id": task_id},
         )

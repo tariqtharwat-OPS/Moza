@@ -38,10 +38,10 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] MockAgent proof-of-concept calling real tools through ToolRegistry (proving Golden Rule).
 - [x] Tool lifecycle (load/unload/reload) with capabilities system.
 - [x] ResourceManager stub (git_status, file_watcher, vector_index).
-- [ ] Integrate OpenHands SDK as the coding agent adapter.
-- [ ] Implement xterm.js + node-pty in Electron.
+- [x] OpenHands adapter with Action/Observation to MOZA Event mapping.
+- [x] xterm.js terminal output visualization in frontend.
 - [x] Agent streaming UI (structured events display in frontend).
-*Notes: Phase 2 skeleton complete — contracts, real tools, cancellation, ADRs, Golden Rule enforcement in place. Frontend updated to render structured Event stream (tool calls, results, thinking, task status). Ready for OpenHands SDK integration.*
+*Notes: Phase 2 vertical slice complete — TerminalComponent renders real-time tool_call/tool_result (tool="terminal") output in xterm.js with GitHub Dark theme. Electron IPC bridge (terminal:write) provides input passthrough path. ChatInterface filters terminal events from normal blocks and renders TerminalComponent inline for live terminal visualization.*
 
 ### Phase 3: The Senses (Browser & Vision) - [ ]
 - [ ] Integrate Browser-Use agent.

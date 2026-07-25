@@ -27,6 +27,7 @@ class MOZAConfig(BaseSettings):
     providers: dict[str, ProviderConfig] = Field(default_factory=dict)
     litellm: LiteLLMConfig = LiteLLMConfig()
     logging: LoggingConfig = LoggingConfig()
+    agent_type: str = "mock"
 
     @classmethod
     def from_yaml(cls, path: str | Path = "config.yaml") -> "MOZAConfig":

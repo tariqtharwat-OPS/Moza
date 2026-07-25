@@ -30,6 +30,8 @@ async def startup():
     logger.info(f"Loaded config with providers: {list(config.providers.keys())}")
 
     llm: LLMProvider = LiteLLMAdapter(config)
+    app.state.config = config
+    app.state.llm = llm
     app_state = AppState(config=config, llm=llm)
 
     registry = get_tool_registry()

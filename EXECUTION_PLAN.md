@@ -121,6 +121,15 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] All existing 75+ tests still pass.
 *Notes: `ContextBuilder.build_context()` returns a structured text block with 7 sections. Injected into `messages[0]` (system prompt) before each LLM call in the ReAct loop. Handles gracefully: empty workspace, no git repo, no events yet, PermissionError on dir walk. 9 unit tests cover all sections, empty states, and edge cases.*
 
+### Phase 2.12: Recovery Loop - [x]
+**Exit Criteria:**
+- [x] Tool execution failure returns structured `ToolResultPayload` with `success=False` and clear `error_message` (not unhandled exception).
+- [x] ReAct loop catches failure, emits `TOOL_RESULT` event with `success=False`, feeds error back to LLM as tool result in message history.
+- [x] LLM autonomously decides next step based on error (retry, different tool, fix params, or `TASK_FAILED`).
+- [x] Live E2E test proves recovery: agent reads non-existent file → gets `success=False` → autonomously creates file → reads it successfully → completes task.
+- [x] All 75+ existing tests still pass.
+*Notes: Agent received `success=False` on read of `will_not_exist.txt` (stderr: "Path does not exist"), autonomously switched to `filesystem write` creating `recovered.txt` with "The agent recovered from the error!", then read it back successfully. 3 tool calls, TASK_COMPLETED. No code changes needed — error handling was already built into the ReAct loop from Phase 2.10, just needed the live E2E test to prove it. Verified with `backend/tests/live/test_recovery_loop.py`.*
+
 ### Phase 3: The Senses (Browser & Vision) - [≈]
 - [x] Create `BrowserTool` wrapping Playwright with 11 actions (navigate, click, type, extract_text, screenshot, scroll, back, forward, get_url, execute_js, close).
 - [x] Register BrowserTool in tool registry at startup.

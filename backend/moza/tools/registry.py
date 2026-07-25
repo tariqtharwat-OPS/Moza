@@ -1,10 +1,24 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from pydantic import BaseModel, Field
+
+
+class ToolParameter(BaseModel):
+    name: str
+    type: str = "string"
+    description: str = ""
+    required: bool = True
+
 
 class BaseTool(ABC):
     name: str = ""
     description: str = ""
+    version: str = "1.0.0"
+    parameters: list[ToolParameter] = Field(default_factory=list)
+    returns: str = ""
+    requires_confirmation: bool = False
+    is_destructive: bool = False
 
     @abstractmethod
     async def execute(self, **kwargs: Any) -> Any: ...

@@ -7,12 +7,13 @@ from sse_starlette.sse import EventSourceResponse
 
 from moza.agents.interfaces import AgentInterface
 from moza.agents.mock_agent import MockAgent
-from moza.core.event_bus import EventBus, get_event_bus
-from moza.core.models import ExecutionStep, Task, TaskStatus, Workspace
-from moza.gateway.interfaces import LLMProvider
-from moza.tools.registry import get_tool_registry
+from moza.core.event_bus import get_event_bus
+from moza.core.models import Workspace
+from moza.orchestrator.orchestrator import get_orchestrator
+from moza.orchestrator.service import TaskService, get_task_service
+from moza.core.models import Task
 
-router = APIRouter(prefix="/v1", tags=["chat"])
+router = APIRouter(prefix="/v1", tags=["task"])
 
 
 class TaskRequest(BaseModel):
@@ -21,58 +22,30 @@ class TaskRequest(BaseModel):
     workspace_path: str = ""
 
 
-def get_llm() -> LLMProvider:
-    from moza.main import app_state
-    return app_state.llm
-
-
-def get_agent() -> AgentInterface:
-    return MockAgent()
-
-
 @router.post("/task/execute")
-async def task_execute(
-    request: TaskRequest,
-    agent: AgentInterface = Depends(get_agent),
-):
+async def task_execute(request: TaskRequest):
     session_id = request.session_id or uuid4().hex[:12]
     workspace = Workspace(root_path=request.workspace_path)
     task = Task(session_id=session_id, description=request.description)
 
-    return EventSourceResponse(
-        _task_stream(agent, task, workspace, session_id)
-    )
+    orchestrator = get_orchestrator()
+    agent: AgentInterface = MockAgent()
+    orchestrator.set_agent(agent)
 
+    task_service: TaskService = get_task_service()
+    await task_service.submit_task(session_id, task, workspace)
 
-async def _task_stream(
-    agent: AgentInterface, task: Task, workspace: Workspace, session_id: str
-):
-    event_bus: EventBus = get_event_bus()
+    event_bus = get_event_bus()
     queue = event_bus.subscribe(session_id)
-    tool_registry = get_tool_registry()
 
-    task.status = TaskStatus.RUNNING
+    async def event_stream():
+        try:
+            while True:
+                event = await queue.get()
+                if event is None:
+                    break
+                yield {"event": "step", "data": event.model_dump_json()}
+        finally:
+            event_bus.unsubscribe(session_id, queue)
 
-    async def run_agent():
-        async for step in agent.execute_task(task, workspace, tool_registry):
-            await event_bus.publish(session_id, step)
-        task.status = TaskStatus.COMPLETED
-        await event_bus.publish_and_complete(session_id,
-            ExecutionStep(
-                task_id=task.id,
-                session_id=session_id,
-                step_type="message",
-                payload={"content": "", "done": True},
-            )
-        )
-
-    asyncio.create_task(run_agent())
-
-    try:
-        while True:
-            step = await queue.get()
-            if step is None:
-                break
-            yield {"event": "step", "data": step.model_dump_json()}
-    finally:
-        event_bus.unsubscribe(session_id, queue)
+    return EventSourceResponse(event_stream())

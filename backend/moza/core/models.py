@@ -118,8 +118,21 @@ class Workspace(Environment):
     """
     DEPRECATED: Use Environment instead.
     Kept for backward compatibility. Will be removed in a future release.
+
+    Accepts top-level `root_path` and `git_branch` kwargs and maps them
+    to the ``filesystem`` sub-domain for backward compat.
     """
-    pass
+
+    def __init__(self, **data):
+        fs = data.get("filesystem")
+        if not isinstance(fs, dict):
+            fs = {}
+        if "root_path" in data:
+            fs.setdefault("root_path", data.pop("root_path"))
+        if "git_branch" in data:
+            fs.setdefault("git_branch", data.pop("git_branch"))
+        data["filesystem"] = fs
+        super().__init__(**data)
 
 
 class Artifact(BaseModel):

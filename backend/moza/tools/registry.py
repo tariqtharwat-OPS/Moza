@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from loguru import logger
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class ToolParameter(BaseModel):
@@ -16,11 +16,11 @@ class BaseTool(ABC):
     name: str = ""
     description: str = ""
     version: str = "1.0.0"
-    parameters: list[ToolParameter] = Field(default_factory=list)
+    parameters: list[ToolParameter] = []
     returns: str = ""
     requires_confirmation: bool = False
     is_destructive: bool = False
-    capabilities: list[str] = Field(default_factory=list)
+    capabilities: list[str] = []
 
     @abstractmethod
     async def execute(self, **kwargs: Any) -> Any: ...

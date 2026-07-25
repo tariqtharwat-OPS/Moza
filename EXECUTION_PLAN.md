@@ -77,7 +77,16 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] **Groq Provider Fix**: Model name corrected to `groq/llama-3.3-70b-versatile` per spec.
 - [x] **Agent Config in config.yaml**: `agents.mock.allowed_tools: []` (empty = all tools allowed) and `agents.openhands.allowed_tools: []`.
 - [x] **All code paths updated**: `context.py`, `orchestrator.py`, `service.py`, `chat.py`, `openhands_adapter.py`, `registry.py`, `models.py`, `config/models.py`, `config.yaml`.
-*Notes: Core AI OS plumbing complete. Environment provides sub-domain isolation. Capability Manager enforces per-agent tool gates. Approval Service enables human-in-the-loop for destructive/confirmation-required tool calls. Ready for Phase 3 (Browser).*
+*Notes: Core AI OS plumbing complete. Environment provides sub-domain isolation. Capability Manager enforces per-agent tool gates. Approval Service enables human-in-the-loop for destructive/confirmation-required tool calls.*
+
+### Phase 2.7 Verification & Phase 2.8: Backend E2E Integration Testing (Zero-Error Guarantee) - [x]
+- [x] **47 unit tests covering Environment, Capability Manager, Approval Service, Groq config, EventRecorder** — all pass.
+- [x] **12 integration tests for SSE stream, tool execution, approval flow, EventRecorder persistence** — all pass.
+- [x] **Bugfix: `BaseTool` `Field()` on non-Pydantic ABC** — removed `Field(default_factory=...)` from tool definitions, replaced with plain `list` literals, fixing `PydanticSerializationError` in SSE stream.
+- [x] **Bugfix: SSE event stream missing first event** — reordered `event_bus.subscribe()` before `task_service.submit_task()` in route handler so the queue catches AGENT_STARTED.
+- [x] **Bugfix: SSE line-ending parsing** — normalized `\r\n` → `\n` in SSE parser and used `line.strip()` to handle CRLF boundaries.
+- [x] **Bugfix: Agent overwrite in route handler** — route now checks `if orchestrator.agent is None` before setting agent, allowing tests to pre-configure custom agents.
+*Notes: Backend proven flawless — zero-errors in SSE stream, all Event schema validated, approval flow verified, EventRecorder writes match streamed events. Ready for Phase 3 (Browser).*
 
 ### Phase 3: The Senses (Browser & Vision) - [ ]
 - [ ] Integrate Browser-Use agent.

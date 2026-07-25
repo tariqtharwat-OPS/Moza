@@ -36,15 +36,16 @@ async def task_execute(request: Request, body: TaskRequest):
     environment = Environment(filesystem={"root_path": body.workspace_path})
     task = Task(session_id=session_id, description=body.description)
 
+    event_bus = get_event_bus()
+    queue = event_bus.subscribe(session_id)
+
     orchestrator = get_orchestrator()
-    agent = _create_agent(config.agent_type)
-    orchestrator.set_agent(agent)
+    if orchestrator.agent is None:
+        agent = _create_agent(config.agent_type)
+        orchestrator.set_agent(agent)
 
     task_service: TaskService = get_task_service()
     await task_service.submit_task(session_id, task, environment)
-
-    event_bus = get_event_bus()
-    queue = event_bus.subscribe(session_id)
 
     async def event_stream():
         try:

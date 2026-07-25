@@ -51,6 +51,10 @@ class Orchestrator:
     def set_agent(self, agent: AgentInterface) -> None:
         self._agent = agent
 
+    @property
+    def agent(self) -> AgentInterface | None:
+        return self._agent
+
     def get_session(self, session_id: str) -> Session | None:
         return self._sessions.get(session_id)
 

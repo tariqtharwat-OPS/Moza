@@ -3,7 +3,6 @@ import time
 from typing import Any
 
 from loguru import logger
-from pydantic import Field
 
 from moza.core.models import ToolResultPayload
 from moza.tools.registry import BaseTool, ToolParameter
@@ -19,7 +18,7 @@ class TerminalTool(BaseTool):
     name: str = "terminal"
     description: str = "Execute shell commands in the workspace."
     version: str = "1.0.0"
-    parameters: list[ToolParameter] = Field(default_factory=lambda: [
+    parameters: list[ToolParameter] = [
         ToolParameter(
             name="command",
             type="string",
@@ -38,11 +37,11 @@ class TerminalTool(BaseTool):
             description="Timeout in seconds (default 30)",
             required=False,
         ),
-    ])
+    ]
     returns: str = "stdout, stderr, exit_code"
     requires_confirmation: bool = True
     is_destructive: bool = True
-    capabilities: list[str] = Field(default_factory=lambda: ["run_command"])
+    capabilities: list[str] = ["run_command"]
 
     def __init__(self) -> None:
         self._active_process: asyncio.subprocess.Process | None = None

@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any
 
 from loguru import logger
-from pydantic import Field
 
 from moza.core.models import ToolResultPayload
 from moza.tools.registry import BaseTool, ToolParameter
@@ -13,7 +12,7 @@ class FilesystemTool(BaseTool):
     name: str = "filesystem"
     description: str = "Read, write, and list files in the workspace."
     version: str = "1.0.0"
-    parameters: list[ToolParameter] = Field(default_factory=lambda: [
+    parameters: list[ToolParameter] = [
         ToolParameter(
             name="action",
             type="enum",
@@ -32,15 +31,15 @@ class FilesystemTool(BaseTool):
             description="File content (required for 'write' action)",
             required=False,
         ),
-    ])
+    ]
     returns: str = "File content, directory listing, or write confirmation."
     requires_confirmation: bool = True
     is_destructive: bool = True
-    capabilities: list[str] = Field(default_factory=lambda: [
+    capabilities: list[str] = [
         "read_file",
         "write_file",
         "list_dir",
-    ])
+    ]
 
     async def execute(self, **kwargs: Any) -> Any:
         start = time.monotonic()

@@ -1,28 +1,31 @@
 const API_BASE = "http://localhost:8000/v1";
 
-export type Role = "user" | "assistant" | "system";
-
-export interface Message {
-  role: Role;
-  content: string;
+export interface MozaEvent {
+  id: string;
+  timestamp: string;
+  session_id: string;
+  task_id: string;
+  type: string;
+  source: string;
+  payload: Record<string, unknown>;
 }
 
-export interface ChatRequest {
-  messages: Message[];
-  stream?: boolean;
-}
-
-export async function* streamChat(
-  messages: Message[]
-): AsyncGenerator<string> {
-  const response = await fetch(`${API_BASE}/chat/completions`, {
+export async function* streamTask(
+  description: string,
+  sessionId?: string
+): AsyncGenerator<MozaEvent> {
+  const response = await fetch(`${API_BASE}/task/execute`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, stream: true } satisfies ChatRequest),
+    body: JSON.stringify({
+      session_id: sessionId || null,
+      description,
+      workspace_path: "",
+    }),
   });
 
   if (!response.ok) {
-    throw new Error(`Chat API error: ${response.status}`);
+    throw new Error(`Task API error: ${response.status}`);
   }
 
   const reader = response.body!.getReader();
@@ -38,9 +41,18 @@ export async function* streamChat(
     const lines = buffer.split("\n");
     buffer = lines.pop() || "";
 
+    let isDataLine = false;
     for (const line of lines) {
-      if (line.startsWith("data: ")) {
-        yield line.slice(6);
+      if (line.startsWith("event: step")) {
+        isDataLine = true;
+      } else if (isDataLine && line.startsWith("data: ")) {
+        isDataLine = false;
+        try {
+          const parsed: MozaEvent = JSON.parse(line.slice(6));
+          yield parsed;
+        } catch {
+          // skip malformed JSON
+        }
       }
     }
   }

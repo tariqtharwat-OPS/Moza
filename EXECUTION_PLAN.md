@@ -40,8 +40,8 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] ResourceManager stub (git_status, file_watcher, vector_index).
 - [ ] Integrate OpenHands SDK as the coding agent adapter.
 - [ ] Implement xterm.js + node-pty in Electron.
-- [ ] Agent streaming UI (structured events display in frontend).
-*Notes: Phase 2 skeleton complete — contracts, real tools, cancellation, ADRs, and Golden Rule enforcement in place. Ready for OpenHands SDK integration.*
+- [x] Agent streaming UI (structured events display in frontend).
+*Notes: Phase 2 skeleton complete — contracts, real tools, cancellation, ADRs, Golden Rule enforcement in place. Frontend updated to render structured Event stream (tool calls, results, thinking, task status). Ready for OpenHands SDK integration.*
 
 ### Phase 3: The Senses (Browser & Vision) - [ ]
 - [ ] Integrate Browser-Use agent.

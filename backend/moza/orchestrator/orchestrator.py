@@ -14,11 +14,10 @@ The Orchestrator is the central dispatcher:
 """
 
 import asyncio
-from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import Any
 
 from moza.agents.interfaces import AgentInterface
+from moza.core.context import ExecutionContext
 from moza.core.event_bus import EventBus, get_event_bus
 from moza.core.models import Event, EventType, Session, Task, TaskStatus, Workspace
 from moza.tools.registry import ToolRegistry, get_tool_registry
@@ -56,6 +55,13 @@ class Orchestrator:
         task.updated_at = datetime.now(timezone.utc)
         session.tasks.append(task)
 
+        context = ExecutionContext.build(
+            session=session,
+            workspace=workspace,
+            tool_registry=self._tool_registry,
+            event_bus=self._event_bus,
+        )
+
         started_event = Event(
             session_id=session_id,
             task_id=task.id,
@@ -67,22 +73,20 @@ class Orchestrator:
         await self._event_bus.publish(session_id, started_event)
 
         async_task = asyncio.create_task(
-            self._run_agent(session_id, task, session, workspace)
+            self._run_agent(context, session_id, task, session)
         )
         self._running_tasks[task.id] = async_task
 
     async def _run_agent(
         self,
+        context: ExecutionContext,
         session_id: str,
         task: Task,
         session: Session,
-        workspace: Workspace,
     ) -> None:
         try:
             assert self._agent is not None
-            async for event in self._agent.execute(
-                session, task, self._tool_registry, self._event_bus
-            ):
+            async for event in self._agent.execute(context):
                 session.execution_history.append(event)
                 await self._event_bus.publish(session_id, event)
 
@@ -98,6 +102,19 @@ class Orchestrator:
             )
             session.execution_history.append(completed_event)
             await self._event_bus.publish_and_complete(session_id, completed_event)
+        except asyncio.CancelledError:
+            task.status = TaskStatus.CANCELLED
+            task.updated_at = datetime.now(timezone.utc)
+            context.cancellation_token.cancel()
+            cancelled_event = Event(
+                session_id=session_id,
+                task_id=task.id,
+                type=EventType.TASK_FAILED,
+                source="orchestrator",
+                payload={"error": "Task cancelled", "task_id": task.id},
+            )
+            session.execution_history.append(cancelled_event)
+            await self._event_bus.publish_and_complete(session_id, cancelled_event)
         except Exception as e:
             task.status = TaskStatus.FAILED
             task.updated_at = datetime.now(timezone.utc)

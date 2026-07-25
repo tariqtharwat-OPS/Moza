@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
 
-from moza.core.event_bus import EventBus
-from moza.core.models import Event, Session, Task
-from moza.tools.registry import ToolRegistry
+from moza.core.context import ExecutionContext
+from moza.core.models import Event
 
 
 class AgentInterface(ABC):
@@ -18,8 +17,5 @@ class AgentInterface(ABC):
     @abstractmethod
     async def execute(
         self,
-        session: Session,
-        task: Task,
-        registry: ToolRegistry,
-        event_bus: EventBus,
+        context: ExecutionContext,
     ) -> AsyncGenerator[Event, None]: ...

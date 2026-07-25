@@ -1,8 +1,11 @@
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from moza.core.resource_manager import ResourceManager
 
 
 class TaskStatus(str, Enum):
@@ -37,9 +40,26 @@ class ArtifactType(str, Enum):
 
 
 class Workspace(BaseModel):
+    """
+    Represents a project workspace with root path and resource management.
+
+    The `resource_manager` field is excluded from Pydantic serialization
+    because it manages runtime state (file watchers, git connections).
+    """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     id: str = Field(default_factory=lambda: uuid4().hex[:12])
     root_path: str = ""
     git_branch: str | None = None
+    resource_manager: Any = Field(default=None, exclude=True)
+
+    def ensure_resource_manager(self) -> ResourceManager:
+        if not isinstance(self.resource_manager, ResourceManager):
+            self.resource_manager = ResourceManager(
+                workspace_path=self.root_path,
+                git_branch=self.git_branch,
+            )
+        return self.resource_manager
 
 
 class Artifact(BaseModel):

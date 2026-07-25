@@ -10,7 +10,7 @@ async def get_title(page) -> str:
     return await page.title()
 
 
-async def get_url(page) -> str:
+def get_url(page) -> str:
     return page.url
 
 

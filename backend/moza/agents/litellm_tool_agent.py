@@ -227,7 +227,17 @@ class LiteLLMToolAgent(AgentInterface):
                 except Exception as e:
                     result = {"success": False, "stderr": str(e)}
 
-                result_str = json.dumps(result) if isinstance(result, dict) else str(result)
+                # Strip large binary blobs before feeding to LLM context
+                _llm_result = result
+                if isinstance(result, dict):
+                    _meta = result.get("metadata", {})
+                    if _meta.get("screenshot_base64"):
+                        _meta = dict(_meta)
+                        _meta.pop("screenshot_base64", None)
+                        _llm_result = dict(result)
+                        _llm_result["metadata"] = _meta
+                        _llm_result["_screenshot_taken"] = True
+                result_str = json.dumps(_llm_result) if isinstance(_llm_result, dict) else str(_llm_result)
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": result_str})
 
                 payload: dict = {"tool": fn_name}

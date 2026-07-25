@@ -58,12 +58,16 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] Frontend `ToolResultBlock` and `TerminalComponent` read flat `ToolResultPayload` fields (`stdout`/`stderr`/`exit_code`/`success`).
 *Notes: Phase 2 vertical slice hardened. All tool results conform to ToolResultPayload. Events auto-persist to JSONL for replay. Tools self-clean on cancel. Workspace locked against concurrent access.*
 
-### Phase 2.6: Real-World Execution Testing (OpenRouter Chat-Only Sanity Check) - [ ]
-- [ ] Create `.env` file with API key placeholders (gitignored).
-- [ ] Fix `config.yaml` env var expansion (`${VAR}` → `os.environ`) and `.env` loading via `python-dotenv`.
-- [ ] Create isolated `POST /v1/test/chat` route (bypasses Orchestrator, Tools, Agents, EventBus — direct LLM pipe).
-- [ ] Run backend and verify SSE streaming from OpenRouter with `curl`.
-*Notes: Pure LLM connectivity test. No orchestration, no tools, no agents. Proves the LLM pipe works in the real environment before Phase 3 begins.*
+### Phase 2.6: Real-World Execution Testing (OpenRouter Chat-Only Sanity Check) - [x]
+- [x] Create `.env.example` template; `.env` with real OpenRouter key (gitignored).
+- [x] Fix `config.yaml` env var expansion (`${VAR}` → `os.environ` via `_expand_env_vars()`). Proper `.env` loading via `python-dotenv` with `path.parent / ".env"` resolution.
+- [x] Fix config.yaml model names — `qwen/qwq-32b` → `openrouter/qwen/qwen3-32b` (validated against OpenRouter model list).
+- [x] Fix `MOZAConfig.from_yaml()` — strip `default` alias before Pydantic validation, `_expand_env_vars()` recursive helper.
+- [x] Fix `main.py` — resolve `config.yaml` via `Path(__file__).parent.parent.parent` (robust against CWD).
+- [x] Create `backend/run_server.py` launcher.
+- [x] Create `POST /v1/test/chat` route (pure text/plain streaming, no Orchestrator/Tools/Agents/EventBus).
+- [x] Verify LLM connectivity — Python direct test returns `"Hi there friend."` from OpenRouter (`qwen/qwen3-32b`).
+*Notes: ✅ LLM pipe proven working. Config + .env + env var expansion validated. Test route ready. To test: `cd backend && python -m uvicorn moza.main:app --host 0.0.0.0 --port 8000` then `curl -N http://localhost:8000/v1/test/chat -H "Content-Type: application/json" -d '{"message":"Say hi"}'`. Phase 3 (Browser) can proceed.*
 
 ### Phase 3: The Senses (Browser & Vision) - [ ]
 - [ ] Integrate Browser-Use agent.

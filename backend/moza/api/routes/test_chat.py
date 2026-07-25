@@ -3,7 +3,9 @@ Pure LLM Chat Test Route — Phase 2.6 Environment Sanity Check.
 
 Bypasses Orchestrator, ToolRegistry, EventRecorder, and all Agents.
 Direct, isolated pipe to LiteLLMAdapter to prove LLM connectivity
-and SSE streaming work flawlessly before any tooling is attached.
+and streaming work flawlessly before any tooling is attached.
+
+Returns text/plain streaming (not SSE) for curl compatibility.
 
 CRITICAL: This route MUST NOT import or use:
   - Orchestrator / TaskService
@@ -13,8 +15,8 @@ CRITICAL: This route MUST NOT import or use:
 """
 
 from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sse_starlette.sse import EventSourceResponse
 
 from moza.config.models import MOZAConfig
 from moza.gateway.interfaces import ChatMessage, ChatRequest
@@ -39,8 +41,11 @@ async def test_chat(request: Request, body: TestChatRequest):
 
     chat_request = ChatRequest(messages=messages, stream=True)
 
-    async def event_stream():
-        async for token in llm.stream_completion(chat_request):
-            yield {"event": "token", "data": token}
+    async def token_stream():
+        try:
+            async for token in llm.stream_completion(chat_request):
+                yield token
+        except Exception as e:
+            yield f"\n[ERROR] {type(e).__name__}: {e}"
 
-    return EventSourceResponse(event_stream())
+    return StreamingResponse(token_stream(), media_type="text/plain")

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
@@ -10,6 +11,9 @@ from moza.gateway.litellm_adapter import LiteLLMAdapter
 from moza.tools.filesystem_tool import FilesystemTool
 from moza.tools.registry import get_tool_registry
 from moza.tools.terminal_tool import TerminalTool
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+_PROJECT_DIR = _BACKEND_DIR.parent
 
 app = FastAPI(title="MOZA Backend", version="0.1.0")
 
@@ -26,7 +30,7 @@ app_state: AppState | None = None
 @app.on_event("startup")
 async def startup():
     global app_state
-    config = MOZAConfig.from_yaml("config.yaml")
+    config = MOZAConfig.from_yaml(_PROJECT_DIR / "config.yaml")
     logger.info(f"Loaded config with providers: {list(config.providers.keys())}")
 
     llm: LLMProvider = LiteLLMAdapter(config)

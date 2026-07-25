@@ -47,8 +47,12 @@ class MOZAConfig(BaseSettings):
 
     @classmethod
     def from_yaml(cls, path: str | Path = "config.yaml") -> "MOZAConfig":
-        load_dotenv()
         path = Path(path)
+        env_path = path.parent / ".env"
+        if env_path.exists():
+            load_dotenv(env_path)
+        else:
+            load_dotenv()
         if not path.exists():
             return cls()
         with open(path) as f:

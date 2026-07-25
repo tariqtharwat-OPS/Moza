@@ -7,10 +7,10 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 ### Phase 1: The Neural Link (Chat & LLM Pipeline) - [x]
 - [x] Backend: FastAPI setup, Pydantic config models, LiteLLM client.
 - [x] Backend: `/v1/chat/completions` route with SSE Streaming.
-- [ ] Frontend: Next.js basic chat UI.
+- [x] Frontend: Next.js basic chat UI.
 - [ ] Desktop: Electron shell + API connection.
 - [ ] Integration: End-to-end streaming chat test.
-*Notes: Backend foundation, LiteLLM adapter (clean adapter pattern), and SSE streaming route completed and approved. Moving to Frontend chat UI.*
+*Notes: Backend foundation, LiteLLM adapter (clean adapter pattern), and SSE streaming route completed and approved. Frontend SSE streaming and Chat UI completed (clean native fetch implementation). Desktop shell in progress.*
 
 ### Phase 2: The Hands (Coding Agent & Terminal) - [ ]
 - [ ] Integrate OpenHands SDK as the coding agent.

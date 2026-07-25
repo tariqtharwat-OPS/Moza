@@ -1,0 +1,23 @@
+[project]
+name = "moza-backend"
+version = "0.1.0"
+description = "MOZA AI Operating System - Backend"
+requires-python = ">=3.11"
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.5.0",
+    "litellm>=1.50.0",
+    "loguru>=0.7.0",
+    "pyyaml>=6.0",
+    "sse-starlette>=2.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["moza"]

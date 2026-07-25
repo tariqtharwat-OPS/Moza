@@ -113,6 +113,14 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] All existing 66+ tests still pass.
 *Notes: Refactored `LiteLLMToolAgent.execute()` to true ReAct loop with `steps_count` counter. Agent made 4 autonomous tool calls (write step1.txt, write step2.txt, read step1.txt, read step2.txt) in one loop iteration, then summarized — 12 events, 27.8s. Added `max_steps` field to `AgentConfig`. Verified with `backend/tests/live/test_multi_step_agent.py`.*
 
+### Phase 2.11: Context Engine - [x]
+**Exit Criteria:**
+- [x] Dedicated `ContextBuilder` class in `backend/moza/core/context_builder.py`.
+- [x] Before *every* LLM call, the prompt is dynamically injected with: Workspace Tree, Current Directory, Git Status, Recent Events, Current Task, Available Tools, Current Artifacts.
+- [x] Unit test verifies all 7 context sections are present in the output (9 tests).
+- [x] All existing 75+ tests still pass.
+*Notes: `ContextBuilder.build_context()` returns a structured text block with 7 sections. Injected into `messages[0]` (system prompt) before each LLM call in the ReAct loop. Handles gracefully: empty workspace, no git repo, no events yet, PermissionError on dir walk. 9 unit tests cover all sections, empty states, and edge cases.*
+
 ### Phase 3: The Senses (Browser & Vision) - [≈]
 - [x] Create `BrowserTool` wrapping Playwright with 11 actions (navigate, click, type, extract_text, screenshot, scroll, back, forward, get_url, execute_js, close).
 - [x] Register BrowserTool in tool registry at startup.

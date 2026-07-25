@@ -6,6 +6,7 @@ from loguru import logger
 
 from moza.agents.interfaces import AgentInterface
 from moza.core.context import ExecutionContext
+from moza.core.context_builder import ContextBuilder
 from moza.core.models import Event, EventType
 from moza.tools.registry import ToolRegistry
 
@@ -131,6 +132,13 @@ class LiteLLMToolAgent(AgentInterface):
             context.cancellation_token.raise_if_cancelled()
 
             logger.info(f"[LiteLLMToolAgent] step {steps_count + 1}/{self._max_steps} — {len(messages)} messages")
+
+            # ── Inject dynamic environment context before every LLM call ──
+            env_context = await ContextBuilder.build_context(context)
+            messages[0] = {
+                "role": "system",
+                "content": f"{self._build_system_prompt(registry)}\n\n{env_context}",
+            }
 
             kwargs: dict = {
                 "model": provider.model,

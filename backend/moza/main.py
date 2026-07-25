@@ -42,6 +42,9 @@ async def startup():
     from moza.api.routes.chat import router as chat_router
     app.include_router(chat_router)
 
+    from moza.api.routes.test_chat import router as test_chat_router
+    app.include_router(test_chat_router)
+
 
 @app.on_event("shutdown")
 async def shutdown():

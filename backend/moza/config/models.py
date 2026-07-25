@@ -1,9 +1,25 @@
+import os
+import re
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Any, Optional
 
 import yaml
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
+
+
+def _expand_env_vars(obj: Any) -> Any:
+    """Recursively expand ${VAR} patterns in all string values using os.environ."""
+    if isinstance(obj, str):
+        def _replace(m: re.Match) -> str:
+            return os.environ.get(m.group(1), m.group(0))
+        return re.sub(r'\$\{(\w+)\}', _replace, obj)
+    elif isinstance(obj, dict):
+        return {k: _expand_env_vars(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_expand_env_vars(v) for v in obj]
+    return obj
 
 
 class ProviderConfig(BaseModel):
@@ -31,11 +47,16 @@ class MOZAConfig(BaseSettings):
 
     @classmethod
     def from_yaml(cls, path: str | Path = "config.yaml") -> "MOZAConfig":
+        load_dotenv()
         path = Path(path)
         if not path.exists():
             return cls()
         with open(path) as f:
             raw = yaml.safe_load(f)
+        raw = _expand_env_vars(raw)
+        providers_raw = raw.get("providers", {})
+        if isinstance(providers_raw.get("default"), str):
+            providers_raw.pop("default")
         return cls(**raw)
 
     def get_provider(self, name: str | None = None) -> ProviderConfig:

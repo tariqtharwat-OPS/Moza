@@ -56,7 +56,14 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] Orchestrator drives task state machine based on emitted event types.
 - [x] OpenHandsAdapter uses `ToolResultPayload` for TOOL_RESULT events; simulation fallback routes through `tool_registry.execute()`.
 - [x] Frontend `ToolResultBlock` and `TerminalComponent` read flat `ToolResultPayload` fields (`stdout`/`stderr`/`exit_code`/`success`).
-*Notes: Phase 2 vertical slice hardened. All tool results conform to ToolResultPayload. Events auto-persist to JSONL for replay. Tools self-clean on cancel. Workspace locked against concurrent access. Ready for Phase 3 (Browser/Playwright).*
+*Notes: Phase 2 vertical slice hardened. All tool results conform to ToolResultPayload. Events auto-persist to JSONL for replay. Tools self-clean on cancel. Workspace locked against concurrent access.*
+
+### Phase 2.6: Real-World Execution Testing (OpenRouter Chat-Only Sanity Check) - [ ]
+- [ ] Create `.env` file with API key placeholders (gitignored).
+- [ ] Fix `config.yaml` env var expansion (`${VAR}` → `os.environ`) and `.env` loading via `python-dotenv`.
+- [ ] Create isolated `POST /v1/test/chat` route (bypasses Orchestrator, Tools, Agents, EventBus — direct LLM pipe).
+- [ ] Run backend and verify SSE streaming from OpenRouter with `curl`.
+*Notes: Pure LLM connectivity test. No orchestration, no tools, no agents. Proves the LLM pipe works in the real environment before Phase 3 begins.*
 
 ### Phase 3: The Senses (Browser & Vision) - [ ]
 - [ ] Integrate Browser-Use agent.

@@ -141,6 +141,38 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] Framework is scenario-parameterised via `BugScenario` dataclass — new bug types (off-by-one, syntax error, wrong import, etc.) added by instantiation, no test rewrites.
 *Notes: Agent executed full fail→read→fix→pass cycle autonomously in 12.4s: wrote test_calculator.py, ran pytest (1 failed: integer division bug), read calculator.py, wrote fixed version with `return a / b`, ran pytest (4 passed), completed with summary. Event sequence validation passed all 10 checks, anti-cheat passed all 9 checks. 14 events recorded. Verified with `backend/tests/live/test_software_engineer_benchmark.py`. This benchmark is now the quality gate for all future engineering tasks.*
 
+### Phase 2.14: Replay API (Backend Only) - [x]
+**Exit Criteria:**
+- [x] `GET /v1/sessions` returns list of recorded session IDs with light metadata (task_count, total_events, first/last event timestamps).
+- [x] `GET /v1/sessions/{session_id}` returns full metadata including task list (status, event_count, description derived from events).
+- [x] `GET /v1/sessions/{session_id}/events` reads and returns structured events from `events.jsonl` (supports `?task_id=` filter).
+- [x] `POST /v1/sessions/{session_id}/replay` re-emits recorded events to EventBus, returns `replay_initiated` with replayed/total counts.
+- [x] All endpoints return 404 for nonexistent sessions.
+- [x] 6 integration tests prove all endpoints work with seeded session data (empty list, 404, full lifecycle, multi-task, event count, replay delivery).
+- [x] All 81 existing tests still pass.
+*Notes: Created `SessionManager` (reads session metadata + events from disk via same `events.jsonl` files written by `EventRecorder`), `Replay API router` (4 endpoints under `/v1/` prefix), registered in `main.py`. Tests cover empty state, 404s, single-task session CRUD, multi-task sessions, and event replay delivery verification via EventBus queue. 6 tests, all passing. 81 total tests.*
+
+## Architectural Coverage Report (Phase 2.13 — Software Engineer Benchmark)
+
+This report documents which architectural layers were exercised by the Phase 2.13 live benchmark.
+
+| Layer | Component | Status | Evidence |
+|-------|-----------|--------|----------|
+| **Agent Loop** | ReAct (while + max_steps) | ✓ | Agent loop ran 5 steps (write test → pytest → read source → fix → pytest) |
+| **Recovery** | Tool error → LLM feedback | ✓ | First pytest returned `success=False, exit_code=1` — agent read traceback and fixed code |
+| **Filesystem** | FilesystemTool (read/write) | ✓ | `filesystem write test_calculator.py`, `filesystem read calculator.py`, `filesystem write calculator.py` |
+| **Terminal** | TerminalTool (subprocess) | ✓ | `pytest test_calculator.py -v` executed twice (first failure, second success) |
+| **Context Engine** | ContextBuilder (7 sections) | ✓ | Workspace tree, current dir, tool list injected — agent used correct `cwd` param |
+| **Event Bus** | Pub/Sub + EventRecorder | ✓ | 14 events streamed, persisted to `events.jsonl` |
+| **Task State** | PENDING→RUNNING→COMPLETED | ✓ | Task completed with `TASK_COMPLETED` |
+| **Anti-Cheat** | Post-run integrity verification | ✓ | `calculator.py` was modified (not tests), `divide(5,2)==2.5` verified, 6 test keywords present |
+| **Scenario Framework** | `BugScenario` parameterisation | ✓ | Single scenario run; new bugs added by instantiation |
+| **Config** | MOZAConfig + provider | ✓ | config.yaml loaded, Groq provider resolved, API key from .env |
+| **Browser** | BrowserTool | ✗ | Not exercised in this benchmark |
+| **Approval** | Approval Service | ✗ | Not exercised (terminal tool `requires_confirmation` bypassed for agent-direct execution) |
+| **Capability** | Capability Manager | ✗ | Not exercised (all tools allowed by default) |
+| **Replay API** | SessionManager + replay endpoints | ✓ | Phase 2.14 adds coverage; benchmark data replayable via API |
+
 ### Phase 3: The Senses (Browser & Vision) - [≈]
 - [x] Create `BrowserTool` wrapping Playwright with 11 actions (navigate, click, type, extract_text, screenshot, scroll, back, forward, get_url, execute_js, close).
 - [x] Register BrowserTool in tool registry at startup.

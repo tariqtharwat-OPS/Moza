@@ -8,6 +8,7 @@ from loguru import logger
 from moza.config.models import MOZAConfig
 from moza.gateway.interfaces import LLMProvider
 from moza.gateway.litellm_adapter import LiteLLMAdapter
+from moza.tools.browser_tool import BrowserTool
 from moza.tools.filesystem_tool import FilesystemTool
 from moza.tools.registry import get_tool_registry
 from moza.tools.terminal_tool import TerminalTool
@@ -41,6 +42,7 @@ async def startup():
     registry = get_tool_registry()
     await registry.load(FilesystemTool())
     await registry.load(TerminalTool())
+    await registry.load(BrowserTool(headless=True))
     logger.info(f"Registered {len(registry.get_all())} tools: {[t.name for t in registry.get_all()]}")
 
     from moza.api.routes.chat import router as chat_router
@@ -48,6 +50,9 @@ async def startup():
 
     from moza.api.routes.test_chat import router as test_chat_router
     app.include_router(test_chat_router)
+
+    from moza.api.routes.replay import router as replay_router
+    app.include_router(replay_router)
 
 
 @app.on_event("shutdown")

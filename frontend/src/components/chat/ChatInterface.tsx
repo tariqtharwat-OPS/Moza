@@ -313,10 +313,6 @@ export default function ChatInterface() {
     setWaitingApproval((prev) => prev ? { ...prev, description: "rejecting..." } : null);
     await rejectTask(waitingApproval.taskId);
   }
-      setStreaming(false);
-      scrollToBottom();
-    }
-  }
 
   function renderEvent(event: MozaEvent, idx: number) {
     switch (event.type) {

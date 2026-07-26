@@ -69,7 +69,21 @@ Route (app)                                 Size  First Load JS
 └ ○ /_not-found                            993 B         104 kB
 ```
 
-## 5. Troubleshooting
+## 5. CORS Configuration
+
+The backend includes `CORSMiddleware` configured to accept requests from:
+- `http://localhost:3000` (Next.js dev server)
+- `http://127.0.0.1:3000` (alternative loopback)
+
+This is configured in `backend/moza/main.py`. If you need to add additional
+origins (e.g., for Electron packaging), update the `allow_origins` list.
+
+The frontend API client (`frontend/src/lib/api.ts`) connects to
+`http://localhost:8000/v1/...`. The CORS handshake is tested by
+`backend/tests/e2e/test_real_browser_ui.py` which launches a real
+Playwright browser and verifies zero CORS errors in the console.
+
+## 6. Troubleshooting
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from moza.config.models import MOZAConfig
@@ -17,6 +18,14 @@ _BACKEND_DIR = Path(__file__).resolve().parent.parent
 _PROJECT_DIR = _BACKEND_DIR.parent
 
 app = FastAPI(title="MOZA Backend", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @dataclass

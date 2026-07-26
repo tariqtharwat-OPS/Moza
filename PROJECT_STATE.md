@@ -55,9 +55,9 @@ Refactor before adding new features. Monolithic code must be split, error paths 
 
 | Property | Value |
 |----------|-------|
-| **Current Phase** | Phase 3.3.5 Patch — Agent Over-Tooling Prevention & UI Resilience |
-| **Total Passing Tests** | 81 unit/integration + 6 new E2E behavior tests = 87 total — 100% pass rate (backend freeze intact) |
-| **Last Successful Benchmark** | Phase 3.3.5 Patch — Agent now responds directly to greetings including 'hi how are you' without tool calls; filesystem tool returns actionable errors; Browser viewport shows clean empty state |
+| **Current Phase** | Phase 3.3.5 Patch — Professional UI Redesign & Build Fix |
+| **Total Passing Tests** | 81 unit/integration + 6 E2E behavior tests = 87 total — 100% pass rate (backend freeze intact) |
+| **Last Successful Benchmark** | Phase 3.3.5 Patch — Two-panel professional UI with logo, markdown rendering, connection status, code copy button, clean empty states; build cache cleared, react-markdown added |
 | **Latest Model** | Groq `llama-3.3-70b-versatile` |
 | **Engine Architecture** | ReAct loop via `LiteLLMToolAgent` (backend only, no UI) |
 | **Browser Engine** | `PlaywrightEngine` implementing `BrowserEngine` ABC (headless Chromium, 1280x720) |
@@ -102,6 +102,37 @@ Refactor before adding new features. Monolithic code must be split, error paths 
 - Commit: [`e0caad7`](https://github.com/tariqtharwat-OPS/Moza/commit/e0caad7)
 - Files: `mock_agent.py`, `litellm_tool_agent.py`, `filesystem_tool.py`, `BrowserVisualizer.tsx`, `test_agent_behavior_patterns.py`
 - All 81 existing tests pass (zero regression). Frontend build succeeds. 6th E2E test added.
+
+### Phase 3.3.5 Patch — Professional UI Redesign & Build Fix
+
+**Problem:** Build corruption (`Cannot find module './833.js'`), bare-bones single-column UI unsuitable for `.exe` product.
+
+**Fixes Applied:**
+- Deleted `.next` and `node_modules/.cache`, clean rebuild succeeds in 44s
+- Added `react-markdown` + `remark-gfm` for proper markdown rendering
+- **New two-panel MainLayout**: Header (logo + connection status) → Left panel (~65%, chat messages) + Right panel (~35%, browser + tools)
+- **Logo component**: 220px width from `frontend/public/logo.png`, hover opacity effect
+- **StatusIndicator**: Green/red/amber glow dots with "Backend Connected/Disconnected" labels, auto-polls `/docs` every 15s
+- **MessageBubble**: Markdown rendering, code blocks with language label + copy button, inline code styling, link styling, timestamp on hover, fade-in animation
+- **InputArea**: Auto-resize textarea (3-8 lines, max 200px), Ctrl+Enter send shortcut, send icon button, disabled state styling
+- **TypingIndicator**: Three animated bounce dots for agent thinking state
+- **BrowserVisualizer**: Clean empty state (camera SVG + "Waiting for a browser task...") instead of raw "No screenshot available"
+- **Enhanced globals.css**: Inter font, custom scrollbar (thin, dark), fadeIn/slideUp keyframe animations
+- **ChatInterface rewrite**: Conversation history (user + agent messages), agent status indicator, events rendered inline, right panel with browser + terminal + tool execution log
+- `Tailwind config`: preserved JetBrains Mono font family
+- `.gitignore`: added `node_modules/`, `.next/`, `*.tsbuildinfo`
+
+**Design Specs:**
+- Dark theme: `zinc-950` background, `zinc-800/50` agent bubbles, `indigo-600/20` user bubbles
+- Indigo accent for send button, amber for tool names, emerald for success
+- Right panel: `w-[420px]` fixed width with scroll
+- Font: Inter (body) + JetBrains Mono (code)
+
+**Audit Trail:**
+- Commit: [`112fba7`](https://github.com/tariqtharwat-OPS/Moza/commit/112fba7)
+- 14 files changed, 2051 insertions, 202 deletions
+- New files: `MainLayout.tsx`, `InputArea.tsx`, `Logo.tsx`, `MessageBubble.tsx`, `StatusIndicator.tsx`, `TypingIndicator.tsx`, `public/logo.png`
+- All 81 backend tests pass. Frontend build succeeds.
 
 ### Phase 3.2 Exit Criteria (Confirmed)
 - ✅ Stability guarantee: local HTTP server + static HTML fixtures (no live data)
@@ -255,6 +286,7 @@ Route (app)                                 Size  First Load JS
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-07-26 | [`112fba7`](https://github.com/tariqtharwat-OPS/Moza/commit/112fba7) | **Phase 3.3.5 Patch** — Build fix + professional UI redesign + logo |
 | 2026-07-26 | [`e0caad7`](https://github.com/tariqtharwat-OPS/Moza/commit/e0caad7) | **Phase 3.3.5 Patch** — stricter greeting detection, fs error messages, UI empty state |
 | 2026-07-26 | [`3068532`](https://github.com/tariqtharwat-OPS/Moza/commit/3068532) | **Agent Behavior Audit** — fix tool overuse for simple conversational tasks |
 | 2026-07-26 | [`353f3eb`](https://github.com/tariqtharwat-OPS/Moza/commit/353f3eb) | **CORS + E2E** — CORSMiddleware, real-browser test proving zero CORS errors |

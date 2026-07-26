@@ -16,6 +16,10 @@ _SIMPLE_PATTERNS = re.compile(
 )
 _WH_WORDS = re.compile(r"^\s*(what|who|when|where|why|how)\s", re.IGNORECASE)
 _SHORT_ACK = re.compile(r"^\s*(yes|no|maybe|sure|ok|thanks|thank you)\s*$", re.IGNORECASE)
+_GREETING_ONLY = re.compile(
+    r"^\s*(hi|hey|hello)\b.*$",
+    re.IGNORECASE,
+)
 
 # Arabic simple greeting patterns (no \b — word boundaries don't work with Arabic)
 _ARABIC_CMD_GREET = re.compile(
@@ -38,6 +42,8 @@ def _is_simple_conversational(text: str) -> bool:
         return True
     if _SHORT_ACK.match(t):
         return True
+    if _GREETING_ONLY.match(t):
+        return True
     if _ARABIC_CMD_GREET.match(t):
         return True
     if _ARABIC_HAS_GREET.search(t) and _ARABIC_GREET_SHORT.match(t):
@@ -59,10 +65,10 @@ _SIMPLE_RESPONSES = {
         "hello": "Hello!",
         "hi": "Hi there!",
         "hey": "Hey!",
+        "how are you": "I'm doing great, thanks for asking! How can I help you today?",
         "مرحبا": "Hello!",
         "what is your name": "I'm MOZA, an AI operating system agent.",
         "what's your name": "I'm MOZA, an AI operating system agent.",
-        "how are you": "I'm functioning optimally, thank you!",
     },
     "arabic": {
         "hello": "مرحباً",

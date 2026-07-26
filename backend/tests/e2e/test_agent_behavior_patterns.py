@@ -60,6 +60,11 @@ def _run_interaction(browser, prompt: str, wait_after_click: float = 6.0):
     body_text = page.inner_text("body")
     page.close()
 
+    has_errors = any(
+        "error" in line.lower() or "fail" in line.lower() or "traceback" in line.lower()
+        for line in body_text.split("\n")
+    )
+
     return {
         "body": body_text,
         "console_errors": console_errors,
@@ -69,6 +74,7 @@ def _run_interaction(browser, prompt: str, wait_after_click: float = 6.0):
             or "browser" in body_text,
         "has_task_complete": "Task completed" in body_text
             or "completed" in body_text.lower(),
+        "has_errors": has_errors,
     }
 
 
@@ -134,7 +140,33 @@ def test_mixed_interaction(browser):
     )
 
 
-# ── Test 5: Non-English Greeting (Arabic) ────────────────────────────
+# ── Test 5: Casual Greeting "hi how are you" ─────────────────────────
+
+
+def test_casual_greeting_hi_how_are_you(browser):
+    """Input 'hi how are you' → direct friendly response, ZERO tool calls, ZERO errors."""
+    result = _run_interaction(browser, "hi how are you", wait_after_click=6.0)
+
+    assert not result["has_tool_calls"], (
+        f"Agent called tools for casual greeting. Body:\n{result['body'][:500]}"
+    )
+
+    assert not result["has_errors"], (
+        f"UI contains error text. Body:\n{result['body'][:500]}"
+    )
+
+    assert "great" in result["body"].lower() or "fine" in result["body"].lower() or "hello" in result["body"].lower() or "hi" in result["body"].lower(), (
+        f"Expected friendly response. Body:\n{result['body'][:500]}"
+    )
+
+    if result["console_errors"]:
+        filtered = [e for e in result["console_errors"] if "Third-party" not in e]
+        assert not filtered, (
+            f"Browser console contains errors:\n" + "\n".join(filtered)
+        )
+
+
+# ── Test 6: Non-English Greeting (Arabic) ────────────────────────────
 
 
 def test_arabic_greeting_direct_response(browser):

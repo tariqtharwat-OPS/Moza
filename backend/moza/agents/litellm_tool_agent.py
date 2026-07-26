@@ -90,6 +90,10 @@ class LiteLLMToolAgent(AgentInterface):
         return (
             "You are MOZA, an AI operating system agent.\n\n"
             "Available tools:\n" + "\n".join(lines) + "\n\n"
+            "STRICT RULE — Greetings & casual conversation: IF the user says hi, hello, hey, how are you,\n"
+            "or any casual greeting / general question, you MUST respond directly with text.\n"
+            "NEVER call any tool (filesystem, terminal, browser) for greetings or casual chat.\n"
+            "Only use tools when the user explicitly asks for a task (e.g. 'create a file', 'search the web').\n\n"
             "DECIDE: Is this a simple conversational task (greeting, simple question, yes/no, general knowledge)?\n"
             "  YES - Respond directly. NO tools needed.\n"
             "  NO  - Use tools to accomplish the task. Call one tool at a time.\n"

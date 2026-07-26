@@ -63,7 +63,7 @@ class FilesystemTool(BaseTool):
                 ).model_dump()
             if not target.is_file():
                 return ToolResultPayload.error(
-                    f"Path is not a file: {path}",
+                    f"Error: '{path}' is a directory, not a file. To read a file, provide a valid file path (e.g. 'readme.txt'). To list directory contents, use action='list' instead.",
                     duration_ms=(time.monotonic() - start) * 1000,
                 ).model_dump()
             text = target.read_text(encoding="utf-8")

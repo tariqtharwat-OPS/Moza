@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — MOZA Living Context Document
 
 > **Purpose:** Single source of truth for any AI agent or developer joining the project.
-> **Last Updated:** Phase 3.3.5 — Agent Behavior Audit & Fix (tool overuse prevention)
+> **Last Updated:** Phase 3.3.5 Patch — Agent Over-Tooling Prevention & UI Resilience
 > **Repository:** https://github.com/tariqtharwat-OPS/Moza
 
 ---
@@ -55,9 +55,9 @@ Refactor before adding new features. Monolithic code must be split, error paths 
 
 | Property | Value |
 |----------|-------|
-| **Current Phase** | Phase 3.3.5 — Agent Behavior Audit & Fix (tool overuse prevention) |
-| **Total Passing Tests** | 81 unit/integration + 5 new E2E behavior tests = 86 total — 100% pass rate (backend freeze intact) |
-| **Last Successful Benchmark** | Phase 3.3.5 — Agent now responds directly to simple greetings/questions without unnecessary tool calls; verified by 5 new E2E Playwright tests |
+| **Current Phase** | Phase 3.3.5 Patch — Agent Over-Tooling Prevention & UI Resilience |
+| **Total Passing Tests** | 81 unit/integration + 6 new E2E behavior tests = 87 total — 100% pass rate (backend freeze intact) |
+| **Last Successful Benchmark** | Phase 3.3.5 Patch — Agent now responds directly to greetings including 'hi how are you' without tool calls; filesystem tool returns actionable errors; Browser viewport shows clean empty state |
 | **Latest Model** | Groq `llama-3.3-70b-versatile` |
 | **Engine Architecture** | ReAct loop via `LiteLLMToolAgent` (backend only, no UI) |
 | **Browser Engine** | `PlaywrightEngine` implementing `BrowserEngine` ABC (headless Chromium, 1280x720) |
@@ -81,6 +81,27 @@ Refactor before adding new features. Monolithic code must be split, error paths 
 - Commit: [`3068532`](https://github.com/tariqtharwat-OPS/Moza/commit/3068532)
 - Files: `mock_agent.py` (+116 lines), `litellm_tool_agent.py` (+4 lines), `test_agent_behavior_patterns.py` (new, 125 lines), `RUNNING_GUIDE.md` (+47 lines)
 - All 81 existing tests pass (zero regression). 5 new E2E tests added.
+
+### Phase 3.3.5 Patch — Agent Over-Tooling Prevention & UI Resilience
+
+**Problem:** (from browser analysis) "hi how are you" triggered `filesystem` tool (`{"action":"demo","path":"."}`), returned `exit code 1 - Path is not a file: .`, and the frontend showed ugly "No screenshot available" text in the Browser Viewport.
+
+**Root Cause:**
+1. `_is_simple_conversational()` missed casual "hi how are you" — didn't match `_WH_WORDS` (no wh-word start) or `_SIMPLE_PATTERNS` (no command verb)
+2. `filesystem_tool.py` read error on a directory said "Path is not a file: path" — no suggestion for alternative action
+3. `BrowserVisualizer.tsx` showed bare "No screenshot available" text — poor UX for `.exe` goal
+
+**Fixes Applied:**
+- `mock_agent.py`: Added `_GREETING_ONLY` regex catching `hi`, `hey`, `hello` with any trailing text. Added `"how are you"` response entry.
+- `litellm_tool_agent.py`: System prompt now starts with `"STRICT RULE — Greetings & casual conversation: ... NEVER call any tool"`
+- `filesystem_tool.py`: Directory read error now says: `"Error: '{path}' is a directory, not a file. To read a file, provide a valid file path (e.g. 'readme.txt'). To list directory contents, use action='list' instead."`
+- `BrowserVisualizer.tsx`: Replaced "No screenshot available" with an SVG icon + "Waiting for a browser task..." centered empty state.
+- `test_agent_behavior_patterns.py`: Added `test_casual_greeting_hi_how_are_you` — asserts ZERO tool calls, friendly text, zero errors, zero console errors.
+
+**Audit Trail:**
+- Commit: [`e0caad7`](https://github.com/tariqtharwat-OPS/Moza/commit/e0caad7)
+- Files: `mock_agent.py`, `litellm_tool_agent.py`, `filesystem_tool.py`, `BrowserVisualizer.tsx`, `test_agent_behavior_patterns.py`
+- All 81 existing tests pass (zero regression). Frontend build succeeds. 6th E2E test added.
 
 ### Phase 3.2 Exit Criteria (Confirmed)
 - ✅ Stability guarantee: local HTTP server + static HTML fixtures (no live data)
@@ -234,6 +255,7 @@ Route (app)                                 Size  First Load JS
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-07-26 | [`e0caad7`](https://github.com/tariqtharwat-OPS/Moza/commit/e0caad7) | **Phase 3.3.5 Patch** — stricter greeting detection, fs error messages, UI empty state |
 | 2026-07-26 | [`3068532`](https://github.com/tariqtharwat-OPS/Moza/commit/3068532) | **Agent Behavior Audit** — fix tool overuse for simple conversational tasks |
 | 2026-07-26 | [`353f3eb`](https://github.com/tariqtharwat-OPS/Moza/commit/353f3eb) | **CORS + E2E** — CORSMiddleware, real-browser test proving zero CORS errors |
 | 2026-07-26 | [`10443f5`](https://github.com/tariqtharwat-OPS/Moza/commit/10443f5) | **Docs** — Ultimate Product Vision, NTFS requirement, running guide |

@@ -152,7 +152,20 @@ class LiteLLMToolAgent(AgentInterface):
             if provider.base_url:
                 kwargs["api_base"] = provider.base_url
 
-            response = await litellm.acompletion(**kwargs)
+            try:
+                response = await litellm.acompletion(**kwargs)
+            except Exception as e:
+                err_msg = f"LLM API error: {e}"
+                logger.warning(err_msg)
+                messages.append({"role": "system", "content": err_msg + " Please retry."})
+                steps_count += 1
+                yield Event(
+                    session_id=sid, task_id=task_id,
+                    type=EventType.TOOL_RESULT,
+                    source="litellm_tool_agent",
+                    payload={"tool": "_llm", "success": False, "stderr": err_msg},
+                )
+                continue
             choice = response.choices[0]
             msg = choice.message
 

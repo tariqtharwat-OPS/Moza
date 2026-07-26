@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Python Feature Comparison</title></head>
+<body>
+  <h1>Feature Comparison: Python 3.8 vs Python 3.9</h1>
+
+  <div class="adoption-stability">
+    <p><strong>Adoption Stability:</strong> Python 3.8.0 was widely adopted and
+    considered highly stable for production. Python 3.9.0 offered more features
+    but required newer library versions, reducing immediate production adoption.</p>
+  </div>
+
+  <table class="comparison">
+    <tr>
+      <th>Feature</th>
+      <th>Python 3.8.0</th>
+      <th>Python 3.9.0</th>
+    </tr>
+    <tr>
+      <td>Release Date</td>
+      <td class="release-date">2019-10-14</td>
+      <td class="release-date">2020-10-05</td>
+    </tr>
+    <tr>
+      <td>End of Life</td>
+      <td class="end-of-life-date">2024-10-07</td>
+      <td class="end-of-life-date">2025-10-05</td>
+    </tr>
+    <tr>
+      <td>Walrus Operator (:=)</td>
+      <td>Supported</td>
+      <td>Supported</td>
+    </tr>
+    <tr>
+      <td>Dictionary Merge (|)</td>
+      <td>Not supported</td>
+      <td>Supported</td>
+    </tr>
+    <tr>
+      <td>Built-in Type Generics</td>
+      <td>Not supported (use typing module)</td>
+      <td>Supported (list[int], dict[str, int])</td>
+    </tr>
+    <tr>
+      <td>zoneinfo Module</td>
+      <td>Not available (use pytz)</td>
+      <td>Supported</td>
+    </tr>
+    <tr>
+      <td>str.removeprefix()</td>
+      <td>Not available</td>
+      <td>Supported</td>
+    </tr>
+    <tr>
+      <td rowspan="2" class="key-features">Key Features</td>
+      <td class="key-features">Walrus operator, positional-only params</td>
+      <td class="key-features">Dict merge, type generics, zoneinfo</td>
+    </tr>
+  </table>
+
+  <div class="summary">
+    <h2>Summary</h2>
+    <p>Python 3.9.0 builds on 3.8 by adding dictionary merge operators,
+    built-in type generics, zoneinfo, and string utility methods.
+    Python 3.8 introduced the walrus operator and positional-only parameters.</p>
+    <p>For production stability in 2019-2020, Python 3.8.0 was preferred due to
+    wider library support and proven reliability. Python 3.9.0 offered more features
+    but required newer library versions for compatibility.</p>
+  </div>
+</body>
+</html>

@@ -152,9 +152,10 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 - [x] All 81 existing tests still pass.
 *Notes: Created `SessionManager` (reads session metadata + events from disk via same `events.jsonl` files written by `EventRecorder`), `Replay API router` (4 endpoints under `/v1/` prefix), registered in `main.py`. Tests cover empty state, 404s, single-task session CRUD, multi-task sessions, and event replay delivery verification via EventBus queue. 6 tests, all passing. 81 total tests.*
 
-## Architectural Coverage Report (Phase 2.13–3.2)
+## Architectural Coverage Report (Phase 2.13–3.2.5)
 
 This report documents which architectural layers were exercised by live benchmarks across Phases 2.13 to 3.2.
+All proven layers below are **frozen** as of Phase 3.2.5 — no regression allowed.
 
 | Layer | Component | Status | Evidence |
 |-------|-----------|--------|----------|
@@ -198,6 +199,23 @@ This report documents which architectural layers were exercised by live benchmar
 - [x] Bugfix: `browser/dom.py` `get_url()` made synchronous (was async for sync property, causing JSON serialization error).
 - [x] All 81 existing tests still pass.
 *Notes: Agent navigated to Wikipedia, typed "Python (programming language)" into `#searchInput`, attempted `#searchButton` click (timed out — Wikipedia modern UI), recovered by extracting text and taking screenshot, saved artifact. 18 events, 89.9s. Screenshot base64 correctly stripped from LLM context to prevent 128K token overflow. Verified with `backend/tests/live/test_browser_live_benchmark.py`.*
+
+### Phase 3.2.5: Regression Freeze — Canonical Benchmarks Locked - [x]
+**Exit Criteria:**
+- [x] **Code Quality Audit**: Zero TODOs, FIXMEs, HACKs, dead code, or unused imports in `backend/moza/tools/browser/`.
+- [x] **All 5 Canonical Benchmarks PASS:**
+  - Phase 2.12 (Recovery Loop): Agent recovered from file-not-found error, wrote + read recovery file. ✅
+  - Phase 2.13 (Software Engineer): Agent wrote tests, fixed integer division bug, verified all pass. ✅
+  - Phase 3.1 (Browser Live): Wikipedia navigate → type → click (timeout, recovered) → extract → screenshot → save artifact. ✅
+  - Phase 3.2 (Autonomous Research): Local HTTP server fixtures, 2 pages, 4 data fields per page, structured research.md. ✅
+  - Phase 2.14 (Replay API): 6 integration tests (empty, 404, CRUD lifecycle, multi-task, events, replay). ✅
+- [x] **Full Test Suite**: 81/81 tests pass (100%). No failures, no skipped, no xfail, no warnings.
+- [x] **Documentation Updated**: PROJECT_STATE.md, REGRESSION_FREEZE.md created.
+- [x] **Rules Enforced**:
+  - No new capability can break any frozen benchmark.
+  - All new features must include Canonical Benchmark + Regression Test.
+  - Vision, Approval, and Memory are deferred to Phase 3.4+.
+*Notes: This freeze is PERMANENT. Future phases MUST respect it. Next: Phase 3.3 (Frontend E2E Integration) → Phase 3.4 (Vision-Enhanced Reasoning).*
 
 ### Phase 3.2: Autonomous Research Benchmark (Stable Fixtures) - [x]
 **Exit Criteria:**

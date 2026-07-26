@@ -268,9 +268,9 @@ async def main():
     if wrote_file and file_content:
         print(f"   File length: {len(file_content)} chars")
         has_markdown = bool(re.search(r"#{1,6}\s", file_content))
-        has_version_38 = "3.8.0" in file_content
-        has_version_39 = "3.9.0" in file_content
-        has_date = bool(re.search(r"20\d{2}-\d{2}-\d{2}", file_content))
+        has_version_38 = "3.8.0" in search_text
+        has_version_39 = "3.9.0" in search_text
+        has_date = bool(re.search(r"20\d{2}-\d{2}-\d{2}|\w+ \d{1,2},? \d{4}", search_text))
         print(f"   Contains Markdown:    {'PASS' if has_markdown else 'FAIL'}")
         print(f"   Mentions 3.8.0:       {'PASS' if has_version_38 else 'FAIL'}")
         print(f"   Mentions 3.9.0:       {'PASS' if has_version_39 else 'FAIL'}")

@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — MOZA Living Context Document
 
 > **Purpose:** Single source of truth for any AI agent or developer joining the project.
-> **Last Updated:** Phase 3.2 (Autonomous Research Benchmark)
+> **Last Updated:** Phase 3.2.5 (Regression Freeze — all benchmarks frozen)
 > **Repository:** https://github.com/tariqtharwat-OPS/Moza
 
 ---
@@ -35,9 +35,9 @@ Refactor before adding new features. Monolithic code must be split, error paths 
 
 | Property | Value |
 |----------|-------|
-| **Current Phase** | Phase 3.2 — Autonomous Research Benchmark |
-| **Total Passing Tests** | 81 |
-| **Last Successful Benchmark** | Phase 3.1 — Browser Live Testing (Wikipedia search, extraction, screenshot, artifact saving) |
+| **Current Phase** | Phase 3.2.5 — Regression Freeze Complete |
+| **Total Passing Tests** | 81 — 100% pass rate (0 failures, 0 skipped, 0 xfail) |
+| **Last Successful Benchmark** | Phase 3.2.5 — All 5 canonical benchmarks frozen |
 | **Latest Model** | Groq `llama-3.3-70b-versatile` |
 | **Engine Architecture** | ReAct loop via `LiteLLMToolAgent` (backend only, no UI) |
 | **Browser Engine** | `PlaywrightEngine` implementing `BrowserEngine` ABC (headless Chromium, 1280x720) |
@@ -84,10 +84,15 @@ Legend: ✓ = Proved by live benchmark, ✗ = Not yet exercised, ≈ = Partial
 
 ## 4. Immediate Next Steps
 
-### Phase 3.3: Vision-Enhanced Browser Reasoning (Screenshots + DOM)
+### Phase 3.3: Frontend E2E Integration Testing
+- Prove UI consumes Backend correctly (SSE stream → React state → rendered components)
+- BrowserVisualizer component integration with real browser events
+- All 5 frozen benchmarks + 81 unit/integration tests must still pass
+
+### Phase 3.4: Vision-Enhanced Browser Reasoning (Screenshots + DOM)
 - Add vision capability: feed screenshot images to LLM alongside DOM text for richer reasoning
-- Agent must navigate a page, screenshot it, and use the screenshot content (not just DOM text) to answer a visual question
-- All 81+ existing tests must still pass
+- Agent must navigate a page, screenshot it, and use the screenshot content to answer a visual question
+- All 5 frozen benchmarks + 81+ existing tests must still pass
 
 ### Phase 4: The Brain (Memory & RAG)
 - Integrate Mem0 for long/short-term memory
@@ -99,6 +104,7 @@ Legend: ✓ = Proved by live benchmark, ✗ = Not yet exercised, ≈ = Partial
 - UI Polish
 
 ### Key Constraints for Next Agent
+- **Read REGRESSION_FREEZE.md before writing any code.** All frozen benchmarks are PERMANENT.
 - ALL work is backend-only (no UI/frontend changes)
 - No single file should exceed ~250 lines
 - Screenshot base64 data (~280KB) must be stripped from LLM tool messages (existing fix in `litellm_tool_agent.py`)

@@ -1,7 +1,7 @@
 # MOZA Test Strategy & Capability Certification Framework
 
 > Replaces "counting passing tests" with "certifying real-world capabilities."
-> **Version:** 1.0 — Phase 3.3.5
+> **Version:** 1.1 — Phase 3.3.5 Patch (Frontend Runtime Integrity)
 
 ---
 
@@ -22,8 +22,9 @@
 | **Integration — Replay API** | 6 | `tests/integration/test_replay_api.py` | ✅ Solid — covers list, get, events, replay with seeded data |
 | **E2E — Real Browser UI** | 2 | `tests/e2e/test_real_browser_ui.py` | ✅ Good — CORS preflight + real browser interaction (requires servers running) |
 | **E2E — Agent Behavior Patterns** | 6 | `tests/e2e/test_agent_behavior_patterns.py` | ⚠️ New — covers greeting, simple Q, tool task, mixed, Arabic, casual greeting (requires servers running) |
+| **E2E — Frontend Runtime Integrity** | 2 | `frontend/tests/e2e/test_frontend_runtime_integrity.py` | ✅ New — verifies zero 404s on core JS/CSS assets, logo/chat visible, no console errors |
 | **Live — Benchmarks** | 5 | `tests/live/` | ✅ Canonical — recovery, software engineer, browser live, autonomous research, multi-step agent |
-| **Total** | **87** | | |
+| **Total** | **89** | | |
 
 ### 1.2 Redundancy & Weakness Flags
 
@@ -62,6 +63,7 @@
 | 16 | **Multi-Agent Orchestration** | ✗ Not Certified | Not implemented | — |
 | 17 | **Self-Improvement (Controlled Evolution)** | ✗ Not Certified | Architecture defined, not implemented | — |
 | 18 | **CORS & Network Resilience** | ✅ Certified | `test_real_browser_ui.py` CORS preflight + zero-error console check | Phase 3.3 |
+| 19 | **Frontend Runtime Integrity** | ✅ Certified | `frontend/tests/e2e/test_frontend_runtime_integrity.py` — zero 404s on core JS/CSS assets, logo/chat visible, clean browser console | Phase 3.3.5 Patch |
 
 ---
 
@@ -111,7 +113,7 @@ Layer 6: Canonical Capability Benchmarks  ← CERTIFICATION GATE
 - **What:** Next.js UI rendering, event stream consumption, BrowserVisualizer, TerminalComponent, InputArea
 - **How tested:** Real browser (Playwright) navigating to localhost:3000, simulating user input, verifying DOM
 - **Frameworks:** Playwright (sync API), pytest
-- **Test files:** `tests/e2e/test_real_browser_ui.py`, `tests/e2e/test_agent_behavior_patterns.py`
+- **Test files:** `tests/e2e/test_real_browser_ui.py`, `tests/e2e/test_agent_behavior_patterns.py`, `frontend/tests/e2e/test_frontend_runtime_integrity.py`
 - **Requires:** Both backend AND frontend servers running
 
 ### Layer 6 — Canonical Capability Benchmarks (CERTIFICATION GATE)

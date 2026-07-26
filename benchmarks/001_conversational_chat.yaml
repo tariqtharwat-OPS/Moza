@@ -1,0 +1,81 @@
+capability: "Direct Conversational Response"
+version: "1.0.0"
+description: >
+  Verifies the agent responds to simple conversational inputs with direct text,
+  without invoking any tools. This is the most basic user-facing capability.
+user_story: >
+  As a non-technical user, I want to ask a simple greeting or question
+  and receive a friendly text response, so that I feel the agent understands
+  natural conversation.
+
+required_capabilities:
+  - "Intent Classification"
+  - "Direct Response"
+
+required_tools: []
+
+scenarios:
+  - id: "greeting-basic"
+    description: "Simple English greeting"
+    input:
+      type: "chat"
+      content: "hi how are you?"
+    expected:
+      tool_calls: 0
+      response_contains: ["great", "fine", "hello", "hi", "thanks"]
+      max_duration_ms: 15000
+    certification_rules:
+      fails_if:
+        - "any_tool_invoked"
+
+  - id: "greeting-command"
+    description: "Command-style greeting"
+    input:
+      type: "chat"
+      content: "Say hello in one word"
+    expected:
+      tool_calls: 0
+      response_contains: ["Hello", "hello", "مرحباً"]
+      max_duration_ms: 15000
+    certification_rules:
+      fails_if:
+        - "any_tool_invoked"
+
+  - id: "question-simple"
+    description: "Simple factual question"
+    input:
+      type: "chat"
+      content: "What is 2 + 2?"
+    expected:
+      tool_calls: 0
+      response_contains: ["4"]
+      max_duration_ms: 15000
+    certification_rules:
+      fails_if:
+        - "any_tool_invoked"
+
+  - id: "greeting-arabic"
+    description: "Arabic greeting - non-English support"
+    input:
+      type: "chat"
+      content: "\u0642\u0644 \u0645\u0631\u062d\u0628\u0627\u064b \u0628\u0643\u0644\u0645\u0629 \u0648\u0627\u062d\u062f\u0629 \u0641\u0642\u0637"
+    expected:
+      tool_calls: 0
+      response_contains: ["\u0645\u0631\u062d\u0628\u0627\u064b", "hello", "Hello"]
+      max_duration_ms: 15000
+    certification_rules:
+      fails_if:
+        - "any_tool_invoked"
+
+exit_criteria:
+  all_scenarios_pass: true
+  zero_console_errors: true
+  zero_network_errors: true
+
+artifacts:
+  chat_history:
+    - role: "user"
+      content: "hi how are you?"
+    - role: "agent"
+      must_contain_text: true
+      must_not_contain_tool_calls: true

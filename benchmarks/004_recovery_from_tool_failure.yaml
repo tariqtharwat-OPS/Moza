@@ -1,0 +1,88 @@
+capability: "Recovery from Tool Failure"
+version: "1.0.0"
+description: >
+  Verifies the agent can gracefully handle tool execution failures, interpret
+  structured error responses, and autonomously choose a corrective action
+  (retry, alternative tool, parameter fix) instead of crashing or halting.
+user_story: >
+  As a user running complex multi-step tasks, I want the agent to handle
+  errors gracefully and recover autonomously, so that I don't have to
+  restart tasks from scratch when something goes wrong.
+
+required_capabilities:
+  - "Recovery from Tool Failure"
+  - "LLM Error Resilience"
+  - "Multi-Step ReAct Reasoning"
+  - "Filesystem Read/Write"
+
+required_tools:
+  - "filesystem"
+
+scenarios:
+  - id: "file-not-found-recovery"
+    description: "Agent tries to read a non-existent file, recovers by creating it"
+    input:
+      type: "chat"
+      content: "Read the file 'will_not_exist.txt', then create it with recovery content if it doesn't exist"
+    expected:
+      tool_calls_min: 2
+      tool_calls_max: 6
+      tool_names_used: ["filesystem"]
+      max_duration_ms: 30000
+    verification:
+      event_sequence:
+        - event: "tool_call"
+          tool: "filesystem"
+          action: "read"
+          description: "Agent attempts to read non-existent file"
+        - event: "tool_result"
+          success: false
+          description: "File not found error returned"
+          error_contains: "does not exist"
+        - event: "tool_call"
+          tool: "filesystem"
+          action: "write"
+          description: "Agent creates the file as recovery action"
+        - event: "tool_result"
+          success: true
+          description: "File created successfully"
+      artifact_assertions:
+        - path: "will_not_exist.txt"
+          must_exist: true
+          min_size_bytes: 1
+    certification_rules:
+      fails_if:
+        - "agent_crashes_on_file_not_found"
+        - "agent_does_not_recover"
+        - "agent_retries_read_more_than_3_times"
+        - "task_fails_with_unhandled_error"
+
+  - id: "tool-parameter-fix-recovery"
+    description: "Agent provides wrong parameters, gets actionable error, fixes and retries"
+    input:
+      type: "chat"
+      content: "List files in the current directory"
+    expected:
+      tool_calls_min: 1
+      tool_calls_max: 4
+      tool_names_used: ["filesystem"]
+      max_duration_ms: 20000
+    verification:
+      error_recovery:
+        - if_tool_fails: true
+          expected_action: "fix_parameters_or_alternative"
+          max_retries: 2
+    certification_rules:
+      fails_if:
+        - "agent_hangs_after_error"
+        - "agent_loops_on_same_failed_call_3+_times"
+
+exit_criteria:
+  all_scenarios_pass: true
+  task_completes_with_success: true
+  no_unhandled_exceptions: true
+
+artifacts:
+  evidence:
+    - "event_sequence_proves_recovery"
+    - "recovery_file_exists_on_disk"

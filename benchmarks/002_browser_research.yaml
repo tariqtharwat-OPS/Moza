@@ -1,0 +1,68 @@
+capability: "Browser Navigation & Multi-Page Research Synthesis"
+version: "1.0.0"
+description: >
+  Verifies the agent can navigate to multiple pages via browser, extract structured
+  data via CSS selectors, synthesize findings across pages, and produce a
+  structured artifact.
+user_story: >
+  As a researcher, I want to ask the agent to compare information across multiple
+  web pages and produce a structured summary, so that I can quickly gather
+  insights without manual browsing.
+
+required_capabilities:
+  - "Browser Navigation"
+  - "DOM Extraction (CSS Selectors)"
+  - "Multi-Page Research Synthesis"
+  - "Artifact Generation (Filesystem Write)"
+  - "Multi-Step ReAct Reasoning"
+
+required_tools:
+  - "browser"
+  - "filesystem"
+
+scenarios:
+  - id: "two-page-research"
+    description: "Visit 2 pages, extract data, synthesize into markdown report"
+    input:
+      type: "chat"
+      content: "Visit the research fixtures and create a comparison report of Python 3.8 vs Python 3.9"
+    setup:
+      local_http_server:
+        port: 8765
+        fixtures_dir: "tests/fixtures/research/"
+    expected:
+      tool_calls_min: 6
+      tool_calls_max: 12
+      tool_names_used: ["browser", "filesystem"]
+      response_contains: ["research", "report", "comparison", "Python"]
+      max_duration_ms: 60000
+    verification:
+      dom_assertions:
+        - page: "releases"
+          selector: ".release-date"
+          min_extractions: 1
+        - page: "features"
+          selector: ".key-features"
+          min_extractions: 1
+      artifact_assertions:
+        - path: "research.md"
+          must_exist: true
+          min_size_bytes: 500
+          contains_sections: ["Version Info", "Feature Comparison", "Recommendation"]
+          mentions_both: ["3.8", "3.9"]
+    certification_rules:
+      fails_if:
+        - "fewer_than_2_pages_visited"
+        - "no_artifact_created"
+        - "no_css_extractions"
+
+exit_criteria:
+  all_scenarios_pass: true
+  zero_browser_console_errors: true
+  screenshot_taken: true
+
+artifacts:
+  expected_files:
+    - path: "research.md"
+      type: "markdown"
+      min_size_bytes: 500

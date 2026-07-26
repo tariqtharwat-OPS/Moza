@@ -1,0 +1,85 @@
+capability: "Software Engineering (Debug & Fix Bug)"
+version: "1.0.0"
+description: >
+  Verifies the agent can autonomously debug a codebase: read source code,
+  write test cases, run tests, interpret failure output, fix the bug,
+  and verify all tests pass.
+user_story: >
+  As a software developer, I want to ask the agent to fix a bug in my code,
+  so that I can delegate debugging and focus on higher-level architecture.
+
+required_capabilities:
+  - "Filesystem Read/Write"
+  - "Terminal Command Execution"
+  - "Test Writing & Execution"
+  - "Failure Analysis from Test Output"
+  - "Multi-Step ReAct Reasoning"
+  - "Recovery from Tool Failure"
+
+required_tools:
+  - "filesystem"
+  - "terminal"
+
+scenarios:
+  - id: "fix-integer-division-bug"
+    description: "Fix integer division bug where // is used instead of /"
+    input:
+      type: "chat"
+      content: "Fix the calculator.py bug and verify all tests pass"
+    setup:
+      seed_file:
+        path: "calculator.py"
+        content: |
+          def add(a, b): return a + b
+          def subtract(a, b): return a - b
+          def multiply(a, b): return a * b
+          def divide(a, b): return a // b  # BUG: integer division
+    expected:
+      tool_calls_min: 4
+      tool_calls_max: 10
+      tool_names_used: ["filesystem", "terminal"]
+      max_duration_ms: 45000
+    verification:
+      event_sequence:
+        - event: "tool_call"
+          tool: "filesystem"
+          action: "write"
+          description: "Agent writes test file"
+        - event: "tool_call"
+          tool: "terminal"
+          command_contains: "pytest"
+          description: "Agent runs tests (first run - expected failure)"
+        - event: "tool_result"
+          success: false
+          description: "First test run fails (expected)"
+        - event: "tool_call"
+          tool: "filesystem"
+          action: "write"
+          description: "Agent fixes the bug"
+        - event: "tool_call"
+          tool: "terminal"
+          command_contains: "pytest"
+          description: "Agent re-runs tests"
+        - event: "tool_result"
+          success: true
+          description: "Second test run passes"
+      anti_cheat:
+        source_file_modified: "calculator.py"
+        test_file_preserved: true
+        mathematical_check: "divide(5, 2) == 2.5"
+    certification_rules:
+      fails_if:
+        - "agent_modifies_test_file"
+        - "fewer_than_2_pytest_runs"
+        - "binary_division_operator_still_present"
+        - "divide_function_returns_integer"
+
+exit_criteria:
+  all_scenarios_pass: true
+  anti_cheat_all_checks_pass: true
+
+artifacts:
+  expected_changes:
+    - file: "calculator.py"
+      change_type: "fix"
+      verification: "divide(5, 2) returns 2.5 (float), not 2 (int)"

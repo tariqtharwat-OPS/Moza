@@ -6,6 +6,26 @@
 
 ---
 
+## 0. 🎯 THE ULTIMATE PRODUCT VISION & AI GUIDANCE RULES
+
+### The Goal
+MOZA is NOT just scripts. It is a standalone, production-ready Desktop Application (`.exe` / `.app`). The end-user must launch it with a double-click, without ever touching a terminal or managing dependencies.
+
+### The Golden Rule
+Every task must be evaluated against: *"Does this bring us closer to a shippable, robust, standalone desktop product?"*
+
+### Strict Rules
+- **No "Works on My Machine" code.** Every phase must include Build & Run verification.
+- **Dependency Management:** The app must handle its own dependencies. End-users never run `npm install` or `pip install`.
+- **UX First:** If a feature requires the user to open a terminal or edit a config file, it is a bug. Fix it with GUI or automated background processes.
+- **Packaging Readiness:** Code must be written with PyInstaller/Electron packaging in mind (e.g., correct relative paths, no hardcoded local paths).
+
+### System Requirements (CRITICAL)
+- **Drive Format:** The project (especially the frontend) MUST reside on an **NTFS** drive. Node.js v24+ will fail with `EISDIR` errors on FAT32/exFAT drives due to `fs.readlinkSync()` incompatibility.
+- **OS:** Windows 10+ (for Electron packaging). macOS/Linux support is deferred.
+
+---
+
 ## 1. Core Philosophies (The 7 Golden Rules)
 
 ### Stability First
@@ -85,11 +105,9 @@ Legend: ✓ = Proved by live benchmark, ✗ = Not yet exercised, ≈ = Partial
 ## 4. Immediate Next Steps
 
 ### Phase 3.4: Vision-Enhanced Browser Reasoning (Screenshots + DOM)
-
-### Phase 3.4: Vision-Enhanced Browser Reasoning (Screenshots + DOM)
-- Add vision capability: feed screenshot images to LLM alongside DOM text for richer reasoning
-- Agent must navigate a page, screenshot it, and use the screenshot content to answer a visual question
-- All 5 frozen benchmarks + 81+ existing tests must still pass
+- Add vision capability: feed screenshot images to LLM alongside DOM text for richer reasoning.
+- Agent must navigate a page, screenshot it, and use the screenshot content to answer a visual question.
+- All 5 frozen benchmarks + 81+ existing tests must still pass.
 
 ### Phase 4: The Brain (Memory & RAG)
 - Integrate Mem0 for long/short-term memory
@@ -102,11 +120,13 @@ Legend: ✓ = Proved by live benchmark, ✗ = Not yet exercised, ≈ = Partial
 
 ### Key Constraints for Next Agent
 - **Read REGRESSION_FREEZE.md before writing any code.** All frozen benchmarks are PERMANENT.
-- ALL work is backend-only (no UI/frontend changes)
-- No single file should exceed ~250 lines
-- Screenshot base64 data (~280KB) must be stripped from LLM tool messages (existing fix in `litellm_tool_agent.py`)
-- Playwright headless Chromium required for browser tests
-- `dom.get_url()` is a sync property (not async)
+- **No backend changes unless explicitly approved** (Regression Freeze active).
+- **Frontend changes are allowed** but must be verified with `next build` before committing.
+- No single file should exceed ~250 lines (backend) or ~450 lines (frontend components).
+- Screenshot base64 data (~280KB) must be stripped from LLM tool messages (existing fix in `litellm_tool_agent.py`).
+- Playwright headless Chromium required for browser tests.
+- `dom.get_url()` is a sync property (not async).
+- The frontend MUST be developed on an **NTFS drive** (FAT32/exFAT causes Node.js build failures).
 
 ---
 
@@ -131,6 +151,31 @@ Legend: ✓ = Proved by live benchmark, ✗ = Not yet exercised, ≈ = Partial
 
 ## 6. How to Run
 
+### Critical: NTFS Requirement
+> **⚠️ The project MUST reside on an NTFS drive.** Node.js v24+ fails with `EISDIR` errors on FAT32/exFAT. If your `npm install` or `next build` crashes with `Error: EISDIR: illegal operation on a directory, readlink`, move the project to an NTFS drive.
+
+### Backend (FastAPI + Uvicorn)
+
+```bash
+cd backend
+set PYTHONPATH=backend
+python -m uvicorn moza.main:app --host 0.0.0.0 --port 8000
+```
+
+### Frontend (Next.js 15 + React 19)
+
+```bash
+cd frontend
+npm install --prefer-offline --no-audit --no-fund
+npm run dev
+```
+
+> **Note:** `--prefer-offline --no-audit --no-fund` are required on first install to avoid npm audit/fund checks that can hang on slow networks.
+
+Open **http://localhost:3000** in a browser. The backend must be running on port 8000.
+
+### Running Tests
+
 ```bash
 # Unit + integration tests (81 tests, no live dependencies)
 cd backend && python -m pytest tests/ -v
@@ -143,3 +188,20 @@ cd backend && python tests/live/test_autonomous_research_benchmark.py
 **Note:** Live benchmarks start a real Playwright browser and call the Groq API. They require:
 - `GROQ_API_KEY` in `.env`
 - `playwright install chromium` after pip install
+- The benchmark fixtures are at `backend/tests/fixtures/research/`
+
+### Verifying the Frontend Build
+
+```bash
+cd frontend
+npm run build
+```
+
+A successful build produces:
+```
+✓ Compiled successfully in ~19s
+✓ Generating static pages (4/4)
+Route (app)                                 Size  First Load JS
+┌ ○ /                                     4.7 kB         108 kB
+└ ○ /_not-found                            993 B         104 kB
+```

@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — MOZA Living Context Document
 
 > **Purpose:** Single source of truth for any AI agent or developer joining the project.
-> **Last Updated:** Phase 3.3.5 Patch — Agent Over-Tooling Prevention & UI Resilience
+> **Last Updated:** Strategic Pivot — Capability Certification Framework + Controlled Evolution Architecture
 > **Repository:** https://github.com/tariqtharwat-OPS/Moza
 
 ---
@@ -26,7 +26,7 @@ Every task must be evaluated against: *"Does this bring us closer to a shippable
 
 ---
 
-## 1. Core Philosophies (The 7 Golden Rules)
+## 1. Core Philosophies (The 9 Golden Rules)
 
 ### Stability First
 Tests must remain valid for years. Use static HTML fixtures and local HTTP servers — never live, changing data. Every benchmark must be 100% reproducible.
@@ -41,7 +41,7 @@ Every phase must explicitly state what architectural layers it proved. Coverage 
 Build capabilities (e.g., "agent can research and synthesize across multiple pages"), not just components. A component without a proven capability is technical debt.
 
 ### No Regression
-No new capability breaks an old one. 100% test pass rate required before any phase can be marked complete. Current baseline: 81 unit/integration + 5 E2E = 86 tests.
+No new capability breaks an old one. 100% test pass rate required before any phase can be marked complete. Current baseline: 87 tests (81 unit/integration + 6 E2E).
 
 ### Every Capability Has a Demo
 Proof of concept via raw E2E logs captured in benchmark output. Every architectural layer in the coverage map links to evidence.
@@ -49,14 +49,21 @@ Proof of concept via raw E2E logs captured in benchmark output. Every architectu
 ### Zero Technical Debt Before Next Phase
 Refactor before adding new features. Monolithic code must be split, error paths hardened, and edge cases handled before moving to the next phase.
 
+### Capability Certification Framework (New)
+**"Capability Coverage" replaces "Test Count" as the primary quality metric.** Every future phase must begin by defining its Capability Benchmark first. The Capability Certification Matrix in `TEST_STRATEGY.md` tracks 18 capabilities (9 certified ✓, 9 pending ✗). A capability is certified ONLY when its Layer 6 Canonical Benchmark passes on `main`.
+
+### Controlled Evolution Architecture (New)
+MOZA's self-improvement is strictly governed by Three-Tier Deployment and Four Sources of Evolution (detailed in Section 8 below). No self-modification code runs outside the `Experimental` tier. All merges to `Stable` require explicit human approval.
+
 ---
 
 ## 2. Current Status
 
 | Property | Value |
 |----------|-------|
-| **Current Phase** | Phase 3.3.5 Patch — Professional UI Redesign & Build Fix |
-| **Total Passing Tests** | 81 unit/integration + 6 E2E behavior tests = 87 total — 100% pass rate (backend freeze intact) |
+| **Current Phase** | Strategic Pivot — Capability Certification Framework & Controlled Evolution Architecture |
+| **Total Passing Tests** | 87 tests (81 unit/integration + 6 E2E behavior) = 100% pass rate (regression freeze intact) |
+| **Capabilities Defined / Certified** | 18 defined, 9 certified ✅ (see `TEST_STRATEGY.md`) |
 | **Last Successful Benchmark** | Phase 3.3.5 Patch — Two-panel professional UI with logo, markdown rendering, connection status, code copy button, clean empty states; build cache cleared, react-markdown added |
 | **Latest Model** | Groq `llama-3.3-70b-versatile` |
 | **Engine Architecture** | ReAct loop via `LiteLLMToolAgent` (backend only, no UI) |
@@ -286,6 +293,8 @@ Route (app)                                 Size  First Load JS
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-07-26 | [`53d92df`](https://github.com/tariqtharwat-OPS/Moza/commit/53d92df) | **Strategic Pivot** — benchmarks/ with 4 YAML capability specs |
+| 2026-07-26 | [`4917753`](https://github.com/tariqtharwat-OPS/Moza/commit/4917753) | **Strategic Pivot** — TEST_STRATEGY.md with Capability Certification Matrix |
 | 2026-07-26 | [`112fba7`](https://github.com/tariqtharwat-OPS/Moza/commit/112fba7) | **Phase 3.3.5 Patch** — Build fix + professional UI redesign + logo |
 | 2026-07-26 | [`e0caad7`](https://github.com/tariqtharwat-OPS/Moza/commit/e0caad7) | **Phase 3.3.5 Patch** — stricter greeting detection, fs error messages, UI empty state |
 | 2026-07-26 | [`3068532`](https://github.com/tariqtharwat-OPS/Moza/commit/3068532) | **Agent Behavior Audit** — fix tool overuse for simple conversational tasks |
@@ -306,3 +315,93 @@ Route (app)                                 Size  First Load JS
 | 2026-07-24 | [`8f1d906`](https://github.com/tariqtharwat-OPS/Moza/commit/8f1d906) | **Phase 2.10** — ReAct loop with max_steps |
 
 **Repository:** https://github.com/tariqtharwat-OPS/Moza
+
+---
+
+## 8. Controlled Evolution Architecture (Self-Improvement Framework)
+
+> MOZA's self-improvement is strictly governed to remain safe, auditable, and human-approved.
+
+### 8.1 Three-Tier Deployment Pipeline
+
+```
+  [Experimental]  ->  [Candidate]  ->  [Stable]
+      |                  |                |
+  Agent proposes     Passes all        Human merges
+  & tests changes    Canonical         after review
+                     Benchmarks
+```
+
+| Tier | Description | Gate |
+|------|-------------|------|
+| **Experimental** | Agent proposes changes, runs tests, iterates autonomously. May break things. No user-facing impact. | None (agent autonomy) |
+| **Candidate** | Changes pass ALL Canonical Benchmarks + existing 87 tests. Ready for human review. | Automated: 100% benchmark pass |
+| **Stable** | Merged to `main` ONLY via explicit human approval (`manager-approve` in commit). | Human: manager sign-off |
+
+### 8.2 Four Sources of Evolution
+
+| Source | Description | How It Feeds In |
+|--------|-------------|-----------------|
+| **1. Research** | arXiv, new AI papers, academic publications | Agent reads paper summaries, extracts actionable patterns |
+| **2. Open Source Analysis** | OpenHands, Cline, LangChain - analyzing patterns, not copying | Agent analyzes architecture docs, PRs, and issue discussions |
+| **3. Benchmarks** | SWE-bench, Terminal-bench, our own 6 E2E tests | Agent runs benchmarks, identifies weaknesses, proposes fixes |
+| **4. Self-Analysis** | Internal telemetry - token consumption, tool failure rates, unused modules, error logs | Agent audits telemetry daily, generates optimization proposals |
+
+### 8.3 Evolution Backlog (Proposal Format)
+
+Every proposed improvement MUST document all of the following before any branch is created:
+
+```yaml
+PROPOSAL: [Short Name]
+STATUS: [Accepted | Rejected | Need Review]
+PROBLEM: [What is broken or suboptimal?]
+EVIDENCE: [Link to telemetry, benchmark failure, research paper]
+PROPOSAL: [What change does the agent suggest?]
+RISK: [What could go wrong? Regression risk assessment]
+EXPECTED_BENEFIT: [Quantified metrics: % speedup, % fewer errors]
+```
+
+The backlog is managed via GitHub Issues with label `evolution-proposal`.
+
+### 8.4 Explicit Prohibitions
+
+| Prohibited | Rationale |
+|------------|-----------|
+| Self-modification outside `Experimental` tier | Prevents untested changes from reaching users |
+| Direct `main` commits by agent | Human oversight required for all stable changes |
+| Deleting or modifying Canonical Benchmarks without review | Preserves regression freeze integrity |
+| Auto-merging without human approval | Safety-critical: agent cannot self-approve |
+
+---
+
+## 9. Capability Certification Framework
+
+> **Primary quality metric:** Number of certified capabilities (not test count).
+
+### 9.1 Certification Process
+
+1. **Define** the capability benchmark spec (YAML in `benchmarks/`)
+2. **Implement** the test harness and any required support code
+3. **Execute** the Layer 6 Canonical Benchmark on `main`
+4. **Certify** - update Capability Certification Matrix in `TEST_STRATEGY.md`
+5. **Freeze** - no regression allowed; benchmark becomes permanent quality gate
+
+### 9.2 Current Certification Status
+
+| Metric | Value |
+|--------|-------|
+| Total capabilities defined | 18 |
+| Certified (checkmark) | 9 |
+| Not yet certified (x) | 9 |
+| YAML benchmark specs | 4 (`benchmarks/001` through `004`) |
+| Test strategy document | `TEST_STRATEGY.md` |
+
+### 9.3 Future Capability Roadmap
+
+| Phase | Capability to Certify | Benchmark Spec |
+|-------|----------------------|----------------|
+| 3.4 | Vision-Enhanced Browser Reasoning | `benchmarks/005_vision_reasoning.yaml` (TBD) |
+| 4.0 | Long/Short-Term Memory | `benchmarks/006_memory_rag.yaml` (TBD) |
+| 4.5 | Approval Flow (Human-in-Loop) | `benchmarks/007_approval_flow.yaml` (TBD) |
+| 5.0 | Self-Improvement (Controlled Evolution) | `benchmarks/008_self_improvement.yaml` (TBD) |
+| 5.5 | Multi-Agent Orchestration | `benchmarks/009_multi_agent.yaml` (TBD) |

@@ -61,12 +61,12 @@ MOZA's self-improvement is strictly governed by Three-Tier Deployment and Four S
 
 | Property | Value |
 |----------|-------|
-| **Current Phase** | Strategic Pivot — Capability Certification Framework & Controlled Evolution Architecture |
-| **Total Passing Tests** | 87 tests (81 unit/integration + 6 E2E behavior) = 100% pass rate (regression freeze intact) |
-| **Capabilities Defined / Certified** | 18 defined, 9 certified ✅ (see `TEST_STRATEGY.md`) |
-| **Last Successful Benchmark** | Phase 3.3.5 Patch — Two-panel professional UI with logo, markdown rendering, connection status, code copy button, clean empty states; build cache cleared, react-markdown added |
+| **Current Phase** | Phase 4.0 — Executive Mind, Workspace UI & Capability Certification |
+| **Total Passing Tests** | 94 tests (81 unit/integration + 13 intent classifier) = 100% pass rate (regression freeze intact) |
+| **Capabilities Defined / Certified** | 21 defined, 11 certified ✅ (see `TEST_STRATEGY.md`) |
+| **Last Successful Benchmark** | Phase 4.0 — Executive Mind (deterministic intent routing), Workspace UI (3-panel layout, welcome card, sidebar, collapsible execution panel) |
 | **Latest Model** | Groq `llama-3.3-70b-versatile` |
-| **Engine Architecture** | ReAct loop via `LiteLLMToolAgent` (backend only, no UI) |
+| **Engine Architecture** | Executive Mind (Orchestrator-level `classify_intent()`) + ReAct loop via `LiteLLMToolAgent` |
 | **Browser Engine** | `PlaywrightEngine` implementing `BrowserEngine` ABC (headless Chromium, 1280x720) |
 | **Context Strategy** | 7-section `ContextBuilder` (task, tools, workspace tree, git status, recent events, artifacts, environment) |
 
@@ -293,6 +293,7 @@ Route (app)                                 Size  First Load JS
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-07-26 | [`602d9b2`](https://github.com/tariqtharwat-OPS/Moza/commit/602d9b2) | **Phase 4.0** — Executive Mind, Workspace UI & Capability Certification |
 | 2026-07-26 | [`53d92df`](https://github.com/tariqtharwat-OPS/Moza/commit/53d92df) | **Strategic Pivot** — benchmarks/ with 4 YAML capability specs |
 | 2026-07-26 | [`4917753`](https://github.com/tariqtharwat-OPS/Moza/commit/4917753) | **Strategic Pivot** — TEST_STRATEGY.md with Capability Certification Matrix |
 | 2026-07-26 | [`112fba7`](https://github.com/tariqtharwat-OPS/Moza/commit/112fba7) | **Phase 3.3.5 Patch** — Build fix + professional UI redesign + logo |

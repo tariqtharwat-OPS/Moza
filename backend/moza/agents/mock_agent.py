@@ -183,66 +183,6 @@ class MockAgent(AgentInterface):
         await asyncio.sleep(0.3)
         context.cancellation_token.raise_if_cancelled()
 
-        for tool in tools:
-            yield Event(
-                session_id=session.id,
-                task_id=task_id,
-                type=EventType.TOOL_CALL,
-                source="mock_agent",
-                payload={
-                    "tool": tool.name,
-                    "description": tool.description,
-                    "capabilities": tool.capabilities,
-                    "args": {"action": "demo", "path": "."},
-                },
-            )
-            await asyncio.sleep(0.2)
-            context.cancellation_token.raise_if_cancelled()
-
-            try:
-                tool_start = time.monotonic()
-                raw = await registry.execute_tool(
-                    tool.name,
-                    action="read",
-                    path=".",
-                )
-                elapsed = (time.monotonic() - tool_start) * 1000
-                if isinstance(raw, dict):
-                    result_payload = ToolResultPayload(
-                        success=raw.get("success", True),
-                        duration_ms=raw.get("duration_ms", elapsed),
-                        exit_code=raw.get("exit_code", 0),
-                        stdout=raw.get("stdout", ""),
-                        stderr=raw.get("stderr", ""),
-                        metadata={"raw": raw},
-                    )
-                else:
-                    result_payload = ToolResultPayload.ok(
-                        stdout=str(raw), duration_ms=elapsed
-                    )
-                yield Event(
-                    session_id=session.id,
-                    task_id=task_id,
-                    type=EventType.TOOL_RESULT,
-                    source="mock_agent",
-                    payload={"tool": tool.name, **result_payload.model_dump()},
-                )
-            except Exception as e:
-                logger.warning(f"MockAgent: tool {tool.name} execution skipped: {e}")
-                yield Event(
-                    session_id=session.id,
-                    task_id=task_id,
-                    type=EventType.TOOL_RESULT,
-                    source="mock_agent",
-                    payload={
-                        "tool": tool.name,
-                        **ToolResultPayload.error(str(e)).model_dump(),
-                    },
-                )
-            await asyncio.sleep(0.2)
-
-        context.cancellation_token.raise_if_cancelled()
-
         yield Event(
             session_id=session.id,
             task_id=task_id,
@@ -250,10 +190,9 @@ class MockAgent(AgentInterface):
             source="mock_agent",
             payload={
                 "content": (
-                    f"Task completed! Analyzed: '{task_desc}'.\n"
-                    f"Used tools: {tool_list}.\n"
-                    "Golden Rule of Mutation proven — all tool calls went through "
-                    "ToolRegistry -> Tool Execution -> Event Emission."
+                    f"MockAgent received: '{task_desc}'.\n"
+                    f"Available tools: {tool_list}.\n"
+                    "This is a mock agent. Switch to LiteLLMToolAgent for real execution."
                 ),
             },
         )

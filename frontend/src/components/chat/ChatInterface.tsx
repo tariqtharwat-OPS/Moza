@@ -320,6 +320,7 @@ export default function ChatInterface() {
         } as MozaEvent,
       ]);
     } finally {
+      setStreaming(false);
       setAgentStatus("Idle");
       setWaitingApproval(null);
       scrollToBottom();

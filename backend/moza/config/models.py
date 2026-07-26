@@ -49,7 +49,7 @@ class MOZAConfig(BaseSettings):
     providers: dict[str, ProviderConfig] = Field(default_factory=dict)
     litellm: LiteLLMConfig = LiteLLMConfig()
     logging: LoggingConfig = LoggingConfig()
-    agent_type: str = "mock"
+    agent_type: str = "litellm"
     agents: dict[str, AgentConfig] = Field(default_factory=dict)
 
     @classmethod

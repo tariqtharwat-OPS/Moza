@@ -76,11 +76,13 @@ class FilesystemTool(BaseTool):
             ).model_dump()
 
         if action == "write":
-            if not content:
+            if content is None:
                 return ToolResultPayload.error(
                     "'content' is required for write action.",
                     duration_ms=(time.monotonic() - start) * 1000,
                 ).model_dump()
+            if content == "":
+                logger.warning("Warning: Created empty file as requested")
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
             elapsed = (time.monotonic() - start) * 1000

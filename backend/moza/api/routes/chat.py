@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from moza.agents.interfaces import AgentInterface
+from moza.agents.litellm_tool_agent import LiteLLMToolAgent
 from moza.agents.mock_agent import MockAgent
 from moza.config.models import MOZAConfig
 from moza.core.event_bus import get_event_bus
@@ -22,7 +23,12 @@ class TaskRequest(BaseModel):
     workspace_path: str = ""
 
 
-def _create_agent(agent_type: str) -> AgentInterface:
+def _create_agent(agent_type: str, config: MOZAConfig | None = None) -> AgentInterface:
+    if agent_type == "litellm" or agent_type == "groq" or agent_type == "openrouter":
+        provider = None
+        if agent_type != "litellm":
+            provider = agent_type
+        return LiteLLMToolAgent(config, provider_name=provider, max_steps=15) if config else MockAgent()
     if agent_type == "openhands":
         from moza.agents.openhands_adapter import OpenHandsAdapter
         return OpenHandsAdapter()
@@ -41,7 +47,7 @@ async def task_execute(request: Request, body: TaskRequest):
 
     orchestrator = get_orchestrator()
     if orchestrator.agent is None:
-        agent = _create_agent(config.agent_type)
+        agent = _create_agent(config.agent_type, config)
         orchestrator.set_agent(agent)
 
     task_service: TaskService = get_task_service()

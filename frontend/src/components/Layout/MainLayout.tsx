@@ -50,7 +50,7 @@ export default function MainLayout({ leftPanel, rightPanel, inputArea, agentStat
       {/* Left Sidebar */}
       <aside className="flex w-[250px] shrink-0 flex-col border-r border-slate-800/60 bg-slate-900/40">
         <div className="flex items-center gap-3 border-b border-slate-800/40 px-4 py-4">
-          <Logo size={64} />
+          <Logo size={72} />
         </div>
         <div className="px-3 py-3">
           <button

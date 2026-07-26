@@ -1,4 +1,6 @@
 import asyncio
+import subprocess
+import sys
 import time
 from typing import Any
 
@@ -62,25 +64,14 @@ class TerminalTool(BaseTool):
         self._active_process = None
 
         try:
-            proc = await asyncio.create_subprocess_shell(
-                command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=cwd,
-            )
-            self._active_process = proc
-            stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                proc.communicate(), timeout=timeout
-            )
-            elapsed = (time.monotonic() - start) * 1000
-
-            return ToolResultPayload(
-                success=proc.returncode == 0,
-                duration_ms=elapsed,
-                exit_code=proc.returncode or 0,
-                stdout=stdout_bytes.decode("utf-8", errors="replace"),
-                stderr=stderr_bytes.decode("utf-8", errors="replace"),
-            ).model_dump()
+            try:
+                # Attempt async subprocess (may raise NotImplementedError on some Windows configs)
+                result = await self._run_async(command, cwd, timeout, start)
+            except NotImplementedError:
+                # Fallback: use synchronous subprocess in executor
+                logger.warning("TerminalTool: async subprocess not supported, falling back to sync subprocess")
+                result = await self._run_sync(command, cwd, timeout, start)
+            return result
 
         except asyncio.TimeoutError:
             elapsed = (time.monotonic() - start) * 1000
@@ -100,15 +91,62 @@ class TerminalTool(BaseTool):
 
         except Exception as e:
             elapsed = (time.monotonic() - start) * 1000
+            err_detail = f"{type(e).__name__}: {e}" if str(e) else f"{type(e).__name__} (no message)"
+            logger.error(f"TerminalTool: command failed — {err_detail}")
             return ToolResultPayload(
                 success=False,
                 duration_ms=elapsed,
                 exit_code=-1,
-                stderr=f"Command failed: {e}",
+                stderr=err_detail,
             ).model_dump()
 
         finally:
             self._active_process = None
+
+    async def _run_async(self, command: str, cwd: str | None, timeout: int, start: float) -> dict:
+        shell_cmd = ["cmd", "/c", command] if sys.platform == "win32" else ["sh", "-c", command]
+        proc = await asyncio.create_subprocess_exec(
+            *shell_cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=cwd,
+        )
+        self._active_process = proc
+        stdout_bytes, stderr_bytes = await asyncio.wait_for(
+            proc.communicate(), timeout=timeout
+        )
+        elapsed = (time.monotonic() - start) * 1000
+        return ToolResultPayload(
+            success=proc.returncode == 0,
+            duration_ms=elapsed,
+            exit_code=proc.returncode or 0,
+            stdout=stdout_bytes.decode("utf-8", errors="replace"),
+            stderr=stderr_bytes.decode("utf-8", errors="replace"),
+        ).model_dump()
+
+    async def _run_sync(self, command: str, cwd: str | None, timeout: int, start: float) -> dict:
+        """Fallback: run command synchronously in a thread via asyncio executor."""
+        loop = asyncio.get_running_loop()
+
+        def _run():
+            shell = ["cmd", "/c", command] if sys.platform == "win32" else ["sh", "-c", command]
+            result = subprocess.run(
+                shell,
+                capture_output=True,
+                cwd=cwd,
+                timeout=timeout,
+            )
+            return result
+
+        proc_result = await loop.run_in_executor(None, _run)
+        elapsed = (time.monotonic() - start) * 1000
+        return ToolResultPayload(
+            success=proc_result.returncode == 0,
+            duration_ms=elapsed,
+            exit_code=proc_result.returncode or 0,
+            stdout=proc_result.stdout.decode("utf-8", errors="replace"),
+            stderr=proc_result.stderr.decode("utf-8", errors="replace"),
+        ).model_dump()
 
     async def cleanup(self) -> None:
         if self._active_process and self._active_process.returncode is None:

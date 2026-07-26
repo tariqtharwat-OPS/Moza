@@ -15,7 +15,7 @@ export default function InputArea({ value, onChange, onSubmit, disabled, placeho
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         if (!disabled && value.trim()) {
           onSubmit(e as unknown as FormEvent);
@@ -63,7 +63,7 @@ export default function InputArea({ value, onChange, onSubmit, disabled, placeho
       </div>
       {disabled && (
         <p className="mx-auto mt-1.5 max-w-3xl text-center text-[10px] text-zinc-600">
-          Press Ctrl+Enter to send
+          Press Enter to send, Shift+Enter for newline
         </p>
       )}
     </form>

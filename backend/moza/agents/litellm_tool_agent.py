@@ -1,5 +1,7 @@
 import json
+import os
 import re
+from typing import Any
 from collections.abc import AsyncGenerator
 
 from loguru import logger
@@ -79,7 +81,7 @@ class LiteLLMToolAgent(AgentInterface):
         return tools
 
     @staticmethod
-    def _build_system_prompt(registry: ToolRegistry) -> str:
+    def _build_system_prompt(registry: ToolRegistry, cwd: str = "") -> str:
         lines = []
         for t in registry.get_all():
             params = "; ".join(
@@ -87,19 +89,73 @@ class LiteLLMToolAgent(AgentInterface):
                 for p in t.parameters
             )
             lines.append(f"- {t.name}: {t.description} | {params}")
+        cwd_line = f"\nCurrent working directory: {cwd}\n" if cwd else ""
         return (
             "You are MOZA, an AI operating system agent.\n\n"
             "Available tools:\n" + "\n".join(lines) + "\n\n"
+            f"{cwd_line}"
             "STRICT RULE — Greetings & casual conversation: IF the user says hi, hello, hey, how are you,\n"
             "or any casual greeting / general question, you MUST respond directly with text.\n"
             "NEVER call any tool (filesystem, terminal, browser) for greetings or casual chat.\n"
             "Only use tools when the user explicitly asks for a task (e.g. 'create a file', 'search the web').\n\n"
+            "STRICT RULE — Respect explicit tool requests: IF the user explicitly requests a specific tool\n"
+            "(e.g. 'use terminal', 'use browser'), you MUST use that tool.\n"
+            "Do not default to a different tool if the user specified which one to use.\n\n"
+            "STRICT RULE — Never drop or alter content: When writing to a file, you MUST pass the exact content\n"
+            "requested by the user. NEVER send empty strings or placeholder spaces to bypass validation.\n"
+            "If the content is empty, write an empty file — do not substitute spaces.\n\n"
+            "CLARIFICATION RULE: If the user's request is vague, ambiguous, or lacking detail\n"
+            "(e.g. 'find me something interesting' or 'do some research'), DO NOT guess.\n"
+            "Instead, respond with clarifying questions to narrow down what they want.\n"
+            "Only proceed with tool calls once the request is specific enough.\n\n"
             "DECIDE: Is this a simple conversational task (greeting, simple question, yes/no, general knowledge)?\n"
             "  YES - Respond directly. NO tools needed.\n"
-            "  NO  - Use tools to accomplish the task. Call one tool at a time.\n"
+            "  NO  - Is the request specific and detailed?\n"
+            "    YES - Use tools to accomplish the task. Call one tool at a time.\n"
+            "    NO  - Ask clarifying questions before using any tools.\n"
             "After receiving tool results, decide the next step.\n"
             "When the task is complete, respond with a final summary."
         )
+
+    @staticmethod
+    def _sanitize_tool_result(result: dict | Any) -> dict:
+        """Remove binary/image fields that would trigger vision errors in non-vision LLMs."""
+        if not isinstance(result, dict):
+            return result
+
+        cleaned = {}
+        for k, v in result.items():
+            if k in ("screenshot_base64", "image_data", "image", "base64"):
+                continue
+            if isinstance(v, str) and len(v) > 1000:
+                # Check if the string looks like base64 image data
+                if re.match(r'^[A-Za-z0-9+/=]{100,}$', v[:200]):
+                    v = f"<{k}: {len(v)} bytes of binary data, omitted>"
+            if isinstance(v, dict):
+                v = LiteLLMToolAgent._sanitize_tool_result(v)
+            elif isinstance(v, list):
+                v = [LiteLLMToolAgent._sanitize_tool_result(i) if isinstance(i, dict) else i for i in v]
+            cleaned[k] = v
+
+        # Truncate oversized stdout/stderr to prevent token overflow
+        for key in ("stdout", "stderr"):
+            if key in cleaned and isinstance(cleaned[key], str) and len(cleaned[key]) > 10000:
+                cleaned[key] = cleaned[key][:10000] + "\n... [output truncated]"
+        return cleaned
+
+    # ── message normalization ─────────────────────────────────────────────
+
+    @staticmethod
+    def _normalize_message(msg: dict) -> dict:
+        """Ensure every message dict contains all fields expected by LiteLLM's serializer."""
+        base = {
+            "role": msg.get("role", "user"),
+            "content": msg.get("content"),
+            "name": msg.get("name"),
+            "tool_calls": msg.get("tool_calls"),
+            "tool_call_id": msg.get("tool_call_id"),
+        }
+        return {k: v for k, v in base.items() if v is not None}
 
     # ── provider resolution ───────────────────────────────────────────────
 
@@ -118,8 +174,9 @@ class LiteLLMToolAgent(AgentInterface):
         registry = context.tool_registry
         provider = self._provider
 
+        cwd = os.getcwd()
         messages: list[dict] = [
-            {"role": "system", "content": self._build_system_prompt(registry)},
+            {"role": "system", "content": self._build_system_prompt(registry, cwd=cwd)},
             {"role": "user", "content": task.description if task else "No task"},
         ]
 
@@ -143,12 +200,13 @@ class LiteLLMToolAgent(AgentInterface):
             env_context = await ContextBuilder.build_context(context)
             messages[0] = {
                 "role": "system",
-                "content": f"{self._build_system_prompt(registry)}\n\n{env_context}",
+                "content": f"{self._build_system_prompt(registry, cwd=cwd)}\n\n{env_context}",
             }
 
+            normalized_msgs = [self._normalize_message(m) for m in messages]
             kwargs: dict = {
                 "model": provider.model,
-                "messages": messages,
+                "messages": normalized_msgs,
                 "tools": tools,
                 "tool_choice": "auto",
                 "parallel_tool_calls": False,
@@ -246,17 +304,11 @@ class LiteLLMToolAgent(AgentInterface):
                 except Exception as e:
                     result = {"success": False, "stderr": str(e)}
 
-                # Strip large binary blobs before feeding to LLM context
-                _llm_result = result
-                if isinstance(result, dict):
-                    _meta = result.get("metadata", {})
-                    if _meta.get("screenshot_base64"):
-                        _meta = dict(_meta)
-                        _meta.pop("screenshot_base64", None)
-                        _llm_result = dict(result)
-                        _llm_result["metadata"] = _meta
-                        _llm_result["_screenshot_taken"] = True
+                # Strip large/binary blobs before feeding to LLM context
+                _llm_result = self._sanitize_tool_result(result)
                 result_str = json.dumps(_llm_result) if isinstance(_llm_result, dict) else str(_llm_result)
+                if len(result_str) > 50000:
+                    result_str = result_str[:50000] + "\n... [truncated]"
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": result_str})
 
                 payload: dict = {"tool": fn_name}

@@ -1,0 +1,49 @@
+providers:
+  default: openrouter
+
+  openrouter:
+    api_key: ${OPENROUTER_API_KEY}
+    model: openrouter/qwen/qwen3-32b
+    base_url: https://openrouter.ai/api/v1
+
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    model: openai/gpt-4o
+
+  groq:
+    api_key: ${GROQ_API_KEY}
+    model: groq/llama-3.3-70b-versatile
+    base_url: https://api.groq.com/openai/v1
+
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+    model: anthropic/claude-sonnet-4-20260514
+
+  ollama:
+    base_url: http://localhost:11434
+    model: ollama/qwen3:235b
+
+  vllm:
+    base_url: http://localhost:8000
+    model: openai/qwen3-235b
+
+  lm_studio:
+    base_url: http://localhost:1234
+    model: openai/local-model
+
+litellm:
+  port: 4000
+  drop_params: true
+  add_function_to_prompt: true
+
+agent_type: litellm  # "litellm", "mock", "openhands", "groq", or "openrouter"
+
+agents:
+  mock:
+    allowed_tools: []
+  openhands:
+    allowed_tools: []
+
+logging:
+  level: DEBUG
+  file: logs/moza.log

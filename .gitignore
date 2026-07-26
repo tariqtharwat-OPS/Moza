@@ -1,42 +1,16 @@
-# Config & secrets
-config.yaml
-.env
-.env.local
-*.key
-
-# Python
+# junk
+frontend-dev-err.txt
+frontend-dev-out.txt
+python_info.json
+start-frontend.bat
+wikipedia_python.txt
+*.tmp
+*.log
 __pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-*.egg
-dist/
+*.pyc
+.pytest_cache/
 
-# Node
+# Node / frontend
 node_modules/
 .next/
-out/
 *.tsbuildinfo
-next-env.d.ts
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-logs/
-*.log
-
-# Build
-build/
-desktop/out/
-
-# Sessions (runtime test artifacts)
-sessions/

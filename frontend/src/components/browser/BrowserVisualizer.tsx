@@ -33,17 +33,35 @@ export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
 
   const screenshotSrc =
     (metaScreenshot as string) || state.screenshotBase64 || null;
-  const displayUrl = (metaUrl as string) || state.url || "—";
-  const displayTitle = (metaTitle as string) || state.title || "—";
+  const displayUrl = (metaUrl as string) || state.url || null;
+  const displayTitle = (metaTitle as string) || state.title || null;
 
-  if (!screenshotSrc && !displayUrl) {
-    return null;
-  }
+  const hasContent = screenshotSrc || displayUrl || events.length > 0;
 
   const actionLabel =
-    lastEvent.type === "tool_call"
+    lastEvent?.type === "tool_call"
       ? ((payload.args as Record<string, unknown>)?.action as string) || ""
       : "result";
+
+  /* ── Empty state ─────────────────────────────────────────────── */
+  if (!hasContent) {
+    return (
+      <div className="overflow-hidden rounded-xl border border-zinc-700/50 bg-zinc-950">
+        <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-2.5">
+          <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+            <span className="h-2 w-2 rounded-full bg-blue-500" />
+            Browser
+          </span>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-xs text-zinc-600">
+          <svg className="h-8 w-8 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+          </svg>
+          <span>Waiting for a browser task...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-700/50 bg-zinc-950">
@@ -55,7 +73,7 @@ export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
         <div className="flex flex-1 items-center gap-2 overflow-hidden">
           <span className="text-xs text-zinc-400">URL:</span>
           <span className="truncate font-mono text-xs text-zinc-300">
-            {displayUrl}
+            {displayUrl || "\u2014"}
           </span>
         </div>
         <div className="flex gap-1">
@@ -95,17 +113,10 @@ export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
                 src={`data:image/png;base64,${screenshotSrc}`}
                 alt="Browser screenshot"
                 className="w-full object-contain"
-                style={{ maxHeight: 480 }}
+                style={{ maxHeight: 360 }}
               />
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-2 px-4 py-16 text-xs text-zinc-600">
-              <svg className="h-8 w-8 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
-              </svg>
-              <span>Waiting for a browser task...</span>
-            </div>
-          )}
+          ) : null}
           {actionLabel && (
             <div className="border-t border-zinc-800 px-4 py-1.5 text-xs text-zinc-500">
               {actionLabel}
@@ -115,7 +126,7 @@ export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
       )}
 
       {activeTab === "actions" && (
-        <div className="max-h-48 overflow-y-auto px-4 py-2">
+        <div className="max-h-40 overflow-y-auto px-4 py-2">
           {events.length === 0 ? (
             <p className="py-4 text-center text-xs text-zinc-600">
               No browser actions yet
@@ -128,9 +139,9 @@ export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
               const label =
                 ev.type === "tool_call"
                   ? act
-                    ? `→ ${act}`
-                    : "→ call"
-                  : `✓ result`;
+                    ? `\u2192 ${act}`
+                    : "\u2192 call"
+                  : `\u2713 result`;
               return (
                 <div
                   key={i}

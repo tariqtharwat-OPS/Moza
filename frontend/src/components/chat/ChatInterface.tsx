@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, type FormEvent } from "react";
-import { streamTask, type MozaEvent } from "@/lib/api";
+import { streamTask, approveTask, rejectTask, type MozaEvent } from "@/lib/api";
+import BrowserVisualizer from "@/components/browser/BrowserVisualizer";
 import TerminalComponent from "@/components/terminal/TerminalComponent";
 
 function ThinkingDots() {
@@ -147,6 +148,47 @@ function StreamingMessage({ content }: { content: string }) {
   );
 }
 
+function ApprovalBanner({
+  waiting,
+  onApprove,
+  onReject,
+}: {
+  waiting: { tool: string; description: string };
+  onApprove: () => void;
+  onReject: () => void;
+}) {
+  const isPending = waiting.description === "approving..." || waiting.description === "rejecting...";
+  return (
+    <div className="overflow-hidden rounded-xl border border-amber-600/40 bg-amber-950/20">
+      <div className="flex items-center gap-2 border-b border-amber-800/30 px-4 py-2.5">
+        <span className="h-2 w-2 rounded-full bg-amber-400" />
+        <span className="text-xs font-medium text-amber-300">Approval Required</span>
+      </div>
+      <div className="px-4 py-3">
+        <p className="mb-2 text-sm text-zinc-300">
+          {waiting.description || `Tool "${waiting.tool}" requires approval.`}
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={onApprove}
+            disabled={isPending}
+            className="rounded-lg bg-emerald-700 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
+          >
+            {waiting.description === "approving..." ? "Approving..." : "Approve"}
+          </button>
+          <button
+            onClick={onReject}
+            disabled={isPending}
+            className="rounded-lg bg-red-800 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+          >
+            {waiting.description === "rejecting..." ? "Rejecting..." : "Reject"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FinalMessage({ content }: { content: string }) {
   if (!content) return null;
   return (
@@ -166,6 +208,12 @@ export default function ChatInterface() {
   const [streaming, setStreaming] = useState(false);
   const [finalMessage, setFinalMessage] = useState("");
   const [terminalEvents, setTerminalEvents] = useState<MozaEvent[]>([]);
+  const [browserEvents, setBrowserEvents] = useState<MozaEvent[]>([]);
+  const [waitingApproval, setWaitingApproval] = useState<{
+    taskId: string;
+    tool: string;
+    description: string;
+  } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -181,8 +229,10 @@ export default function ChatInterface() {
     setStreaming(true);
     setEvents([]);
     setTerminalEvents([]);
+    setBrowserEvents([]);
     setStreamingContent("");
     setFinalMessage("");
+    setWaitingApproval(null);
 
     let sid = sessionId;
 
@@ -208,6 +258,26 @@ export default function ChatInterface() {
         ) {
           setTerminalEvents((prev) => [...prev, event]);
           scrollToBottom();
+        } else if (
+          (event.type === "tool_call" || event.type === "tool_result") &&
+          event.payload.tool === "browser"
+        ) {
+          setBrowserEvents((prev) => [...prev, event]);
+          scrollToBottom();
+        } else if (
+          event.type === "browser_started" ||
+          event.type === "browser_action"
+        ) {
+          setBrowserEvents((prev) => [...prev, event]);
+          scrollToBottom();
+        } else if (event.type === "waiting_approval") {
+          setWaitingApproval({
+            taskId: event.task_id,
+            tool: (event.payload.tool as string) || "unknown",
+            description: (event.payload.description as string) || "",
+          });
+          setEvents((prev) => [...prev, event]);
+          scrollToBottom();
         } else {
           setEvents((prev) => [...prev, event]);
           scrollToBottom();
@@ -227,6 +297,22 @@ export default function ChatInterface() {
         },
       ]);
     } finally {
+      setWaitingApproval(null);
+      scrollToBottom();
+    }
+  }
+
+  async function handleApprove() {
+    if (!waitingApproval) return;
+    setWaitingApproval((prev) => prev ? { ...prev, description: "approving..." } : null);
+    await approveTask(waitingApproval.taskId);
+  }
+
+  async function handleReject() {
+    if (!waitingApproval) return;
+    setWaitingApproval((prev) => prev ? { ...prev, description: "rejecting..." } : null);
+    await rejectTask(waitingApproval.taskId);
+  }
       setStreaming(false);
       scrollToBottom();
     }
@@ -244,6 +330,12 @@ export default function ChatInterface() {
         return <ToolCallBlock key={idx} event={event} />;
       case "tool_result":
         return <ToolResultBlock key={idx} event={event} />;
+      case "waiting_approval":
+        return (
+          <div key={idx} className="rounded-xl border border-amber-600/30 bg-amber-950/10 px-4 py-2 text-xs text-amber-400">
+            Awaiting approval for tool: {(event.payload.tool as string) || "unknown"}
+          </div>
+        );
       case "task_completed":
       case "task_failed":
         return <TaskComplete key={idx} event={event} />;
@@ -278,6 +370,16 @@ export default function ChatInterface() {
           {events.map((ev, i) => renderEvent(ev, i))}
           {terminalEvents.length > 0 && (
             <TerminalComponent events={terminalEvents} />
+          )}
+          {browserEvents.length > 0 && (
+            <BrowserVisualizer events={browserEvents} />
+          )}
+          {waitingApproval && (
+            <ApprovalBanner
+              waiting={{ tool: waitingApproval.tool, description: waitingApproval.description }}
+              onApprove={handleApprove}
+              onReject={handleReject}
+            />
           )}
           {streamingContent && <StreamingMessage content={streamingContent} />}
           {finalMessage && <FinalMessage content={finalMessage} />}

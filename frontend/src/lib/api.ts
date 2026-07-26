@@ -31,6 +31,7 @@ export async function* streamTask(
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let isDataLine = false;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -41,7 +42,6 @@ export async function* streamTask(
     const lines = buffer.split("\n");
     buffer = lines.pop() || "";
 
-    let isDataLine = false;
     for (const line of lines) {
       if (line.startsWith("event: step")) {
         isDataLine = true;
@@ -56,4 +56,18 @@ export async function* streamTask(
       }
     }
   }
+}
+
+export async function approveTask(taskId: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/task/${taskId}/approve`, {
+    method: "POST",
+  });
+  return res.ok;
+}
+
+export async function rejectTask(taskId: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/task/${taskId}/reject`, {
+    method: "POST",
+  });
+  return res.ok;
 }

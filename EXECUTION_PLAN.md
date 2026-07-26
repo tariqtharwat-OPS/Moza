@@ -215,7 +215,19 @@ All proven layers below are **frozen** as of Phase 3.2.5 — no regression allow
   - No new capability can break any frozen benchmark.
   - All new features must include Canonical Benchmark + Regression Test.
   - Vision, Approval, and Memory are deferred to Phase 3.4+.
-*Notes: This freeze is PERMANENT. Future phases MUST respect it. Next: Phase 3.3 (Frontend E2E Integration) → Phase 3.4 (Vision-Enhanced Reasoning).*
+*Notes: This freeze is PERMANENT. Future phases MUST respect it.*
+
+### Phase 3.3: Frontend E2E Integration Testing - [x]
+**Exit Criteria:**
+- [x] **Chat & SSE Streaming**: `ChatInterface` connects to `POST /v1/task/execute` and renders streaming `Event` objects (thinking, tool_call, tool_result) without UI crashes or broken JSON parsing.
+- [x] **SSE Parser Fix**: `isDataLine` flag moved outside the `while(read)` loop — events split across TCP chunks no longer lost.
+- [x] **Terminal Visualization**: `TerminalComponent` (xterm.js) correctly displays terminal commands and output when agent uses `TerminalTool`.
+- [x] **Browser Visualization**: `BrowserVisualizer` correctly renders screenshots from base64 metadata, URL, title, and action log.
+- [x] **Approval UI Flow**: `ChatInterface` handles `WAITING_APPROVAL` events — amber banner with Approve/Reject buttons, calls `POST /v1/task/{id}/approve` and `/reject`, updates UI state.
+- [x] **API Layer**: `api.ts` exports `approveTask()` and `rejectTask()` functions for the approval endpoints.
+- [x] **Zero Backend Regression**: No backend changes needed. All 81 tests still pass. Regression freeze intact.
+- [x] **Manual Testing Checklist**: `TESTING_CHECKLIST.md` created with 6 test scenarios covering chat streaming, terminal, browser, approval, integrated E2E, and error handling.
+*Notes: No backend changes were required. All changes were in `frontend/src/lib/api.ts` (SSE parser fix + approval functions) and `frontend/src/components/chat/ChatInterface.tsx` (WAITING_APPROVAL handler + ApprovalBanner component + approve/reject callbacks). BrowserVisualizer.tsx and TerminalComponent.tsx were already correctly wired. Next: Phase 3.4 (Vision-Enhanced Reasoning).*
 
 ### Phase 3.2: Autonomous Research Benchmark (Stable Fixtures) - [x]
 **Exit Criteria:**

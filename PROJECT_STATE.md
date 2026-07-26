@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — MOZA Living Context Document
 
 > **Purpose:** Single source of truth for any AI agent or developer joining the project.
-> **Last Updated:** Phase 3.3 (Frontend E2E Integration — chat, terminal, browser, approval wired)
+> **Last Updated:** Phase 3.3.5 — Agent Behavior Audit & Fix (tool overuse prevention)
 > **Repository:** https://github.com/tariqtharwat-OPS/Moza
 
 ---
@@ -41,7 +41,7 @@ Every phase must explicitly state what architectural layers it proved. Coverage 
 Build capabilities (e.g., "agent can research and synthesize across multiple pages"), not just components. A component without a proven capability is technical debt.
 
 ### No Regression
-No new capability breaks an old one. 100% test pass rate required before any phase can be marked complete. Current baseline: 81 tests.
+No new capability breaks an old one. 100% test pass rate required before any phase can be marked complete. Current baseline: 81 unit/integration + 5 E2E = 86 tests.
 
 ### Every Capability Has a Demo
 Proof of concept via raw E2E logs captured in benchmark output. Every architectural layer in the coverage map links to evidence.
@@ -55,13 +55,32 @@ Refactor before adding new features. Monolithic code must be split, error paths 
 
 | Property | Value |
 |----------|-------|
-| **Current Phase** | Phase 3.3 — Frontend E2E Integration Complete |
-| **Total Passing Tests** | 81 — 100% pass rate (backend freeze intact) |
-| **Last Successful Benchmark** | Phase 3.3 — Manual E2E verification: chat SSE streaming, terminal xterm.js output, browser screenshot visualization, approval approve/reject flow |
+| **Current Phase** | Phase 3.3.5 — Agent Behavior Audit & Fix (tool overuse prevention) |
+| **Total Passing Tests** | 81 unit/integration + 5 new E2E behavior tests = 86 total — 100% pass rate (backend freeze intact) |
+| **Last Successful Benchmark** | Phase 3.3.5 — Agent now responds directly to simple greetings/questions without unnecessary tool calls; verified by 5 new E2E Playwright tests |
 | **Latest Model** | Groq `llama-3.3-70b-versatile` |
 | **Engine Architecture** | ReAct loop via `LiteLLMToolAgent` (backend only, no UI) |
 | **Browser Engine** | `PlaywrightEngine` implementing `BrowserEngine` ABC (headless Chromium, 1280x720) |
 | **Context Strategy** | 7-section `ContextBuilder` (task, tools, workspace tree, git status, recent events, artifacts, environment) |
+
+### Phase 3.3.5 — Agent Behavior Audit & Fix
+
+**Problem:** Testing revealed the agent over-engineered simple tasks — `"Say hello in one word"` triggered `filesystem` tool with `action: "demo", path: "."` and returned technical jargon instead of "Hello".
+
+**Root Cause:**
+1. **MockAgent** (default agent): Always iterated ALL registered tools for EVERY task, including greetings
+2. **LiteLLMToolAgent** system prompt: "Use tools to accomplish the task" — no guidance that direct responses are OK
+
+**Fixes Applied:**
+- `mock_agent.py`: Added `_is_simple_conversational()` heuristic detecting greetings, simple Qs, yes/no, Arabic commands (`قل مرحباً`). Simple tasks emit `AGENT_THINKING → LLM_TOKEN → LLM_FINISHED` with **zero tool calls**. Complex tasks unchanged.
+- `litellm_tool_agent.py`: System prompt now asks `"DECIDE: Is this a simple conversational task? YES → Respond directly. NO → Use tools."`
+- `test_agent_behavior_patterns.py` (new): 5 Playwright E2E tests for greeting, simple Q, tool task, mixed, Arabic
+- `RUNNING_GUIDE.md`: Added "Agent Behavior Patterns" section with expected behavior tables
+
+**Audit Trail:**
+- Commit: [`3068532`](https://github.com/tariqtharwat-OPS/Moza/commit/3068532)
+- Files: `mock_agent.py` (+116 lines), `litellm_tool_agent.py` (+4 lines), `test_agent_behavior_patterns.py` (new, 125 lines), `RUNNING_GUIDE.md` (+47 lines)
+- All 81 existing tests pass (zero regression). 5 new E2E tests added.
 
 ### Phase 3.2 Exit Criteria (Confirmed)
 - ✅ Stability guarantee: local HTTP server + static HTML fixtures (no live data)
@@ -146,6 +165,9 @@ Legend: ✓ = Proved by live benchmark, ✗ = Not yet exercised, ≈ = Partial
 | `backend/tests/fixtures/research/` | Static HTML fixtures for Phase 3.2 benchmark |
 | `backend/tests/unit/` | Unit tests (tools, config, environment, events) |
 | `backend/tests/integration/` | Integration tests (replay API, SSE flow) |
+| `backend/tests/e2e/test_agent_behavior_patterns.py` | E2E behavior pattern tests (greeting, simple Q, tool task, mixed, Arabic) |
+| `backend/tests/e2e/test_real_browser_ui.py` | Real-browser CORS + UI interaction E2E test |
+| `RUNNING_GUIDE.md` | Quick-start guide with NTFS warning, CORS, troubleshooting, agent behavior patterns |
 
 ---
 
@@ -205,3 +227,28 @@ Route (app)                                 Size  First Load JS
 ┌ ○ /                                     4.7 kB         108 kB
 └ ○ /_not-found                            993 B         104 kB
 ```
+
+---
+
+## 7. Full Audit Trail (Git History)
+
+| Date | Commit | Description |
+|------|--------|-------------|
+| 2026-07-26 | [`3068532`](https://github.com/tariqtharwat-OPS/Moza/commit/3068532) | **Agent Behavior Audit** — fix tool overuse for simple conversational tasks |
+| 2026-07-26 | [`353f3eb`](https://github.com/tariqtharwat-OPS/Moza/commit/353f3eb) | **CORS + E2E** — CORSMiddleware, real-browser test proving zero CORS errors |
+| 2026-07-26 | [`10443f5`](https://github.com/tariqtharwat-OPS/Moza/commit/10443f5) | **Docs** — Ultimate Product Vision, NTFS requirement, running guide |
+| 2026-07-26 | [`b803349`](https://github.com/tariqtharwat-OPS/Moza/commit/b803349) | **Build Fixes** — Frontend E2E audit, resolve all build errors |
+| 2026-07-26 | [`45cf31e`](https://github.com/tariqtharwat-OPS/Moza/commit/45cf31e) | **Orphan Fix** — remove orphan code from handleSubmit |
+| 2026-07-26 | [`9bdaa7a`](https://github.com/tariqtharwat-OPS/Moza/commit/9bdaa7a) | **Phase 3.3** — Frontend E2E Integration (chat, terminal, browser, approval) |
+| 2026-07-25 | [`f41a96c`](https://github.com/tariqtharwat-OPS/Moza/commit/f41a96c) | **Regression Freeze** — Phase 3.2.5, all canonical benchmarks pass |
+| 2026-07-25 | [`ce42277`](https://github.com/tariqtharwat-OPS/Moza/commit/ce42277) | **SSOT** — PROJECT_STATE.md as single source of truth |
+| 2026-07-25 | [`54e19f2`](https://github.com/tariqtharwat-OPS/Moza/commit/54e19f2) | **Phase 3.2** — Autonomous Research Benchmark |
+| 2026-07-25 | [`0492a34`](https://github.com/tariqtharwat-OPS/Moza/commit/0492a34) | **Phase 3.1** — Live E2E browser benchmark |
+| 2026-07-25 | [`401b6fd`](https://github.com/tariqtharwat-OPS/Moza/commit/401b6fd) | **Phase 3.0** — Abstract BrowserEngine, modular BrowserTool |
+| 2026-07-25 | [`1682a82`](https://github.com/tariqtharwat-OPS/Moza/commit/1682a82) | **Phase 2.14** — Backend Replay API |
+| 2026-07-24 | [`c2a3d6b`](https://github.com/tariqtharwat-OPS/Moza/commit/c2a3d6b) | **Phase 2.13** — Software Engineer Benchmark with failure-recovery |
+| 2026-07-24 | [`21120f3`](https://github.com/tariqtharwat-OPS/Moza/commit/21120f3) | **Phase 2.12** — Recovery Loop for tool failures |
+| 2026-07-24 | [`722f866`](https://github.com/tariqtharwat-OPS/Moza/commit/722f866) | **Phase 2.11** — ContextBuilder |
+| 2026-07-24 | [`8f1d906`](https://github.com/tariqtharwat-OPS/Moza/commit/8f1d906) | **Phase 2.10** — ReAct loop with max_steps |
+
+**Repository:** https://github.com/tariqtharwat-OPS/Moza

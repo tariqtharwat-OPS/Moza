@@ -129,7 +129,61 @@ Layer 6: Canonical Capability Benchmarks  ← CERTIFICATION GATE
 
 ---
 
-## 4. Proposed Benchmark Structure (YAML-Driven)
+## 4. Capability Certification Model
+
+> Each capability is defined by a formal Capability Contract before any implementation.
+> "Capability First, not Framework First" — design the contract from real needs.
+
+### 4.1 Capability Contract Structure
+
+Every capability must document the following in its contract:
+
+| Field | Description | Example (Conversation) |
+|-------|-------------|----------------------|
+| **Purpose** | Why this capability exists | Natural human-like dialogue without tool invocation |
+| **User Story** | Who needs it and why | "As a user, I want to greet MOZA and receive a natural response" |
+| **Inputs** | What the capability accepts | Text messages in Arabic or English |
+| **Expected Outputs** | What the capability produces | Natural language response, same language, no tool calls |
+| **Forbidden Behaviors** | What the capability must NOT do | Tool calls, browser nav, file ops, language switching |
+| **Definition of Done** | Production-ready criteria | Responds to Arabic/English greetings, zero tool calls, <2s response |
+| **Evidence Requirements** | What proves it works | Screenshots, network trace, response times, error logs |
+| **Maturity Level** | Readiness level (0-5) | Level 4 (Production Ready) |
+| **Confidence Score** | Reliability estimate | 95% |
+| **Dependencies** | What it relies on | IntentClassifier, LiteLLMToolAgent, ChatInterface |
+| **Capability History** | Version log | v1.0: initial, v1.1: Arabic support |
+
+### 4.2 Maturity Levels
+
+| Level | Name | Meaning |
+|-------|------|---------|
+| 0 | NOT_IMPLEMENTED | Capability does not exist |
+| 1 | BASIC | Core functionality works in ideal conditions |
+| 2 | ERROR_HANDLING | Errors are caught and reported gracefully |
+| 3 | REALISTIC | Works with real-world inputs and edge cases |
+| 4 | PRODUCTION_READY | Ready for end-users; all DoD criteria met |
+| 5 | TRUSTED_AUTONOMY | Can operate without human supervision |
+
+### 4.3 Definition of Done (DoD)
+
+A capability is "done" (Production Ready) when ALL DoD criteria are met:
+- All required inputs produce correct outputs
+- Zero forbidden behaviors observed
+- Response time within SLA
+- No console or network errors
+- No retries or loops in normal operation
+- Session context preserved
+- Evidence artifacts captured
+
+### 4.4 Forbidden Behaviors
+
+Every capability contract explicitly lists forbidden behaviors — actions the capability must NEVER take. These are tested as negative assertions:
+- If a conversational input triggers ANY tool call → certification FAILS
+- If Arabic input produces English output → certification FAILS
+- If response exceeds time SLA → certification FAILS
+
+---
+
+## 5. Proposed Benchmark Structure (YAML-Driven)
 
 ### 4.1 Rationale
 
@@ -214,7 +268,7 @@ This harness is **Phase 4.5** and NOT implemented yet. The current YAML files se
 
 ---
 
-## 5. Regression Freeze Protocol
+## 6. Regression Freeze Protocol
 
 > A capability is **frozen** once certified. No code change may break a certified capability.
 
@@ -228,7 +282,7 @@ This harness is **Phase 4.5** and NOT implemented yet. The current YAML files se
 
 ---
 
-## 6. Tooling & CI Requirements
+## 7. Tooling & CI Requirements
 
 | Tool | Purpose | Status |
 |------|---------|--------|

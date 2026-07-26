@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — MOZA Living Context Document
 
 > **Purpose:** Single source of truth for any AI agent or developer joining the project.
-> **Last Updated:** Strategic Pivot — Capability Certification Framework + Controlled Evolution Architecture
+> **Last Updated:** Phase 4.1 — Capability Contract Model (Conversation Contract + Minimal Base Class)
 > **Repository:** https://github.com/tariqtharwat-OPS/Moza
 
 ---
@@ -61,7 +61,7 @@ MOZA's self-improvement is strictly governed by Three-Tier Deployment and Four S
 
 | Property | Value |
 |----------|-------|
-| **Current Phase** | Phase 4.0 — Executive Mind, Workspace UI & Capability Certification |
+| **Current Phase** | Phase 4.1 — Capability Contract Model (Conversation Contract) |
 | **Total Passing Tests** | 94 tests (81 unit/integration + 13 intent classifier) = 100% pass rate (regression freeze intact) |
 | **Capabilities Defined / Certified** | 21 defined, 11 certified ✅ (see `TEST_STRATEGY.md`) |
 | **Last Successful Benchmark** | Phase 4.0 — Executive Mind (deterministic intent routing), Workspace UI (3-panel layout, welcome card, sidebar, collapsible execution panel) |
@@ -69,6 +69,33 @@ MOZA's self-improvement is strictly governed by Three-Tier Deployment and Four S
 | **Engine Architecture** | Executive Mind (Orchestrator-level `classify_intent()`) + ReAct loop via `LiteLLMToolAgent` |
 | **Browser Engine** | `PlaywrightEngine` implementing `BrowserEngine` ABC (headless Chromium, 1280x720) |
 | **Context Strategy** | 7-section `ContextBuilder` (task, tools, workspace tree, git status, recent events, artifacts, environment) |
+
+### Phase 4.1 — Capability Contract Model
+
+**Problem:** The project shifted from "test count" to "capability certification" as the primary quality metric, but there was no formal contract defining what a capability is, what it must do, and what it must NOT do.
+
+**Philosophy:** "Capability First, not Framework First." Design the contract from real needs, not theoretical architecture.
+
+**Deliverables:**
+1. **Conversation Contract** — Comprehensive capability contract defining Purpose, Inputs, Outputs, Forbidden Behaviors, Definition of Done, Evidence Requirements, Maturity Level, and Capability History for the Conversation capability.
+2. **Minimal Base Class** — `Capability` ABC with `CertificationResult` dataclass, `MaturityLevel` enum, and three abstract methods (`certify`, `get_definition_of_done`, `get_forbidden_behaviors`). NOT a full framework — only what Conversation needs.
+3. **Source of Truth Updates** — PROJECT_STATE.md, TEST_STRATEGY.md, ARCHITECTURE.md (ADR-003) updated.
+
+**Files Created:**
+- `backend/moza/certification/capabilities/conversation_contract.md`
+- `backend/moza/certification/capability_base.py`
+
+**Capability-First Philosophy:**
+- Each capability has a formal contract (markdown document) before any implementation
+- The contract defines forbidden behaviors explicitly — not just what it should do, but what it must NOT do
+- Definition of Done is the certification gate
+- Maturity Level quantifies readiness (Level 0-5)
+- Confidence Score quantifies reliability (0-100%)
+- Future capabilities will each have their own contract before implementation begins
+
+**Audit Trail:**
+- Commit: [`b6a00a4`](https://github.com/tariqtharwat-OPS/Moza/commit/b6a00a4)
+- All 76 backend unit tests pass (zero regression).
 
 ### Phase 3.3.5 — Agent Behavior Audit & Fix
 
@@ -182,14 +209,11 @@ Legend: ✓ = Proved by live benchmark, ✗ = Not yet exercised, ≈ = Partial
 
 ## 4. Immediate Next Steps
 
-### Phase 3.4: Vision-Enhanced Browser Reasoning (Screenshots + DOM)
-- Add vision capability: feed screenshot images to LLM alongside DOM text for richer reasoning.
-- Agent must navigate a page, screenshot it, and use the screenshot content to answer a visual question.
-- All 5 frozen benchmarks + 81+ existing tests must still pass.
-
-### Phase 4: The Brain (Memory & RAG)
-- Integrate Mem0 for long/short-term memory
-- Integrate LlamaIndex for local RAG
+### Phase 4.2: Implement Conversation Certification
+- Implement the ConversationCapability class extending Capability ABC
+- Execute certification against the Conversation contract
+- Capture evidence (screenshots, traces, timing)
+- Report CertificationResult
 
 ### Phase 5: Production & Polish
 - Plugin system setup
@@ -293,6 +317,7 @@ Route (app)                                 Size  First Load JS
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-07-26 | [`b6a00a4`](https://github.com/tariqtharwat-OPS/Moza/commit/b6a00a4) | **Phase 4.1** — Capability Contract Model (Conversation Contract + Minimal Base Class) |
 | 2026-07-26 | [`602d9b2`](https://github.com/tariqtharwat-OPS/Moza/commit/602d9b2) | **Phase 4.0** — Executive Mind, Workspace UI & Capability Certification |
 | 2026-07-26 | [`53d92df`](https://github.com/tariqtharwat-OPS/Moza/commit/53d92df) | **Strategic Pivot** — benchmarks/ with 4 YAML capability specs |
 | 2026-07-26 | [`4917753`](https://github.com/tariqtharwat-OPS/Moza/commit/4917753) | **Strategic Pivot** — TEST_STRATEGY.md with Capability Certification Matrix |

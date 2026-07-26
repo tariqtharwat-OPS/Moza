@@ -1,9 +1,14 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useRef, useCallback, type FormEvent } from "react";
 import { streamTask, approveTask, rejectTask, type MozaEvent } from "@/lib/api";
 import BrowserVisualizer from "@/components/browser/BrowserVisualizer";
-import TerminalComponent from "@/components/terminal/TerminalComponent";
+
+const TerminalComponent = dynamic(
+  () => import("@/components/terminal/TerminalComponent"),
+  { ssr: false }
+);
 
 function ThinkingDots() {
   return (

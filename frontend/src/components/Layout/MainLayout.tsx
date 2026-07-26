@@ -91,6 +91,23 @@ export default function MainLayout({ leftPanel, rightPanel, inputArea, agentStat
             {leftPanel}
           </div>
         </div>
+        {agentStatus && agentStatus !== "Idle" && (
+          <div className="flex items-center gap-2 border-t border-slate-800/40 px-6 py-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            <span className="text-xs text-slate-500">
+              {agentStatus === "Thinking"
+                ? "MOZA is thinking..."
+                : agentStatus === "Executing Tool"
+                  ? "Executing tool..."
+                  : agentStatus === "Error"
+                    ? "Something went wrong"
+                    : agentStatus}
+            </span>
+          </div>
+        )}
         {inputArea}
       </div>
 

@@ -114,7 +114,15 @@ class LiteLLMToolAgent(AgentInterface):
             "    YES - Use tools to accomplish the task. Call one tool at a time.\n"
             "    NO  - Ask clarifying questions before using any tools.\n"
             "After receiving tool results, decide the next step.\n"
-            "When the task is complete, respond with a final summary."
+            "When the task is complete, respond with a final summary.\n\n"
+            "CRITICAL RULE — Natural phrasing: NEVER output 'Task started', 'Task completed',\n"
+            "'Task finished', or 'The task is done' as a conversational message.\n"
+            "Instead, naturally state what you have accomplished.\n"
+            "For example, instead of 'Task completed', say:\n"
+            "  'I have successfully translated the file and saved it as ...'\n"
+            "  'Here is what I found ...'\n"
+            "  'I have created the file with the requested content. Would you like me to ...'\n"
+            "Always end with a natural question or offer for follow-up assistance."
         )
 
     @staticmethod

@@ -14,3 +14,14 @@ __pycache__/
 node_modules/
 .next/
 *.tsbuildinfo
+
+# Secrets
+.env
+
+# Runtime / session data
+sessions/
+backend/sessions/
+
+# Build artifacts
+*.egg-info/
+Documents/

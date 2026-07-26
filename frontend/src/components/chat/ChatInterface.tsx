@@ -81,35 +81,7 @@ function ToolResultBlock({ event }: { event: MozaEvent }) {
   );
 }
 
-function TaskHeader({ event }: { event: MozaEvent }) {
-  return (
-    <div className="animate-fade-in rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3">
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-        Task started
-      </div>
-      <p className="mt-1 text-sm text-slate-300">
-        {event.payload.description as string}
-      </p>
-    </div>
-  );
-}
 
-function TaskComplete({ event }: { event: MozaEvent }) {
-  const isError = event.type === "task_failed";
-  return (
-    <div className="animate-fade-in flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/30 px-4 py-3 text-sm">
-      <span className={isError ? "text-red-400" : "text-emerald-400"}>
-        {isError ? "\u2715" : "\u2713"}
-      </span>
-      <span className={isError ? "text-red-300" : "text-slate-300"}>
-        {isError
-          ? `Task failed: ${(event.payload.error as string) || "unknown error"}`
-          : "Task completed"}
-      </span>
-    </div>
-  );
-}
 
 function ApprovalBanner({
   waiting,
@@ -341,23 +313,14 @@ export default function ChatInterface() {
 
   function renderEvent(event: MozaEvent, idx: number) {
     switch (event.type) {
-      case "agent_started":
-        return <TaskHeader key={idx} event={event} />;
       case "agent_thinking":
         return <TypingIndicator key={idx} />;
-      case "tool_call":
-        return <ToolCallBlock key={idx} event={event} />;
-      case "tool_result":
-        return <ToolResultBlock key={idx} event={event} />;
       case "waiting_approval":
         return (
           <div key={idx} className="rounded-xl border border-amber-600/30 bg-amber-950/10 px-4 py-2 text-xs text-amber-400">
             Awaiting approval for tool: {(event.payload.tool as string) || "unknown"}
           </div>
         );
-      case "task_completed":
-      case "task_failed":
-        return <TaskComplete key={idx} event={event} />;
       default:
         return null;
     }

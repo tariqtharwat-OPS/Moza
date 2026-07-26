@@ -83,7 +83,52 @@ The frontend API client (`frontend/src/lib/api.ts`) connects to
 `backend/tests/e2e/test_real_browser_ui.py` which launches a real
 Playwright browser and verifies zero CORS errors in the console.
 
-## 6. Troubleshooting
+## 6. Agent Behavior Patterns
+
+The agent intelligently decides when to use tools vs. respond directly.
+
+### Direct Responses (No Tools)
+
+For simple conversational tasks, the agent responds immediately without tool calls:
+
+| Input | Expected Behavior |
+|-------|-------------------|
+| "Say hello in one word" | Replies "Hello!" directly |
+| "What is 2 + 2?" | Replies "4" directly |
+| "قل مرحباً بكلمة واحدة فقط" | Replies "مرحباً" directly |
+| "How are you?" | Replies conversationally |
+
+### Tool-Using Responses
+
+For tasks involving files, terminal, or browser, the agent uses tools:
+
+| Input | Expected Behavior |
+|-------|-------------------|
+| "Create a file named test.txt" | Calls `filesystem` tool, confirms |
+| "List files in current directory" | Calls `filesystem` tool, shows listing |
+| "Open example.com" | Calls `browser` tool, navigates |
+
+### Mixed Interactions
+
+The agent can handle combinations — greeting first, then using tools:
+
+| Input | Expected Behavior |
+|-------|-------------------|
+| "Hello! List the files here" | Greets directly, then uses `filesystem` |
+| "Hi! Create a file and tell me what's in it" | Greets, uses tool, summarizes |
+
+### Test Verification
+
+Agent behavioral patterns are verified by E2E tests:
+```bash
+cd backend
+set PYTHONPATH=backend
+python -m pytest tests/e2e/test_agent_behavior_patterns.py -v
+```
+
+Requires both servers running (backend on :8000, frontend on :3000).
+
+## 7. Troubleshooting
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|

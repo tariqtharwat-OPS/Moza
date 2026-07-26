@@ -1,4 +1,5 @@
 import asyncio
+import re
 import time
 from collections.abc import AsyncGenerator
 
@@ -9,6 +10,84 @@ from moza.core.context import ExecutionContext
 from moza.core.models import Event, EventType, ToolResultPayload
 
 
+_SIMPLE_PATTERNS = re.compile(
+    r"^\s*(say|tell|write|give|respond|answer|reply|echo)\b.*\b(hello|hi|hey|bonjour|hola|hi there|greeting)\b",
+    re.IGNORECASE,
+)
+_WH_WORDS = re.compile(r"^\s*(what|who|when|where|why|how)\s", re.IGNORECASE)
+_SHORT_ACK = re.compile(r"^\s*(yes|no|maybe|sure|ok|thanks|thank you)\s*$", re.IGNORECASE)
+
+# Arabic simple greeting patterns (no \b — word boundaries don't work with Arabic)
+_ARABIC_CMD_GREET = re.compile(
+    r"^\s*(قل|قول|اكتب|جاوب|رد)\s.*(مرحب|سلام)", re.IGNORECASE
+)
+_ARABIC_GREET_SHORT = re.compile(
+    r"^[\s\u0600-\u06FF]{1,30}$"
+)
+_ARABIC_HAS_GREET = re.compile(r"(مرحب|سلام)", re.IGNORECASE)
+
+
+def _is_simple_conversational(text: str) -> bool:
+    """Detect if the task is a simple conversational request that needs no tools."""
+    t = text.strip()
+    if not t:
+        return False
+    if _SIMPLE_PATTERNS.match(t):
+        return True
+    if _WH_WORDS.match(t) and len(t) < 60:
+        return True
+    if _SHORT_ACK.match(t):
+        return True
+    if _ARABIC_CMD_GREET.match(t):
+        return True
+    if _ARABIC_HAS_GREET.search(t) and _ARABIC_GREET_SHORT.match(t):
+        return True
+    if re.match(r"say .+ in one word", t, re.IGNORECASE):
+        return True
+    return False
+
+
+def _detect_language(text: str) -> str:
+    """Rough language detection: if text contains Arabic chars, respond in Arabic."""
+    if re.search(r"[\u0600-\u06FF]", text):
+        return "arabic"
+    return "english"
+
+
+_SIMPLE_RESPONSES = {
+    "english": {
+        "hello": "Hello!",
+        "hi": "Hi there!",
+        "hey": "Hey!",
+        "مرحبا": "Hello!",
+        "what is your name": "I'm MOZA, an AI operating system agent.",
+        "what's your name": "I'm MOZA, an AI operating system agent.",
+        "how are you": "I'm functioning optimally, thank you!",
+    },
+    "arabic": {
+        "hello": "مرحباً",
+        "hi": "مرحباً",
+        "hey": "مرحباً",
+        "مرحبا": "مرحباً",
+    },
+}
+
+
+def _simple_reply(text: str) -> str:
+    """Generate an appropriate direct reply for a simple conversational task."""
+    lang = _detect_language(text)
+    t = text.strip().lower()
+
+    exact_responses = _SIMPLE_RESPONSES[lang]
+    for key, reply in exact_responses.items():
+        if key in t:
+            return reply
+
+    if lang == "arabic":
+        return "مرحباً"
+    return "Hello! How can I help you today?"
+
+
 class MockAgent(AgentInterface):
     async def execute(
         self,
@@ -17,14 +96,47 @@ class MockAgent(AgentInterface):
         session = context.session
         task = session.tasks[-1] if session.tasks else None
         task_id = task.id if task else "unknown"
+        task_desc = task.description if task else ""
         registry = context.tool_registry
 
+        # ── Simple conversational tasks: respond directly, no tools ──────────
+        if _is_simple_conversational(task_desc):
+            yield Event(
+                session_id=session.id,
+                task_id=task_id,
+                type=EventType.AGENT_THINKING,
+                source="mock_agent",
+                payload={"content": "Simple request detected. Responding directly."},
+            )
+            await asyncio.sleep(0.2)
+
+            reply = _simple_reply(task_desc)
+
+            yield Event(
+                session_id=session.id,
+                task_id=task_id,
+                type=EventType.LLM_TOKEN,
+                source="mock_agent",
+                payload={"content": reply},
+            )
+            await asyncio.sleep(0.1)
+
+            yield Event(
+                session_id=session.id,
+                task_id=task_id,
+                type=EventType.LLM_FINISHED,
+                source="mock_agent",
+                payload={"content": reply},
+            )
+            return
+
+        # ── Complex tasks: use tools ─────────────────────────────────────────
         yield Event(
             session_id=session.id,
             task_id=task_id,
             type=EventType.AGENT_THINKING,
             source="mock_agent",
-            payload={"content": f"Analyzing task: {task.description if task else 'unknown'}"},
+            payload={"content": f"Analyzing task: {task_desc}"},
         )
         await asyncio.sleep(0.3)
         context.cancellation_token.raise_if_cancelled()
@@ -132,7 +244,7 @@ class MockAgent(AgentInterface):
             source="mock_agent",
             payload={
                 "content": (
-                    f"Task completed! Analyzed: '{task.description if task else 'unknown'}'.\n"
+                    f"Task completed! Analyzed: '{task_desc}'.\n"
                     f"Used tools: {tool_list}.\n"
                     "Golden Rule of Mutation proven — all tool calls went through "
                     "ToolRegistry -> Tool Execution -> Event Emission."

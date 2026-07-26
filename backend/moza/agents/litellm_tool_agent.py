@@ -90,7 +90,9 @@ class LiteLLMToolAgent(AgentInterface):
         return (
             "You are MOZA, an AI operating system agent.\n\n"
             "Available tools:\n" + "\n".join(lines) + "\n\n"
-            "Use tools to accomplish the task. Call one tool at a time.\n"
+            "DECIDE: Is this a simple conversational task (greeting, simple question, yes/no, general knowledge)?\n"
+            "  YES - Respond directly. NO tools needed.\n"
+            "  NO  - Use tools to accomplish the task. Call one tool at a time.\n"
             "After receiving tool results, decide the next step.\n"
             "When the task is complete, respond with a final summary."
         )

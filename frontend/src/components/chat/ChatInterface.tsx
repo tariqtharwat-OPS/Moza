@@ -22,23 +22,23 @@ function ToolCallBlock({ event }: { event: MozaEvent }) {
   const args = event.payload.args as Record<string, unknown> | undefined;
 
   return (
-    <div className="animate-fade-in overflow-hidden rounded-xl border border-zinc-700/50 bg-zinc-900/50 text-sm">
+    <div className="animate-fade-in overflow-hidden rounded-xl border border-slate-700/40 bg-slate-900/50 text-sm">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-zinc-300 hover:bg-zinc-800/50"
+        className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-slate-300 hover:bg-slate-800/50"
       >
-        <span className="text-xs">{open ? "▾" : "▸"}</span>
+        <span className="text-xs">{open ? "\u25BE" : "\u25B8"}</span>
         <span className="font-mono text-xs font-medium text-amber-400">
           {toolName}
         </span>
         {args && (
-          <span className="truncate text-xs text-zinc-500">
+          <span className="truncate text-xs text-slate-500">
             {JSON.stringify(args).slice(0, 120)}
           </span>
         )}
       </button>
       {open && args && (
-        <pre className="overflow-x-auto border-t border-zinc-800 px-4 py-3 font-mono text-xs text-zinc-400">
+        <pre className="overflow-x-auto border-t border-slate-800 px-4 py-3 font-mono text-xs text-slate-400">
           {JSON.stringify(args, null, 2)}
         </pre>
       )}
@@ -52,69 +52,43 @@ function ToolResultBlock({ event }: { event: MozaEvent }) {
   const stderr = event.payload.stderr as string | undefined;
   const exitCode = event.payload.exit_code as number | null | undefined;
   const isError = success === false;
-
   const content = stdout || stderr || "(empty)";
   const exitInfo = exitCode !== null && exitCode !== undefined
     ? `exit code: ${exitCode}`
     : null;
 
   return (
-    <div className="animate-fade-in overflow-hidden rounded-xl border border-zinc-700/30 bg-zinc-900/30">
-      <div className="flex items-center gap-2 border-b border-zinc-800/50 px-4 py-2">
+    <div className="animate-fade-in overflow-hidden rounded-xl border border-slate-700/30 bg-slate-900/30">
+      <div className="flex items-center gap-2 border-b border-slate-800/50 px-4 py-2">
         <span
           className={`inline-block h-1.5 w-1.5 rounded-full ${
             isError ? "bg-red-500" : "bg-emerald-500"
           }`}
         />
-        <span className="text-xs font-medium text-zinc-400">
+        <span className="text-xs font-medium text-slate-400">
           {isError ? "Failed" : "Output"}
         </span>
         {exitInfo && (
-          <span className="ml-auto font-mono text-xs text-zinc-500">
+          <span className="ml-auto font-mono text-xs text-slate-500">
             {exitInfo}
           </span>
         )}
       </div>
-      <pre className="overflow-x-auto px-4 py-3 font-mono text-xs leading-relaxed text-zinc-300">
+      <pre className="overflow-x-auto px-4 py-3 font-mono text-xs leading-relaxed text-slate-300">
         {content}
       </pre>
     </div>
   );
 }
 
-function ToolSelectedBanner({ event }: { event: MozaEvent }) {
-  const tools = event.payload.tools as
-    | Array<{ name: string; description: string; is_destructive: boolean }>
-    | undefined;
-
-  return (
-    <div className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-zinc-500">
-      <span>tools available:</span>
-      {tools?.map((t) => (
-        <span
-          key={t.name}
-          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono ${
-            t.is_destructive
-              ? "bg-amber-950/40 text-amber-400"
-              : "bg-zinc-800 text-zinc-300"
-          }`}
-        >
-          {t.name}
-          {t.is_destructive && <span className="text-amber-500">&#x26A1;</span>}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 function TaskHeader({ event }: { event: MozaEvent }) {
   return (
-    <div className="animate-fade-in rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-      <div className="flex items-center gap-2 text-xs text-zinc-500">
+    <div className="animate-fade-in rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3">
+      <div className="flex items-center gap-2 text-xs text-slate-500">
         <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
         Task started
       </div>
-      <p className="mt-1 text-sm text-zinc-300">
+      <p className="mt-1 text-sm text-slate-300">
         {event.payload.description as string}
       </p>
     </div>
@@ -124,11 +98,11 @@ function TaskHeader({ event }: { event: MozaEvent }) {
 function TaskComplete({ event }: { event: MozaEvent }) {
   const isError = event.type === "task_failed";
   return (
-    <div className="animate-fade-in flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3 text-sm">
+    <div className="animate-fade-in flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/30 px-4 py-3 text-sm">
       <span className={isError ? "text-red-400" : "text-emerald-400"}>
         {isError ? "\u2715" : "\u2713"}
       </span>
-      <span className={isError ? "text-red-300" : "text-zinc-300"}>
+      <span className={isError ? "text-red-300" : "text-slate-300"}>
         {isError
           ? `Task failed: ${(event.payload.error as string) || "unknown error"}`
           : "Task completed"}
@@ -154,7 +128,7 @@ function ApprovalBanner({
         <span className="text-xs font-medium text-amber-300">Approval Required</span>
       </div>
       <div className="px-4 py-3">
-        <p className="mb-2 text-sm text-zinc-300">
+        <p className="mb-2 text-sm text-slate-300">
           {waiting.description || `Tool "${waiting.tool}" requires approval.`}
         </p>
         <div className="flex gap-2">
@@ -182,9 +156,43 @@ function StreamingMessage({ content }: { content: string }) {
   if (!content) return null;
   return (
     <div className="animate-fade-in flex justify-start">
-      <div className="max-w-[80%] rounded-2xl rounded-bl-md bg-zinc-800 px-4 py-2.5 text-sm leading-relaxed text-zinc-100">
+      <div className="max-w-[80%] rounded-2xl rounded-bl-md bg-slate-800 px-4 py-2.5 text-sm leading-relaxed text-slate-100">
         {content}
         <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-emerald-400" />
+      </div>
+    </div>
+  );
+}
+
+function WelcomeCard({ onChipClick }: { onChipClick: (text: string) => void }) {
+  const chips = [
+    { label: "Search the web", icon: "\uD83D\uDD0D" },
+    { label: "Create a file", icon: "\uD83D\uDCC4" },
+    { label: "Debug my code", icon: "\uD83D\uDD27" },
+    { label: "Research a topic", icon: "\uD83D\uDCDA" },
+  ];
+
+  return (
+    <div className="flex h-full items-center justify-center py-16">
+      <div className="mx-auto max-w-md text-center">
+        <h1 className="mb-2 text-2xl font-bold text-slate-100">
+          Welcome to MOZA Workspace
+        </h1>
+        <p className="mb-8 text-sm text-slate-500">
+          Your AI Operating System. Describe a task and I will execute it.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          {chips.map((chip) => (
+            <button
+              key={chip.label}
+              onClick={() => onChipClick(chip.label)}
+              className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-800/50 px-4 py-2 text-sm text-slate-300 transition-colors hover:border-indigo-500/40 hover:bg-slate-800 hover:text-white"
+            >
+              <span>{chip.icon}</span>
+              <span>{chip.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -199,7 +207,6 @@ export default function ChatInterface() {
   const [streamingContent, setStreamingContent] = useState("");
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [finalMessage, setFinalMessage] = useState("");
   const [terminalEvents, setTerminalEvents] = useState<MozaEvent[]>([]);
   const [browserEvents, setBrowserEvents] = useState<MozaEvent[]>([]);
   const [waitingApproval, setWaitingApproval] = useState<{
@@ -214,10 +221,15 @@ export default function ChatInterface() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const trimmed = input.trim();
+  const hasContent = events.length > 0 || conversation.length > 0 || !!streamingContent;
+
+  async function handleSubmit(e: FormEvent | string) {
+    const trimmed = typeof e === "string" ? e : input.trim();
     if (!trimmed || streaming) return;
+
+    if (typeof e !== "string") {
+      e.preventDefault();
+    }
 
     const userMsg = trimmed;
     setInput("");
@@ -227,7 +239,6 @@ export default function ChatInterface() {
     setTerminalEvents([]);
     setBrowserEvents([]);
     setStreamingContent("");
-    setFinalMessage("");
     setWaitingApproval(null);
 
     setConversation((prev) => [...prev, { role: "user", content: userMsg }]);
@@ -248,12 +259,11 @@ export default function ChatInterface() {
           scrollToBottom();
         } else if (event.type === "llm_finished") {
           const content = event.payload.content as string;
-          setFinalMessage(content || "");
-          setStreamingContent("");
-          setAgentStatus("Idle");
           if (content) {
             setConversation((prev) => [...prev, { role: "agent", content }]);
           }
+          setStreamingContent("");
+          setAgentStatus("Idle");
           scrollToBottom();
         } else if (event.type === "tool_call") {
           setAgentStatus("Executing Tool");
@@ -307,7 +317,7 @@ export default function ChatInterface() {
           type: "task_failed",
           source: "frontend",
           payload: { error: "Connection failed" },
-        },
+        } as MozaEvent,
       ]);
     } finally {
       setAgentStatus("Idle");
@@ -334,8 +344,6 @@ export default function ChatInterface() {
         return <TaskHeader key={idx} event={event} />;
       case "agent_thinking":
         return <TypingIndicator key={idx} />;
-      case "tool_selected":
-        return <ToolSelectedBanner key={idx} event={event} />;
       case "tool_call":
         return <ToolCallBlock key={idx} event={event} />;
       case "tool_result":
@@ -357,13 +365,7 @@ export default function ChatInterface() {
   /* ── Build left panel content ───────────────────────────────── */
   const leftPanel = (
     <>
-      {events.length === 0 && conversation.length === 0 && !streamingContent && !finalMessage && (
-        <div className="flex h-full items-center justify-center py-20">
-          <div className="text-center">
-            <p className="text-sm text-zinc-600">Describe a task to execute.</p>
-          </div>
-        </div>
-      )}
+      {!hasContent && <WelcomeCard onChipClick={(text) => handleSubmit(text)} />}
       {conversation.map((msg, i) => (
         <MessageBubble
           key={`msg-${i}`}
@@ -392,16 +394,19 @@ export default function ChatInterface() {
       </div>
       {terminalEvents.length > 0 && (
         <div className="mb-3">
+          <div className="mb-1 text-[10px] font-medium uppercase tracking-widest text-slate-500">
+            Terminal
+          </div>
           <TerminalComponent events={terminalEvents} />
         </div>
       )}
       {events.filter((e) => e.type === "tool_call" || e.type === "tool_result").length > 0 && (
         <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-zinc-500">
-            <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />
             Tool Execution Log
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {events
               .filter((e) => e.type === "tool_call" || e.type === "tool_result")
               .map((ev, i) => (
@@ -423,8 +428,9 @@ export default function ChatInterface() {
         <InputArea
           value={input}
           onChange={setInput}
-          onSubmit={handleSubmit}
+          onSubmit={(e) => handleSubmit(e)}
           disabled={streaming}
+          placeholder="Ask MOZA to perform a task..."
         />
       }
       agentStatus={agentStatus}

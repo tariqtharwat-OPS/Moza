@@ -1,14 +1,12 @@
 "use client";
 
-export default function Logo() {
+export default function Logo({ size = 72 }: { size?: number }) {
   return (
-    <div className="flex items-center gap-3">
-      <img
-        src="/logo.png"
-        alt="MOZA"
-        style={{ width: 220 }}
-        className="h-auto object-contain transition-opacity duration-200 hover:opacity-90"
-      />
-    </div>
+    <img
+      src="/logo.png"
+      alt="MOZA"
+      style={{ width: size, height: size }}
+      className="h-auto object-contain mix-blend-screen"
+    />
   );
 }

@@ -1,7 +1,7 @@
 # MOZA Test Strategy & Capability Certification Framework
 
 > Replaces "counting passing tests" with "certifying real-world capabilities."
-> **Version:** 1.1 — Phase 3.3.5 Patch (Frontend Runtime Integrity)
+> **Version:** 2.0 — Phase 4.0 (Executive Mind + Workspace UI)
 
 ---
 
@@ -22,9 +22,11 @@
 | **Integration — Replay API** | 6 | `tests/integration/test_replay_api.py` | ✅ Solid — covers list, get, events, replay with seeded data |
 | **E2E — Real Browser UI** | 2 | `tests/e2e/test_real_browser_ui.py` | ✅ Good — CORS preflight + real browser interaction (requires servers running) |
 | **E2E — Agent Behavior Patterns** | 6 | `tests/e2e/test_agent_behavior_patterns.py` | ⚠️ New — covers greeting, simple Q, tool task, mixed, Arabic, casual greeting (requires servers running) |
-| **E2E — Frontend Runtime Integrity** | 2 | `frontend/tests/e2e/test_frontend_runtime_integrity.py` | ✅ New — verifies zero 404s on core JS/CSS assets, logo/chat visible, no console errors |
+| **E2E — Frontend Runtime Integrity** | 2 | `frontend/tests/e2e/test_frontend_runtime_integrity.py` | ✅ Verifies zero 404s on core JS/CSS assets, logo/chat visible, no console errors |
+| **E2E — Executive Mind & UI Audit** | 2 | `frontend/tests/e2e/test_executive_intent_and_ui_audit.py` | ✅ Headed mode — proves "اهلا" triggers ZERO tool calls, UI layout integrity |
+| **Unit — Intent Classifier** | 13 | `tests/unit/test_intent_classifier.py` | ✅ New — covers Arabic/English greetings, short questions, task detection |
 | **Live — Benchmarks** | 5 | `tests/live/` | ✅ Canonical — recovery, software engineer, browser live, autonomous research, multi-step agent |
-| **Total** | **89** | | |
+| **Total** | **94** | | |
 
 ### 1.2 Redundancy & Weakness Flags
 
@@ -64,6 +66,8 @@
 | 17 | **Self-Improvement (Controlled Evolution)** | ✗ Not Certified | Architecture defined, not implemented | — |
 | 18 | **CORS & Network Resilience** | ✅ Certified | `test_real_browser_ui.py` CORS preflight + zero-error console check | Phase 3.3 |
 | 19 | **Frontend Runtime Integrity** | ✅ Certified | `frontend/tests/e2e/test_frontend_runtime_integrity.py` — zero 404s on core JS/CSS assets, logo/chat visible, clean browser console | Phase 3.3.5 Patch |
+| 20 | **Executive Mind Intent Classification** | ✅ Certified | `classify_intent()` in `intent_classifier.py` — orchestrator-level deterministic routing, "اهلا" → 0 tool calls proven by `test_executive_intent_and_ui_audit.py` | Phase 4.0 |
+| 21 | **Workspace UI (3-Panel Layout)** | ✅ Certified | `MainLayout.tsx` — 250px sidebar + center chat + 300px collapsible execution panel; Welcome Card, blended logo, Recent Sessions | Phase 4.0 |
 
 ---
 

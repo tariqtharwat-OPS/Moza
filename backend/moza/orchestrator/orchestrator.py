@@ -25,6 +25,7 @@ from loguru import logger
 from moza.agents.interfaces import AgentInterface
 from moza.core.context import ExecutionContext
 from moza.core.event_bus import EventBus, get_event_bus
+from moza.core.intent_classifier import IntentType, classify_intent, get_conversational_reply
 from moza.core.models import Environment, Event, EventType, Session, Task, TaskStatus
 from moza.tools.registry import ToolRegistry, get_tool_registry
 
@@ -105,6 +106,50 @@ class Orchestrator:
         session: Session,
     ) -> None:
         try:
+            intent = classify_intent(task.description)
+            if intent == IntentType.CONVERSATIONAL:
+                reply = get_conversational_reply(task.description)
+                thinking = Event(
+                    session_id=session_id,
+                    task_id=task.id,
+                    type=EventType.AGENT_THINKING,
+                    source="orchestrator",
+                    payload={"message": "Conversational intent detected. Responding directly."},
+                )
+                session.execution_history.append(thinking)
+                await self._event_bus.publish(session_id, thinking)
+
+                token_event = Event(
+                    session_id=session_id,
+                    task_id=task.id,
+                    type=EventType.LLM_TOKEN,
+                    source="orchestrator",
+                    payload={"content": reply},
+                )
+                session.execution_history.append(token_event)
+                await self._event_bus.publish(session_id, token_event)
+
+                finished = Event(
+                    session_id=session_id,
+                    task_id=task.id,
+                    type=EventType.LLM_FINISHED,
+                    source="orchestrator",
+                    payload={"content": reply},
+                )
+                session.execution_history.append(finished)
+                await self._event_bus.publish(session_id, finished)
+                _transition_task_status(task, TaskStatus.COMPLETED, EventType.TASK_COMPLETED)
+                completed = Event(
+                    session_id=session_id,
+                    task_id=task.id,
+                    type=EventType.TASK_COMPLETED,
+                    source="orchestrator",
+                    payload={"task_id": task.id},
+                )
+                session.execution_history.append(completed)
+                await self._event_bus.publish_and_complete(session_id, completed)
+                return
+
             assert self._agent is not None
             async for event in self._agent.execute(context):
                 session.execution_history.append(event)

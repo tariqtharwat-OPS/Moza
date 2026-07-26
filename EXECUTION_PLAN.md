@@ -19,6 +19,72 @@ USE > INTEGRATE > EXTEND > BUILD | Vertical Slices Approach
 9. **ResourceManager**: Stub workspace resource management (git_status, file_watcher, vector_index).
 10. **Architecture Decision Records (ADRs)**: docs/ADRs/ documenting key architectural decisions.
 
+---
+
+## Capability Certification Framework (Overarching)
+
+**Primary quality metric:** Number of certified capabilities (not test count).
+
+### Certification Process
+
+Every phase MUST begin by defining its Capability Benchmark YAML spec before any code is written.
+
+1. **Define** capability benchmark spec (YAML in `benchmarks/`)
+2. **Implement** the test harness and required support code
+3. **Execute** the Layer 6 Canonical Benchmark on `main`
+4. **Certify** — update Capability Certification Matrix in `TEST_STRATEGY.md`
+5. **Freeze** — no regression allowed; benchmark becomes permanent quality gate
+
+### Layered Testing Model (from TEST_STRATEGY.md)
+
+| Layer | Name | What It Covers |
+|-------|------|----------------|
+| 0 | Static Analysis | Lint, types, unused imports |
+| 1 | Unit Tests | Individual functions/classes in isolation |
+| 2 | Integration Tests | Module boundaries, event flow, state transitions |
+| 3 | Scenario Tests | BugScenario framework, parameterised scenarios |
+| 4 | E2E Simulation Tests | Backend-only with mock LLM (but real tools, real orchestrator) |
+| 5 | Live E2E Tests | Real LLM + real tools + real browser (manual or CI) |
+| 6 | **Canonical Benchmarks** | Frozen, versioned, YAML-driven, anti-cheat checks — THE quality gate |
+
+**A capability is ONLY certified when Layer 6 passes on `main`.**
+
+---
+
+## Controlled Evolution Architecture (Overarching)
+
+MOZA's self-improvement is strictly governed.
+
+### Three-Tier Deployment Pipeline
+
+```
+  [Experimental]  ->  [Candidate]  ->  [Stable]
+```
+
+| Tier | Gate |
+|------|------|
+| **Experimental** | None (agent autonomy) |
+| **Candidate** | All Canonical Benchmarks + 87 tests pass |
+| **Stable** | Human manager approval (`manager-approve`) |
+
+### Four Sources of Evolution
+
+1. **Research** (arXiv, AI papers)
+2. **Open Source Analysis** (OpenHands, Cline — patterns, not code)
+3. **Benchmarks** (SWE-bench, our own 6 E2E tests)
+4. **Self-Analysis** (telemetry: token use, tool errors, dead code)
+
+### Evolution Prohibitions
+
+- No self-modification outside Experimental tier
+- No direct `main` commits by agent
+- No benchmark modification without human review
+- No auto-merging without human approval
+
+See `PROJECT_STATE.md Section 8` for full details.
+
+---
+
 ## Execution Phases
 ### Phase 1: The Neural Link (Chat & LLM Pipeline) - [x]
 - [x] Backend: FastAPI setup, Pydantic config models, LiteLLM client.

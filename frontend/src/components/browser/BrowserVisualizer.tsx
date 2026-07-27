@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { MozaEvent } from "@/lib/api";
 
 interface BrowserState {
   url: string;
   title: string;
   screenshotBase64: string | null;
-  actions: Array<{ action: string; timestamp: string }>;
 }
 
 export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
@@ -15,35 +14,37 @@ export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
     url: "",
     title: "",
     screenshotBase64: null,
-    actions: [],
   });
   const [activeTab, setActiveTab] = useState<"view" | "actions">("view");
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const lastEvent = events[events.length - 1];
   const payload = lastEvent?.payload || {};
-  const metaScreenshot = payload.metadata
-    ? (payload.metadata as Record<string, unknown>)?.screenshot_base64
-    : null;
-  const metaUrl = payload.metadata
-    ? (payload.metadata as Record<string, unknown>)?.url
-    : null;
-  const metaTitle = payload.metadata
-    ? (payload.metadata as Record<string, unknown>)?.title
-    : null;
+  const meta = payload.metadata as Record<string, unknown> | undefined;
+  const metaScreenshot = meta?.screenshot_base64 as string | null;
+  const metaUrl = meta?.url as string | null;
+  const metaTitle = meta?.title as string | null;
 
-  const screenshotSrc =
-    (metaScreenshot as string) || state.screenshotBase64 || null;
-  const displayUrl = (metaUrl as string) || state.url || null;
-  const displayTitle = (metaTitle as string) || state.title || null;
+  const screenshotSrc = metaScreenshot || state.screenshotBase64 || null;
+  const displayUrl = metaUrl || state.url || null;
+  const displayTitle = metaTitle || state.title || null;
 
   const hasContent = screenshotSrc || displayUrl || events.length > 0;
+  const isActive = events.some((e) => e.type === "tool_call" || e.type === "browser_action" || e.type === "browser_started");
+
+  /* Keep state in sync with latest event metadata */
+  useEffect(() => {
+    if (metaScreenshot) setState((s) => ({ ...s, screenshotBase64: metaScreenshot }));
+    if (metaUrl) setState((s) => ({ ...s, url: metaUrl }));
+    if (metaTitle) setState((s) => ({ ...s, title: metaTitle }));
+  }, [metaScreenshot, metaUrl, metaTitle]);
 
   const actionLabel =
     lastEvent?.type === "tool_call"
       ? ((payload.args as Record<string, unknown>)?.action as string) || ""
-      : "result";
+      : null;
 
-  /* ── Empty state ─────────────────────────────────────────────── */
+  /* ── Empty state ── */
   if (!hasContent) {
     return (
       <div className="overflow-hidden rounded-xl border border-zinc-700/50 bg-zinc-950">
@@ -65,10 +66,12 @@ export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-700/50 bg-zinc-950">
+      {/* Header */}
       <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-2.5">
         <span className="flex items-center gap-1.5 text-xs text-zinc-500">
-          <span className="h-2 w-2 rounded-full bg-blue-500" />
+          <span className={`h-2 w-2 rounded-full ${isActive ? "bg-green-500 animate-pulse" : "bg-blue-500"}`} />
           Browser
+          {isActive && <span className="ml-1 text-[10px] text-green-400">LIVE</span>}
         </span>
         <div className="flex flex-1 items-center gap-2 overflow-hidden">
           <span className="text-xs text-zinc-400">URL:</span>
@@ -100,6 +103,7 @@ export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
         </div>
       </div>
 
+      {/* View tab */}
       {activeTab === "view" && (
         <div>
           {displayTitle && (
@@ -110,21 +114,33 @@ export default function BrowserVisualizer({ events }: { events: MozaEvent[] }) {
           {screenshotSrc ? (
             <div className="relative">
               <img
+                ref={imgRef}
                 src={`data:image/png;base64,${screenshotSrc}`}
                 alt="Browser screenshot"
-                className="w-full object-contain"
+                className="w-full object-contain transition-opacity duration-300"
                 style={{ maxHeight: 360 }}
               />
+              {isActive && (
+                <div className="absolute right-2 top-2 flex items-center gap-1 rounded bg-green-950/80 px-2 py-0.5 text-[10px] text-green-400">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" />
+                  Live
+                </div>
+              )}
             </div>
-          ) : null}
+          ) : (
+            <div className="flex items-center justify-center px-4 py-8 text-xs text-zinc-600">
+              <span className="animate-pulse">Loading browser preview...</span>
+            </div>
+          )}
           {actionLabel && (
             <div className="border-t border-zinc-800 px-4 py-1.5 text-xs text-zinc-500">
-              {actionLabel}
+              {"\u2192"} {actionLabel}
             </div>
           )}
         </div>
       )}
 
+      {/* Actions tab */}
       {activeTab === "actions" && (
         <div className="max-h-40 overflow-y-auto px-4 py-2">
           {events.length === 0 ? (

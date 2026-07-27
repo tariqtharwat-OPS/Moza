@@ -17,9 +17,10 @@ const TerminalComponent = dynamic(
 /* ── Sub-components ─────────────────────────────────────────────── */
 
 function ToolCallBlock({ event }: { event: MozaEvent }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const toolName = event.payload.tool as string;
-  const args = event.payload.args as Record<string, unknown> | undefined;
+  const action = (event.payload.args as Record<string, unknown>)?.action as string | undefined;
+  const statusLabel = action ? `Running ${toolName}.${action}` : `Running ${toolName}`;
 
   return (
     <div className="animate-fade-in overflow-hidden rounded-xl border border-slate-700/40 bg-slate-900/50 text-sm">
@@ -27,19 +28,15 @@ function ToolCallBlock({ event }: { event: MozaEvent }) {
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-slate-300 hover:bg-slate-800/50"
       >
-        <span className="text-xs">{open ? "\u25BE" : "\u25B8"}</span>
+        <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
         <span className="font-mono text-xs font-medium text-amber-400">
-          {toolName}
+          {statusLabel}
         </span>
-        {args && (
-          <span className="truncate text-xs text-slate-500">
-            {JSON.stringify(args).slice(0, 120)}
-          </span>
-        )}
+        <span className="ml-auto text-xs">{open ? "\u25BE" : "\u25B8"}</span>
       </button>
-      {open && args && (
+      {open && (
         <pre className="overflow-x-auto border-t border-slate-800 px-4 py-3 font-mono text-xs text-slate-400">
-          {JSON.stringify(args, null, 2)}
+          {JSON.stringify(event.payload, null, 2)}
         </pre>
       )}
     </div>
@@ -47,36 +44,42 @@ function ToolCallBlock({ event }: { event: MozaEvent }) {
 }
 
 function ToolResultBlock({ event }: { event: MozaEvent }) {
+  const [open, setOpen] = useState(false);
   const success = event.payload.success as boolean | undefined;
   const stdout = event.payload.stdout as string | undefined;
   const stderr = event.payload.stderr as string | undefined;
   const exitCode = event.payload.exit_code as number | null | undefined;
   const isError = success === false;
   const content = stdout || stderr || "(empty)";
-  const exitInfo = exitCode !== null && exitCode !== undefined
-    ? `exit code: ${exitCode}`
-    : null;
+  const toolName = event.payload.tool as string;
+  const statusLabel = isError ? `${toolName} failed` : `${toolName} completed`;
 
   return (
     <div className="animate-fade-in overflow-hidden rounded-xl border border-slate-700/30 bg-slate-900/30">
-      <div className="flex items-center gap-2 border-b border-slate-800/50 px-4 py-2">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-4 py-2.5 text-left hover:bg-slate-800/30"
+      >
         <span
           className={`inline-block h-1.5 w-1.5 rounded-full ${
             isError ? "bg-red-500" : "bg-emerald-500"
           }`}
         />
-        <span className="text-xs font-medium text-slate-400">
-          {isError ? "Failed" : "Output"}
+        <span className={`text-xs font-medium ${isError ? "text-red-400" : "text-emerald-400"}`}>
+          {statusLabel}
         </span>
-        {exitInfo && (
-          <span className="ml-auto font-mono text-xs text-slate-500">
-            {exitInfo}
+        {typeof stdout === "string" && stdout.length > 0 && (
+          <span className="truncate text-xs text-slate-500">
+            {stdout.split("\n")[0].slice(0, 80)}
           </span>
         )}
-      </div>
-      <pre className="overflow-x-auto px-4 py-3 font-mono text-xs leading-relaxed text-slate-300">
-        {content}
-      </pre>
+        <span className="ml-auto text-xs text-slate-500">{open ? "\u25BE" : "\u25B8"}</span>
+      </button>
+      {open && (
+        <pre className="overflow-x-auto border-t border-slate-800 px-4 py-3 font-mono text-xs leading-relaxed text-slate-300">
+          {content}
+        </pre>
+      )}
     </div>
   );
 }
@@ -187,6 +190,7 @@ export default function ChatInterface() {
     description: string;
   } | null>(null);
   const [agentStatus, setAgentStatus] = useState("Idle");
+  const [toolLogOpen, setToolLogOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -366,19 +370,25 @@ export default function ChatInterface() {
       )}
       {events.filter((e) => e.type === "tool_call" || e.type === "tool_result").length > 0 && (
         <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
+          <button
+            onClick={() => setToolLogOpen(!toolLogOpen)}
+            className="mb-2 flex w-full items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-300"
+          >
             <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />
             Tool Execution Log
-          </div>
-          <div className="flex flex-col gap-1">
-            {events
-              .filter((e) => e.type === "tool_call" || e.type === "tool_result")
-              .map((ev, i) => (
-                ev.type === "tool_call"
-                  ? <ToolCallBlock key={`rt-${i}`} event={ev} />
-                  : <ToolResultBlock key={`rt-${i}`} event={ev} />
-              ))}
-          </div>
+            <span className="ml-auto text-xs">{toolLogOpen ? "\u25BE" : "\u25B8"}</span>
+          </button>
+          {toolLogOpen && (
+            <div className="flex flex-col gap-1">
+              {events
+                .filter((e) => e.type === "tool_call" || e.type === "tool_result")
+                .map((ev, i) => (
+                  ev.type === "tool_call"
+                    ? <ToolCallBlock key={`rt-${i}`} event={ev} />
+                    : <ToolResultBlock key={`rt-${i}`} event={ev} />
+                ))}
+            </div>
+          )}
         </div>
       )}
     </>

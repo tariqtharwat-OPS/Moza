@@ -230,7 +230,7 @@ async function handleSubmit(e: FormEvent | string) {
 
                 if (event.type === "llm_token") {
                     let token = (event.payload.content as string) || "";
-                    token = token.replace(/<function=[^>]*>/gi, "").replace(/<\/function>/gi, "");
+                    token = token.replace(/<function=[^>]*>/gi, "").replace(/<\/function>/gi, "").replace(/ool_call>/gi, "");
                     setStreamingContent((prev) => prev + token);
                     setAgentStatus("Thinking");
                     scrollToBottom();

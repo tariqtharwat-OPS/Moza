@@ -1,0 +1,12 @@
+MOZA Comprehensive Browser Test Report
+Date: 2026-07-27T22:31:05.690950
+Total: 8 | Passed: 8 | Failed: 0
+
+[PASS] Conversational Intent -- Pure LLM no tools: Reply length: 139 chars, error=False
+[PASS] Browser Tool -- Navigate to Google: 9 events, 2 tool calls, completed=True, failed=False
+[PASS] Filesystem Tool -- Create & Read: 11 events, completed=True, file_exists=True
+[PASS]   + File exists on disk: 
+[PASS] Terminal Tool -- Run dir: 9 events, terminal_used=True, completed=True, failed=False
+[PASS] Error Recovery -- Non-existent file handled gracefully: 9 events, error_detected=True, completed=True, failed=False
+[PASS] Vague Request -- Asks for clarification: 6 events, clarification=True, no_tool_execution=True
+[PASS] Multi-Step Task -- Create + Append + Read: 15 events, 6 tool calls, completed=True, file_exists=True

@@ -31,6 +31,36 @@ providers:
     base_url: http://localhost:1234
     model: openai/local-model
 
+  glm:
+    api_key: ${GLM_API_KEY}
+    model: glm/glm-4
+    base_url: https://open.bigmodel.cn/api/paas/v4
+
+  sambanova:
+    api_key: ${SAMBANOVA_API_KEY}
+    model: sambanova/Meta-Llama-3.1-70B-Instruct
+    base_url: https://api.sambanova.ai/v1
+
+  gemini:
+    api_key: ${GEMINI_API_KEY}
+    model: gemini/gemini-2.0-flash
+    base_url: https://generativelanguage.googleapis.com/v1beta
+
+  huggingface:
+    api_key: ${HUGGINGFACE_API_KEY}
+    model: huggingface/mistralai/Mistral-7B-Instruct-v0.3
+    base_url: https://api-inference.huggingface.co/v1
+
+  deepseek:
+    api_key: ${DEEPSEEK_API_KEY}
+    model: deepseek/deepseek-chat
+    base_url: https://api.deepseek.com/v1
+
+  mistral:
+    api_key: ${MISTRAL_API_KEY}
+    model: mistral/mistral-large-latest
+    base_url: https://api.mistral.ai/v1
+
 litellm:
   port: 4000
   drop_params: true

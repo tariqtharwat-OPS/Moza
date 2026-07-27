@@ -168,5 +168,5 @@ class BrowserTool(BaseTool):
 
     def _sync_state(self) -> None:
         eng = self._engine
-        self._browser = eng._browser if hasattr(eng, "_browser") else None
+        self._browser = eng._context.browser if eng._context else None
         self._page = eng._page if hasattr(eng, "_page") else None

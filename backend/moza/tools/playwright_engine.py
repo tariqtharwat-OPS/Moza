@@ -30,15 +30,25 @@ class PlaywrightEngine(BrowserEngine):
             from playwright.async_api import async_playwright
 
             self._playwright = await async_playwright().start()
-            self._browser = await asyncio.wait_for(
-                self._playwright.chromium.launch(headless=self._headless),
+            self._context = await asyncio.wait_for(
+                self._playwright.chromium.launch_persistent_context(
+                    user_data_dir="./browser_data",
+                    headless=self._headless,
+                    args=[
+                        "--no-sandbox",
+                        "--disable-blink-features=AutomationControlled",
+                    ],
+                    viewport={"width": 1280, "height": 720},
+                    user_agent=(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36"
+                    ),
+                ),
                 timeout=30.0,
             )
-            self._context = await self._browser.new_context(
-                viewport={"width": 1280, "height": 720},
-            )
             self._page = await self._context.new_page()
-            logger.info(f"PlaywrightEngine: browser started (headless={self._headless})")
+            logger.info(f"PlaywrightEngine: browser started (headless={self._headless}, persistent_context)")
         except ImportError:
             raise RuntimeError(
                 "playwright is not installed. Run: pip install playwright && playwright install"
@@ -53,10 +63,10 @@ class PlaywrightEngine(BrowserEngine):
             raise RuntimeError(f"Failed to start browser: {e}")
 
     async def close(self) -> None:
+        # With launch_persistent_context, closing the context closes the browser too.
         for target, name in [
             (self._page, "page"),
             (self._context, "context"),
-            (self._browser, "browser"),
             (self._playwright, "playwright"),
         ]:
             if target is None:
@@ -65,8 +75,6 @@ class PlaywrightEngine(BrowserEngine):
                 if name == "page":
                     await target.close()
                 elif name == "context":
-                    await target.close()
-                elif name == "browser":
                     await target.close()
                 elif name == "playwright":
                     await target.stop()

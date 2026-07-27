@@ -3,7 +3,7 @@ providers:
 
   openrouter:
     api_key: ${OPENROUTER_API_KEY}
-    model: openrouter/qwen/qwen-3-32b
+    model: openrouter/meta-llama/llama-3.1-8b-instruct
     base_url: https://openrouter.ai/api/v1
 
   openai:

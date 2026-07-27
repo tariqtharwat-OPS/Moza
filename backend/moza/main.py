@@ -1,3 +1,5 @@
+import asyncio
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -13,6 +15,10 @@ from moza.tools.browser_tool import BrowserTool
 from moza.tools.filesystem_tool import FilesystemTool
 from moza.tools.registry import get_tool_registry
 from moza.tools.terminal_tool import TerminalTool
+
+# Windows asyncio subprocess support (required for Playwright browser launch)
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
 _PROJECT_DIR = _BACKEND_DIR.parent
@@ -73,4 +79,4 @@ async def shutdown():
 
 
 if __name__ == "__main__":
-    uvicorn.run("moza.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("moza.main:app", host="0.0.0.0", port=8000, reload=False)

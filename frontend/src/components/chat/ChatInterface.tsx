@@ -245,21 +245,21 @@ export default function ChatInterface() {
         } else if (event.type === "tool_call") {
           setAgentStatus("Executing Tool");
           setEvents((prev) => [...prev, event]);
+          if (event.payload.tool === "browser") {
+            setBrowserEvents((prev) => [...prev, event]);
+          }
+          if (event.payload.tool === "terminal") {
+            setTerminalEvents((prev) => [...prev, event]);
+          }
           scrollToBottom();
         } else if (event.type === "tool_result") {
           setEvents((prev) => [...prev, event]);
-          scrollToBottom();
-        } else if (
-          (event.type === "tool_call" || event.type === "tool_result") &&
-          event.payload.tool === "terminal"
-        ) {
-          setTerminalEvents((prev) => [...prev, event]);
-          scrollToBottom();
-        } else if (
-          (event.type === "tool_call" || event.type === "tool_result") &&
-          event.payload.tool === "browser"
-        ) {
-          setBrowserEvents((prev) => [...prev, event]);
+          if (event.payload.tool === "browser") {
+            setBrowserEvents((prev) => [...prev, event]);
+          }
+          if (event.payload.tool === "terminal") {
+            setTerminalEvents((prev) => [...prev, event]);
+          }
           scrollToBottom();
         } else if (
           event.type === "browser_started" ||

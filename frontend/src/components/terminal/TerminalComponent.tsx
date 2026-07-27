@@ -64,35 +64,36 @@ export default function TerminalComponent({ events }: Props) {
     };
   }, []);
 
-  useEffect(() => {
-    const term = terminalRef.current;
-    if (!term) return;
+useEffect(() => {
+        const term = terminalRef.current;
+        if (!term) return;
 
-    const newEvents = events.slice(renderedCount.current);
-    for (const event of newEvents) {
-      renderedCount.current += 1;
+        const newEvents = events.slice(renderedCount.current);
+        for (const event of newEvents) {
+            renderedCount.current += 1;
 
-      if (event.type === "tool_call") {
-        const args = event.payload.args as Record<string, unknown> | undefined;
-        const command = args?.command as string | undefined;
-        if (command) {
-          term.writeln(`\r\n\x1b[32m$\x1b[0m ${command}`);
+            if (event.type === "tool_call") {
+                const args = event.payload.args as Record<string, unknown> | undefined;
+                const command = args?.command as string | undefined;
+                if (command) {
+                    term.clear();
+                    term.writeln(`\r\n\x1b[32m$\x1b[0m ${command}`);
+                }
+            } else if (event.type === "tool_result") {
+                const stdout = event.payload.stdout as string | undefined;
+                const exitCode = event.payload.exit_code as number | null | undefined;
+                if (stdout) {
+                    const lines = stdout.replace(/\n$/, "").split("\n");
+                    for (const line of lines) {
+                        term.writeln(line);
+                    }
+                }
+                if (exitCode !== undefined && exitCode !== null && exitCode !== 0) {
+                    term.writeln(`\x1b[31mexit code: ${exitCode}\x1b[0m`);
+                }
+            }
         }
-      } else if (event.type === "tool_result") {
-        const stdout = event.payload.stdout as string | undefined;
-        const exitCode = event.payload.exit_code as number | null | undefined;
-        if (stdout) {
-          const lines = stdout.replace(/\n$/, "").split("\n");
-          for (const line of lines) {
-            term.writeln(line);
-          }
-        }
-        if (exitCode !== undefined && exitCode !== null && exitCode !== 0) {
-          term.writeln(`\x1b[31mexit code: ${exitCode}\x1b[0m`);
-        }
-      }
-    }
-  }, [events]);
+    }, [events]);
 
   useEffect(() => {
     const fit = () => fitAddonRef.current?.fit();

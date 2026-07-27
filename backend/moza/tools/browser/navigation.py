@@ -1,11 +1,23 @@
+from playwright.async_api import TimeoutError
+from playwright._impl._errors import Error as PlaywrightError
+from playwright.async_api import TimeoutError
 from moza.tools.browser.utils import SCROLL_TIMEOUT_MS, BACK_TIMEOUT_MS, FORWARD_TIMEOUT_MS
 
 
 async def navigate(page, url: str) -> tuple[str, str, str]:
-    await page.goto(url, wait_until="domcontentloaded")
-    title = await page.title()
-    current_url = page.url
-    return title, current_url, f"Navigated to {url}\nTitle: {title}"
+    try:
+        await page.goto(url, wait_until="domcontentloaded")
+        title = await page.title()
+        current_url = page.url
+        return title, current_url, f"Navigated to {url}\nTitle: {title}"
+    except TimeoutError as e:
+        raise TimeoutError(f"Navigation to {url} timed out: {e}")
+    except PlaywrightError as e:
+        raise PlaywrightError(f"Navigation to {url} failed: {e}")
+    except Exception as e:
+        raise Exception(f"Unexpected error navigating to {url}: {e}")
+
+
 
 
 async def go_back(page) -> tuple[str, str, str]:

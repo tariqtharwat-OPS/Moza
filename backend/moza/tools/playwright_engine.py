@@ -1,3 +1,5 @@
+from playwright._impl._errors import Error as PlaywrightError
+from playwright.async_api import TimeoutError
 from pathlib import Path
 from typing import Optional
 
@@ -99,9 +101,43 @@ class PlaywrightEngine(BrowserEngine):
 
     async def navigate(self, url: str) -> dict:
         await self.ensure_browser()
-        title, current_url, stdout = await navigation.navigate(self._page, url)
-        meta = await self._capture()
-        return {"stdout": stdout, **meta}
+        try:
+            title, current_url, stdout = await navigation.navigate(self._page, url)
+            meta = await self._capture()
+            return {"stdout": stdout, **meta}
+        except TimeoutError as e:
+            logger.error(f"PlaywrightEngine: navigation timeout: {e}")
+            return {
+                "stdout": f"Navigation to {url} timed out",
+                "title": "",
+                "url": url,
+                "error": str(e),
+            }
+        except PlaywrightError as e:
+            logger.error(f"PlaywrightEngine: navigation failed: {e}")
+            return {
+                "stdout": f"Navigation to {url} failed",
+                "title": "",
+                "url": url,
+                "error": str(e),
+            }
+        except Exception as e:
+            logger.error(f"PlaywrightEngine: unexpected error during navigation: {e}")
+            return {
+                "stdout": f"Unexpected error navigating to {url}",
+                "title": "",
+                "url": url,
+                "error": str(e),
+            }
+
+        except Exception as e:
+            logger.error(f"PlaywrightEngine: unexpected error during navigation: {e}")
+            return {
+                "stdout": f"Unexpected error navigating to {url}",
+                "title": "",
+                "url": url,
+                "error": str(e),
+            }
 
     async def click(self, selector: str) -> dict:
         await self.ensure_browser()

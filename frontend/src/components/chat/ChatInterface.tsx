@@ -199,110 +199,117 @@ export default function ChatInterface() {
 
   const hasContent = events.length > 0 || conversation.length > 0 || !!streamingContent;
 
-  async function handleSubmit(e: FormEvent | string) {
-    const trimmed = typeof e === "string" ? e : input.trim();
-    if (!trimmed || streaming) return;
+async function handleSubmit(e: FormEvent | string) {
+        const trimmed = typeof e === "string" ? e : input.trim();
+        if (!trimmed || streaming) return;
 
-    if (typeof e !== "string") {
-      e.preventDefault();
-    }
-
-    const userMsg = trimmed;
-    setInput("");
-    setStreaming(true);
-    setAgentStatus("Thinking");
-    setEvents([]);
-    setTerminalEvents([]);
-    setBrowserEvents([]);
-    setStreamingContent("");
-    setWaitingApproval(null);
-
-    setConversation((prev) => [...prev, { role: "user", content: userMsg }]);
-
-    let sid = sessionId;
-
-    try {
-      for await (const event of streamTask(trimmed, sid || undefined)) {
-        if (!sid) {
-          sid = event.session_id;
-          setSessionId(sid);
+        if (typeof e !== "string") {
+            e.preventDefault();
         }
 
-        if (event.type === "llm_token") {
-          let token = (event.payload.content as string) || "";
-          token = token.replace(/<function=[^>]*>/gi, "").replace(/<\/function>/gi, "");
-          setStreamingContent((prev) => prev + token);
-          setAgentStatus("Thinking");
-          scrollToBottom();
-        } else if (event.type === "llm_finished") {
-          const content = event.payload.content as string;
-          if (content) {
-            setConversation((prev) => [...prev, { role: "agent", content }]);
-          }
-          setStreamingContent("");
-          setAgentStatus("Idle");
-          scrollToBottom();
-        } else if (event.type === "tool_call") {
-          setAgentStatus("Executing Tool");
-          setEvents((prev) => [...prev, event]);
-          if (event.payload.tool === "browser") {
-            setBrowserEvents((prev) => [...prev, event]);
-          }
-          if (event.payload.tool === "terminal") {
-            setTerminalEvents((prev) => [...prev, event]);
-          }
-          scrollToBottom();
-        } else if (event.type === "tool_result") {
-          setEvents((prev) => [...prev, event]);
-          if (event.payload.tool === "browser") {
-            setBrowserEvents((prev) => [...prev, event]);
-          }
-          if (event.payload.tool === "terminal") {
-            setTerminalEvents((prev) => [...prev, event]);
-          }
-          scrollToBottom();
-        } else if (
-          event.type === "browser_started" ||
-          event.type === "browser_action"
-        ) {
-          setBrowserEvents((prev) => [...prev, event]);
-          scrollToBottom();
-        } else if (event.type === "waiting_approval") {
-          setWaitingApproval({
-            taskId: event.task_id,
-            tool: (event.payload.tool as string) || "unknown",
-            description: (event.payload.description as string) || "",
-          });
-          setEvents((prev) => [...prev, event]);
-          scrollToBottom();
-        } else {
-          if (event.type === "agent_started") setAgentStatus("Thinking");
-          if (event.type === "task_failed") setAgentStatus("Error");
-          setEvents((prev) => [...prev, event]);
-          scrollToBottom();
+        const userMsg = trimmed;
+        setInput("");
+        setStreaming(true);
+        setAgentStatus("Thinking");
+        setEvents([]);
+        setTerminalEvents([]);
+        setBrowserEvents([]);
+        setStreamingContent("");
+        setWaitingApproval(null);
+
+        setConversation((prev) => [...prev, { role: "user", content: userMsg }]);
+
+        let sid = sessionId;
+
+        try {
+            for await (const event of streamTask(trimmed, sid || undefined)) {
+                if (!sid) {
+                    sid = event.session_id;
+                    setSessionId(sid);
+                }
+
+                if (event.type === "llm_token") {
+                    let token = (event.payload.content as string) || "";
+                    token = token.replace(/<function=[^>]*>/gi, "").replace(/<\/function>/gi, "");
+                    setStreamingContent((prev) => prev + token);
+                    setAgentStatus("Thinking");
+                    scrollToBottom();
+                } else if (event.type === "llm_finished") {
+                    const content = event.payload.content as string;
+                    if (content) {
+                        setConversation((prev) => [...prev, { role: "agent", content }]);
+                    }
+                    setStreamingContent("");
+                    setAgentStatus("Idle");
+                    scrollToBottom();
+                } else if (event.type === "tool_call") {
+                    setAgentStatus("Executing Tool");
+                    setEvents((prev) => [...prev, event]);
+                    if (event.payload.tool === "browser") {
+                        setBrowserEvents((prev) => [...prev, event]);
+                    }
+                    if (event.payload.tool === "terminal") {
+                        setTerminalEvents((prev) => [...prev, event]);
+                    }
+                    scrollToBottom();
+                } else if (event.type === "tool_result") {
+                    setEvents((prev) => [...prev, event]);
+                    if (event.payload.tool === "browser") {
+                        setBrowserEvents((prev) => [...prev, event]);
+                    }
+                    if (event.payload.tool === "terminal") {
+                        setTerminalEvents((prev) => [...prev, event]);
+                    }
+                    scrollToBottom();
+                } else if (
+                    event.type === "browser_started" ||
+                    event.type === "browser_action"
+                ) {
+                    setBrowserEvents((prev) => [...prev, event]);
+                    scrollToBottom();
+                } else if (event.type === "waiting_approval") {
+                    setWaitingApproval({
+                        taskId: event.task_id,
+                        tool: (event.payload.tool as string) || "unknown",
+                        description: (event.payload.description as string) || "",
+                    });
+                    setEvents((prev) => [...prev, event]);
+                    scrollToBottom();
+                } else if (event.type === "task_failed") {
+                    setAgentStatus("Error");
+                    setEvents((prev) => [...prev, event]);
+                    scrollToBottom();
+                    const errorMsg = event.payload.error as string || "Task failed";
+                    setConversation((prev) => [...prev, { role: "agent", content: `Error: ${errorMsg}` }]);
+                } else {
+                    if (event.type === "agent_started") setAgentStatus("Thinking");
+                    if (event.type === "task_failed") setAgentStatus("Error");
+                    setEvents((prev) => [...prev, event]);
+                    scrollToBottom();
+                }
+            }
+        } catch (error) {
+            setAgentStatus("Error");
+            setEvents((prev) => [
+                ...prev,
+                {
+                    id: "error",
+                    timestamp: new Date().toISOString(),
+                    session_id: sid || "unknown",
+                    task_id: "unknown",
+                    type: "task_failed",
+                    source: "frontend",
+                    payload: { error: error instanceof Error ? error.message : "Connection failed" },
+                } as MozaEvent,
+            ]);
+            setConversation((prev) => [...prev, { role: "agent", content: `Error: ${error instanceof Error ? error.message : "Connection failed"}` }]);
+        } finally {
+            setStreaming(false);
+            setAgentStatus("Idle");
+            setWaitingApproval(null);
+            scrollToBottom();
         }
-      }
-    } catch {
-      setAgentStatus("Error");
-      setEvents((prev) => [
-        ...prev,
-        {
-          id: "error",
-          timestamp: new Date().toISOString(),
-          session_id: sid || "unknown",
-          task_id: "unknown",
-          type: "task_failed",
-          source: "frontend",
-          payload: { error: "Connection failed" },
-        } as MozaEvent,
-      ]);
-    } finally {
-      setStreaming(false);
-      setAgentStatus("Idle");
-      setWaitingApproval(null);
-      scrollToBottom();
     }
-  }
 
   async function handleApprove() {
     if (!waitingApproval) return;

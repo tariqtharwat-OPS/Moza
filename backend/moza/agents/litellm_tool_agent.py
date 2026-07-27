@@ -183,8 +183,24 @@ class LiteLLMToolAgent(AgentInterface):
         provider = self._provider
 
         cwd = os.getcwd()
+
+        # ── Reconstruct conversation history from previous tasks ─────
+        prev_messages: list[dict] = []
+        for event in context.session.execution_history:
+            if task and event.task_id == task.id:
+                continue  # skip current task's events
+            if event.type == EventType.AGENT_STARTED:
+                desc = event.payload.get("description", "")
+                if desc:
+                    prev_messages.append({"role": "user", "content": desc})
+            elif event.type == EventType.LLM_FINISHED:
+                content = event.payload.get("content", "")
+                if content:
+                    prev_messages.append({"role": "assistant", "content": content})
+
         messages: list[dict] = [
             {"role": "system", "content": self._build_system_prompt(registry, cwd=cwd)},
+            *prev_messages,
             {"role": "user", "content": task.description if task else "No task"},
         ]
 
@@ -194,7 +210,7 @@ class LiteLLMToolAgent(AgentInterface):
             session_id=sid, task_id=task_id,
             type=EventType.AGENT_THINKING,
             source="litellm_tool_agent",
-            payload={"content": f"Task received. {len(tools)} tools available."},
+            payload={"content": "Processing your request..."},
         )
 
         steps_count = 0

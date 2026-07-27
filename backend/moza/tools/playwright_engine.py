@@ -24,11 +24,16 @@ class PlaywrightEngine(BrowserEngine):
     async def ensure_browser(self) -> None:
         if self._page is not None:
             return
+        import asyncio
+
         try:
             from playwright.async_api import async_playwright
 
             self._playwright = await async_playwright().start()
-            self._browser = await self._playwright.chromium.launch(headless=self._headless)
+            self._browser = await asyncio.wait_for(
+                self._playwright.chromium.launch(headless=self._headless),
+                timeout=30.0,
+            )
             self._context = await self._browser.new_context(
                 viewport={"width": 1280, "height": 720},
             )
@@ -38,8 +43,13 @@ class PlaywrightEngine(BrowserEngine):
             raise RuntimeError(
                 "playwright is not installed. Run: pip install playwright && playwright install"
             )
+        except asyncio.TimeoutError:
+            logger.error("PlaywrightEngine: browser launch timed out (30s)")
+            await self.close()
+            raise RuntimeError("Browser launch timed out after 30s. Check that Chromium is installed.")
         except Exception as e:
             logger.error(f"PlaywrightEngine: failed to start browser: {e}")
+            await self.close()
             raise RuntimeError(f"Failed to start browser: {e}")
 
     async def close(self) -> None:

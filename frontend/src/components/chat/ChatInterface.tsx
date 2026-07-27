@@ -229,8 +229,9 @@ export default function ChatInterface() {
         }
 
         if (event.type === "llm_token") {
-          const token = event.payload.content as string;
-          setStreamingContent((prev) => prev + (token || ""));
+          let token = (event.payload.content as string) || "";
+          token = token.replace(/<function=[^>]*>/gi, "").replace(/<\/function>/gi, "");
+          setStreamingContent((prev) => prev + token);
           setAgentStatus("Thinking");
           scrollToBottom();
         } else if (event.type === "llm_finished") {
@@ -320,9 +321,12 @@ export default function ChatInterface() {
       case "agent_thinking":
         return <TypingIndicator key={idx} />;
       case "waiting_approval":
+        const tool = (event.payload.tool as string) || "";
+        const action = (event.payload.args as Record<string, unknown>)?.action as string | undefined;
+        const label = action ? `${tool} (${action})` : tool;
         return (
           <div key={idx} className="rounded-xl border border-amber-600/30 bg-amber-950/10 px-4 py-2 text-xs text-amber-400">
-            Awaiting approval for tool: {(event.payload.tool as string) || "unknown"}
+            Awaiting approval: {label}
           </div>
         );
       default:

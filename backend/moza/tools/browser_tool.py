@@ -102,6 +102,29 @@ class BrowserTool(BaseTool):
                 duration_ms=elapsed,
                 metadata={k: v for k, v in result.items() if k != "stdout"},
             ).model_dump()
+        except RuntimeError as e:
+            # Browser may have been closed — try restarting once
+            err_msg = str(e)
+            logger.warning(f"BrowserTool: {action} failed ({err_msg}), attempting restart...")
+            try:
+                await self._engine.close()
+                self._browser = None
+                self._page = None
+                result = await self._dispatch(self._engine, action, kwargs)
+                self._sync_state()
+                elapsed = (time.monotonic() - start) * 1000
+                return ToolResultPayload.ok(
+                    stdout=result.get("stdout", ""),
+                    duration_ms=elapsed,
+                    metadata={k: v for k, v in result.items() if k != "stdout"},
+                ).model_dump()
+            except Exception as e2:
+                elapsed = (time.monotonic() - start) * 1000
+                logger.error(f"BrowserTool: restart also failed: {e2}")
+                return ToolResultPayload.error(
+                    f"Browser {action} failed after restart: {e2}",
+                    duration_ms=elapsed, exit_code=1,
+                ).model_dump()
         except Exception as e:
             elapsed = (time.monotonic() - start) * 1000
             logger.error(f"BrowserTool: {action} failed: {e}")

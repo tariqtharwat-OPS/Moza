@@ -239,10 +239,16 @@ class LiteLLMToolAgent(AgentInterface):
                 kwargs["api_key"] = provider.api_key
             if provider.base_url:
                 kwargs["api_base"] = provider.base_url
+            # Force Groq provider for litellm routing when using Groq
+            if provider.base_url and "groq" in provider.base_url:
+                kwargs["custom_llm_provider"] = "groq"
 
+            _saved_openai_key = os.environ.pop("OPENAI_API_KEY", None)
             try:
                 response = await litellm.acompletion(**kwargs)
             except Exception as e:
+                if _saved_openai_key is not None:
+                    os.environ["OPENAI_API_KEY"] = _saved_openai_key
                 err_msg = f"LLM API error: {e}"
                 logger.warning(err_msg)
                 messages.append({"role": "system", "content": err_msg + " Please retry."})

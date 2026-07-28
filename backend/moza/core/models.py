@@ -17,6 +17,13 @@ class TaskStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    # ---- Expanded 8-state FSM (Step A.2) ----
+    IDLE = "idle"
+    PLANNING = "planning"
+    EXECUTING = "executing"
+    WAITING_APPROVAL = "waiting_approval"
+    REFLECTING = "reflecting"
+    RECOVERING = "recovering"
 
 
 class EventType(str, Enum):

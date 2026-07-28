@@ -1,16 +1,9 @@
 providers:
   default: openrouter
 
-litellm:
-  port: 4000
-  drop_params: true
-  add_function_to_prompt: true
-
-agent_type: litellm  # "litellm", "mock", "openhands", "groq", or "openrouter"
-
   openrouter:
     api_key: ${OPENROUTER_API_KEY}
-    model: openrouter/qwen/qwen3-32b
+    model: openrouter/qwen/qwen-3-32b
     base_url: https://openrouter.ai/api/v1
 
   openai:

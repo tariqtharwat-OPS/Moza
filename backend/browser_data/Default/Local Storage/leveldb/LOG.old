@@ -1,0 +1,5 @@
+2026/07/28-05:11:22.995 33b4 Creating DB D:\Moza\backend\browser_data\Default\Local Storage\leveldb since it was missing.
+2026/07/28-05:11:23.012 33b4 Reusing MANIFEST D:\Moza\backend\browser_data\Default\Local Storage\leveldb/MANIFEST-000001
+2026/07/28-05:12:23.022 2514 Level-0 table #5: started
+2026/07/28-05:12:23.043 2514 Level-0 table #5: 570816 bytes OK
+2026/07/28-05:12:23.046 2514 Delete type=0 #3

@@ -39,6 +39,7 @@ class PlaywrightEngine(BrowserEngine):
                     args=[
                         "--no-sandbox",
                         "--disable-blink-features=AutomationControlled",
+                        "--disable-web-security",
                     ],
                     viewport={"width": 1280, "height": 720},
                     user_agent=(

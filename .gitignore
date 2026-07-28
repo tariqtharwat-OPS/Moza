@@ -21,6 +21,9 @@ node_modules/
 # Runtime / session data
 sessions/
 backend/sessions/
+backend/browser_data/
+backend/server_output.txt
+frontend/dev_output.txt
 
 # Build artifacts
 *.egg-info/
@@ -28,3 +31,14 @@ Documents/
 build/
 dist/
 *.spec
+*.exe
+
+# Junk files
+*.png
+tmp_test/
+test_screenshots/
+reports/
+test_*.png
+verify_*.png
+verification_*.png
+New Text Document.txt

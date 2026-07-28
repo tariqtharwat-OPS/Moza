@@ -216,6 +216,7 @@ class LiteLLMToolAgent(AgentInterface):
         steps_count = 0
 
         while steps_count < self._max_steps:
+            response = None
             context.cancellation_token.raise_if_cancelled()
 
             logger.info(f"[LiteLLMToolAgent] step {steps_count + 1}/{self._max_steps} — {len(messages)} messages")

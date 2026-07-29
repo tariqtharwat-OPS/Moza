@@ -9,7 +9,9 @@ from loguru import logger
 from moza.agents.interfaces import AgentInterface
 from moza.core.context import ExecutionContext
 from moza.core.context_builder import ContextBuilder
+from moza.core.guards import get_guard_engine
 from moza.core.models import Event, EventType
+from moza.gateway.router import LLMRouter, NormalizedResponse, normalize_litellm_tool_call
 from moza.tools.registry import ToolRegistry
 
 
@@ -19,18 +21,6 @@ _TYPE_MAP = {"string": "string", "enum": "string", "integer": "integer", "number
 class LiteLLMToolAgent(AgentInterface):
     """
     ReAct (Reason + Act) agent powered by LiteLLM.
-    
-    The agent knows NOTHING about specific tools (Filesystem, Terminal, Browser, etc.).
-    It operates solely through:
-      - ToolRegistry  — to discover available tools and execute them
-      - Events        — to stream structured progress to the EventBus
-      - ExecutionContext — for session, cancellation, and environment data
-    
-    Loop: while steps_count < max_steps:
-      1. Call LLM with system prompt + task + conversation + tool schemas
-      2. If LLM returns tool_calls: execute each, append results, steps_count += 1
-      3. If LLM returns final text (no tool_calls): emit COMPLETED, break
-      4. If steps_count >= max_steps: emit FAILED (max_steps reached), break
     """
 
     def __init__(
@@ -38,10 +28,14 @@ class LiteLLMToolAgent(AgentInterface):
         config,
         provider_name: str | None = None,
         max_steps: int = 15,
+        browser_mode: bool = False,
     ) -> None:
         self._config = config
         self._provider_name = provider_name
         self._max_steps = max_steps
+        self._browser_mode = browser_mode
+        self._router = LLMRouter(config) if config else None
+        self._force_tool_choice: str | None = None
 
     # ── tool schema construction ──────────────────────────────────────────
 
@@ -122,21 +116,39 @@ class LiteLLMToolAgent(AgentInterface):
             "  'I have successfully translated the file and saved it as ...'\n"
             "  'Here is what I found ...'\n"
             "  'I have created the file with the requested content. Would you like me to ...'\n"
-            "Always end with a natural question or offer for follow-up assistance."
+            "Always end with a natural question or offer for follow-up assistance.\n\n"
+            "CRITICAL RULE — NEVER simulate tool execution in text: You MUST NEVER describe\n"
+            "tool usage in your conversational text response. Do not write phrases like\n"
+            "'Using browser tool:', 'Using filesystem tool:', 'I have saved the file',\n"
+            "'I am searching the web', 'Let me navigate to', or 'I will create a file'.\n"
+            "If an action requires a tool, you MUST emit a valid tool_call payload.\n"
+            "If you do not emit a tool_call, the tool action DID NOT happen.\n"
+            "The ONLY way to execute a tool is through a structured function call.\n\n"
+            "When you need to use a tool, your response MUST contain ONLY a single\n"
+            "<function_call> tag wrapping a Python dict literal with single-quoted keys.\n"
+            "Example: <function_call>{'name': 'filesystem', 'arguments': {'action': 'write', 'path': 'D:\\\\path\\\\to\\\\file.txt', 'content': 'Hello World'}}</function_call>\n"
+            "The 'name' field must match an available tool name exactly.\n"
+            "The 'arguments' field must be a dict with the required parameters for that tool.\n"
+            "Do NOT wrap in markdown code blocks. Do NOT include any other text before or after the tag.\n"
+            "After the tool executes and returns a result, you may respond conversationally.\n\n"
+            "CRITICAL RULE — Never fabricate data: If you need to look up information on\n"
+            "the web, use the browser tool. Do not make up company names, URLs, or data.\n"
+            "If the browser tool returns no results, report that honestly.\n"
+            "If you need to save a file, use the filesystem tool — do not claim a file\n"
+            "was saved without actually calling the tool."
         )
 
     @staticmethod
     def _sanitize_tool_result(result: dict | Any) -> dict:
-        """Remove binary/image fields that would trigger vision errors in non-vision LLMs."""
         if not isinstance(result, dict):
             return result
-
         cleaned = {}
         for k, v in result.items():
-            if k in ("screenshot_base64", "image_data", "image", "base64"):
+            if k in ("screenshot_base64", "screenshot_path", "image_data", "image", "base64", "png"):
+                continue
+            if "screenshot" in k.lower() or "image" in k.lower() or "png" in k.lower() or "base64" in k.lower():
                 continue
             if isinstance(v, str) and len(v) > 1000:
-                # Check if the string looks like base64 image data
                 if re.match(r'^[A-Za-z0-9+/=]{100,}$', v[:200]):
                     v = f"<{k}: {len(v)} bytes of binary data, omitted>"
             if isinstance(v, dict):
@@ -144,8 +156,6 @@ class LiteLLMToolAgent(AgentInterface):
             elif isinstance(v, list):
                 v = [LiteLLMToolAgent._sanitize_tool_result(i) if isinstance(i, dict) else i for i in v]
             cleaned[k] = v
-
-        # Truncate oversized stdout/stderr to prevent token overflow
         for key in ("stdout", "stderr"):
             if key in cleaned and isinstance(cleaned[key], str) and len(cleaned[key]) > 10000:
                 cleaned[key] = cleaned[key][:10000] + "\n... [output truncated]"
@@ -155,7 +165,6 @@ class LiteLLMToolAgent(AgentInterface):
 
     @staticmethod
     def _normalize_message(msg: dict) -> dict:
-        """Ensure every message dict contains all fields expected by LiteLLM's serializer."""
         base = {
             "role": msg.get("role", "user"),
             "content": msg.get("content"),
@@ -170,25 +179,251 @@ class LiteLLMToolAgent(AgentInterface):
     @property
     def _provider(self):
         return self._config.get_provider(self._provider_name)
+    
+    @staticmethod
+    def _parse_text_tool_calls(content: str, available_tools: list) -> list[dict]:
+        """Extract tool call descriptions from LLM text response."""
+        import uuid
+        import ast
+
+        lowered = content.lower()
+
+        # Strategy 1: <function_call>...</function_call> XML tag
+        m = re.search(r'<function_call>(.*?)</function_call>', content, re.DOTALL)
+        if m:
+            inner = m.group(1).strip()
+            data = None
+            try:
+                data = ast.literal_eval(inner)
+            except (ValueError, SyntaxError, MemoryError):
+                pass
+            if not data:
+                try:
+                    data = json.loads(inner.replace("'", '"'))
+                except json.JSONDecodeError:
+                    pass
+            if isinstance(data, dict):
+                fn_name = data.get("name", "")
+                fn_args = data.get("arguments", {})
+                if isinstance(fn_args, str):
+                    try:
+                        fn_args = json.loads(fn_args)
+                    except (json.JSONDecodeError, ValueError):
+                        try:
+                            fn_args = ast.literal_eval(fn_args)
+                        except (ValueError, SyntaxError, MemoryError):
+                            fn_args = {}
+                if not isinstance(fn_args, dict):
+                    fn_args = {}
+                if fn_name:
+                    for t in available_tools:
+                        if t.name == fn_name:
+                            return [{
+                                "id": f"call_{uuid.uuid4().hex[:12]}",
+                                "type": "function",
+                                "function": {
+                                    "name": fn_name,
+                                    "arguments": json.dumps(fn_args),
+                                },
+                            }]
+
+        # Strategy 2: JSON code blocks ```json ... ```
+        for m in re.finditer(r'```(?:json)?\s*\n?(.*?)```', content, re.DOTALL):
+            inner = m.group(1).strip()
+            data = None
+            try:
+                data = json.loads(inner)
+            except json.JSONDecodeError:
+                try:
+                    data = ast.literal_eval(inner.replace("'", '"'))
+                except (ValueError, SyntaxError, MemoryError):
+                    continue
+            if not isinstance(data, dict):
+                continue
+            fn_name = data.get("name", "") or data.get("tool", "")
+            fn_args = data.get("arguments", {}) or {k: v for k, v in data.items() if k != "tool" and k != "name"}
+            if not fn_name:
+                fn_data = data.get("function", {})
+                fn_name = fn_data.get("name", "")
+                fn_args = fn_data.get("arguments", {})
+            if not fn_name:
+                tc_list = data.get("tool_calls", [])
+                if tc_list:
+                    tc = tc_list[0]
+                    fn_name = tc.get("recipient_name", "") or tc.get("name", "")
+                    fn_args = tc.get("parameters", {}) or tc.get("arguments", {})
+            if isinstance(fn_args, str):
+                try:
+                    fn_args = json.loads(fn_args)
+                except json.JSONDecodeError:
+                    try:
+                        fn_args = ast.literal_eval(fn_args)
+                    except (ValueError, SyntaxError, MemoryError):
+                        fn_args = {}
+            if not isinstance(fn_args, dict):
+                fn_args = {}
+            if fn_name:
+                for t in available_tools:
+                    if t.name == fn_name:
+                        return [{
+                            "id": f"call_{uuid.uuid4().hex[:12]}",
+                            "type": "function",
+                            "function": {
+                                "name": fn_name,
+                                "arguments": json.dumps(fn_args),
+                            },
+                        }]
+
+        # Strategy 3: Inline JSON with tool-related keys
+        for m in re.finditer(r'\{', content):
+            depth = 0
+            in_str = False
+            escape = False
+            start = m.start()
+            for i in range(start, len(content)):
+                ch = content[i]
+                if escape:
+                    escape = False; continue
+                if ch == '\\' and in_str:
+                    escape = True; continue
+                if ch == '"' or ch == "'":
+                    in_str = not in_str; continue
+                if in_str: continue
+                if ch == '{': depth += 1
+                elif ch == '}':
+                    depth -= 1
+                    if depth == 0:
+                        candidate = content[start:i+1]
+                        if len(candidate) < 20:
+                            break
+                        # Check for tool-related keys
+                        low = candidate.lower()
+                        if any(k in low for k in ['"name"', "'name'", '"tool"', "'tool'", '"function"', '"arguments"']):
+                            data = None
+                            try:
+                                data = json.loads(candidate)
+                            except json.JSONDecodeError:
+                                try:
+                                    data = json.loads(candidate.replace("'", '"'))
+                                except json.JSONDecodeError:
+                                    try:
+                                        data = ast.literal_eval(candidate)
+                                    except (ValueError, SyntaxError, MemoryError):
+                                        continue
+                            if isinstance(data, dict):
+                                fn_name = data.get("name", "") or data.get("tool", "")
+                                if not fn_name:
+                                    fn_data = data.get("function", {})
+                                    fn_name = fn_data.get("name", "")
+                                    fn_args = fn_data.get("arguments", {})
+                                    if fn_name:
+                                        if isinstance(fn_args, str):
+                                            try:
+                                                fn_args = json.loads(fn_args)
+                                            except (json.JSONDecodeError, ValueError):
+                                                try:
+                                                    fn_args = ast.literal_eval(fn_args)
+                                                except (ValueError, SyntaxError, MemoryError):
+                                                    fn_args = {}
+                                        if not isinstance(fn_args, dict):
+                                            fn_args = {}
+                                        for t in available_tools:
+                                            if t.name == fn_name:
+                                                return [{"id": f"call_{uuid.uuid4().hex[:12]}", "type": "function", "function": {"name": fn_name, "arguments": json.dumps(fn_args)}}]
+                        break
+
+        # Strategy 4: Tool-specific keyword extraction
+        tool_keywords = {
+            "filesystem": ["write file", "create file", "save file", "write to"],
+            "browser": ["navigate to", "search for", "go to", "browser"],
+            "terminal": ["run ", "execute ", "terminal command"],
+        }
+        for tool_name, triggers in tool_keywords.items():
+            for trigger in triggers:
+                if trigger in lowered:
+                    matching = [t for t in available_tools if t.name == tool_name]
+                    if matching:
+                        args = {}
+                        if tool_name == "filesystem":
+                            args["action"] = "write"
+                            pm = re.search(r'(?:to|in|at|:)\s*([A-Za-z]:\\[^\s"\']+)', content)
+                            if pm:
+                                args["path"] = pm.group(1).strip()
+                            else:
+                                args["path"] = ""
+                            args["content"] = content
+                        elif tool_name == "browser":
+                            url_m = re.search(r'https?://[^\s"\']+', content)
+                            if url_m:
+                                args["url"] = url_m.group(0)
+                                args["action"] = "navigate"
+                            else:
+                                args["action"] = "extract_text"
+                        elif tool_name == "terminal":
+                            cmd_m = re.search(r'`([^`]+)`', content)
+                            if cmd_m:
+                                args["command"] = cmd_m.group(1)
+                            else:
+                                args["command"] = ""
+                        return [{"id": f"call_{uuid.uuid4().hex[:12]}", "type": "function", "function": {"name": tool_name, "arguments": json.dumps(args)}}]
+
+        return []
+
+    @staticmethod
+    def _semantic_requires_tool(
+        task_description: str,
+        available_tools: list,
+    ) -> list[str]:
+        lowered = task_description.lower()
+        required = []
+        action_map: dict[str, list[str]] = {
+            "browser": [
+                "search", "browse", "navigate", "website", "web", "url",
+                "http", "look up", "find", "research", "google", "internet",
+                "scrape", "extract", "page", "site", "online",
+            ],
+            "filesystem": [
+                "write", "save", "create", "file", "folder", "directory",
+                "document", "html", "xlsx", "pdf", "txt", "csv", "json",
+                "read", "open", "load", "path",
+            ],
+            "terminal": [
+                "run", "execute", "command", "terminal", "shell", "script",
+                "install", "pip", "npm", "git", "compile", "build",
+            ],
+        }
+        for tool_name, keywords in action_map.items():
+            if any(kw in lowered for kw in keywords):
+                for t in available_tools:
+                    if t.name == tool_name:
+                        required.append(tool_name)
+                        break
+        return required
+
+    def _get_provider_rank(self, provider_name: str, model_name: str) -> int:
+        try:
+            from moza_orchestrator import RANKING_CONFIG
+            for entry in RANKING_CONFIG["ranking"]:
+                if entry["provider"] == provider_name and entry["model"] == model_name:
+                    return entry["rank"]
+            return 999
+        except ImportError:
+            return 1
 
     # ── ReAct loop ────────────────────────────────────────────────────────
 
     async def execute(self, context: ExecutionContext) -> AsyncGenerator[Event, None]:
-        import litellm
-
         task = context.session.tasks[-1] if context.session.tasks else None
         task_id = task.id if task else "unknown"
         sid = context.session.id
         registry = context.tool_registry
-        provider = self._provider
 
         cwd = os.getcwd()
 
-        # ── Reconstruct conversation history from previous tasks ─────
         prev_messages: list[dict] = []
         for event in context.session.execution_history:
             if task and event.task_id == task.id:
-                continue  # skip current task's events
+                continue
             if event.type == EventType.AGENT_STARTED:
                 desc = event.payload.get("description", "")
                 if desc:
@@ -221,7 +456,6 @@ class LiteLLMToolAgent(AgentInterface):
 
             logger.info(f"[LiteLLMToolAgent] step {steps_count + 1}/{self._max_steps} — {len(messages)} messages")
 
-            # ── Inject dynamic environment context before every LLM call ──
             env_context = await ContextBuilder.build_context(context)
             messages[0] = {
                 "role": "system",
@@ -229,29 +463,76 @@ class LiteLLMToolAgent(AgentInterface):
             }
 
             normalized_msgs = [self._normalize_message(m) for m in messages]
-            kwargs: dict = {
-                "model": provider.model,
-                "messages": normalized_msgs,
-                "tools": tools,
-                "tool_choice": "auto",
-                "parallel_tool_calls": False,
-            }
-            if provider.api_key:
-                kwargs["api_key"] = provider.api_key
-            if provider.base_url:
-                kwargs["api_base"] = provider.base_url
-            # Force Groq provider for litellm routing when using Groq
-            if provider.base_url and "groq" in provider.base_url:
-                kwargs["custom_llm_provider"] = "groq"
-
-            _saved_openai_key = os.environ.pop("OPENAI_API_KEY", None)
             try:
-                response = await litellm.acompletion(**kwargs)
+                if self._router:
+                    result: NormalizedResponse = await self._router.route(
+                        messages=normalized_msgs,
+                        tools=tools,
+                        browser_mode=self._browser_mode,
+                        tool_choice=self._force_tool_choice,
+                    )
+                    self._force_tool_choice = None
+                    provider_name = result.provider
+                    model_name = result.model
+                    logger.info(f"[LiteLLMToolAgent] using provider: {provider_name}/{model_name}")
+                    
+                    yield Event(
+                        session_id=sid, task_id=task_id,
+                        type=EventType.AGENT_THINKING,
+                        source="litellm_tool_agent",
+                        payload={
+                            "content": "Processing your request...",
+                            "provider": provider_name,
+                            "model": model_name,
+                            "rank": self._get_provider_rank(provider_name, model_name)
+                        },
+                    )
+                else:
+                    import litellm
+                    kwargs: dict = {
+                        "model": self._provider.model,
+                        "messages": normalized_msgs,
+                        "tools": tools,
+                        "tool_choice": self._force_tool_choice or "auto",
+                        "parallel_tool_calls": False,
+                    }
+                    self._force_tool_choice = None
+                    if self._provider.api_key:
+                        kwargs["api_key"] = self._provider.api_key
+                    if self._provider.base_url:
+                        kwargs["api_base"] = self._provider.base_url
+                    if self._provider.base_url and "groq" in self._provider.base_url:
+                        kwargs["custom_llm_provider"] = "groq"
+                    _saved_openai_key = os.environ.pop("OPENAI_API_KEY", None)
+                    try:
+                        raw = await litellm.acompletion(**kwargs)
+                    finally:
+                        if _saved_openai_key is not None:
+                            os.environ["OPENAI_API_KEY"] = _saved_openai_key
+                    choice = raw.choices[0]
+                    msg = choice.message
+                    result = NormalizedResponse(
+                        content=msg.content or "",
+                        tool_calls=[normalize_litellm_tool_call(tc) for tc in (msg.tool_calls or [])],
+                        provider=self._provider.name or "unknown",
+                        model=self._provider.model,
+                        usage={"total_tokens": choice.usage.total_tokens if hasattr(choice, "usage") and choice.usage else 0},
+                    )
+                    provider_name = result.provider
+                    model_name = result.model
             except Exception as e:
-                if _saved_openai_key is not None:
-                    os.environ["OPENAI_API_KEY"] = _saved_openai_key
                 err_msg = f"LLM API error: {e}"
                 logger.warning(err_msg)
+                # If all providers are exhausted, fail immediately
+                if "All providers exhausted" in str(e):
+                    logger.error(f"[LiteLLMToolAgent] All providers exhausted — terminating")
+                    yield Event(
+                        session_id=sid, task_id=task_id,
+                        type=EventType.TASK_FAILED,
+                        source="litellm_tool_agent",
+                        payload={"error": "All providers exhausted", "task_id": task_id},
+                    )
+                    return
                 messages.append({"role": "system", "content": err_msg + " Please retry."})
                 steps_count += 1
                 yield Event(
@@ -261,10 +542,65 @@ class LiteLLMToolAgent(AgentInterface):
                     payload={"tool": "_llm", "success": False, "stderr": err_msg},
                 )
                 continue
-            choice = response.choices[0]
-            msg = choice.message
 
-            content = msg.content or ""
+            content = result.content
+            tool_calls = result.tool_calls
+
+            # ── Text-to-Tool Parser ─────────────────────────────────────────
+            if not tool_calls and content:
+                try:
+                    available_tools_list = registry.get_all()
+                    parsed_calls = LiteLLMToolAgent._parse_text_tool_calls(
+                        content, available_tools_list
+                    )
+                    if parsed_calls:
+                        logger.info(
+                            f"[LiteLLMToolAgent] text-to-tool: parsed {len(parsed_calls)} "
+                            f"tool calls from text response"
+                        )
+                        tool_calls = parsed_calls
+                except Exception as parse_err:
+                    logger.warning(f"[LiteLLMToolAgent] text-to-tool parse error: {parse_err}")
+
+            # ── Semantic Hallucination Guard ──────────────────────────────
+            if not tool_calls and content:
+                available_tools_list = registry.get_all()
+                required_tools = LiteLLMToolAgent._semantic_requires_tool(
+                    task.description if task else "", available_tools_list
+                )
+                if required_tools:
+                    logger.warning(
+                        f"[LiteLLMToolAgent] Semantic hallucination detected: "
+                        f"task requires {required_tools} but no tool_call emitted"
+                    )
+                    yield Event(
+                        session_id=sid, task_id=task_id,
+                        type=EventType.LLM_TOKEN,
+                        source="litellm_tool_agent",
+                        payload={"content": content},
+                    )
+                    yield Event(
+                        session_id=sid, task_id=task_id,
+                        type=EventType.TOOL_RESULT,
+                        source="guard_engine",
+                        payload={
+                            "tool": "semantic_hallucination",
+                            "success": False,
+                            "stderr": (
+                                f"Semantic hallucination: task requires {required_tools} "
+                                f"but LLM responded without a tool_call. Retrying with forced tool selection."
+                            ),
+                        },
+                    )
+                    hallucination_msg = (
+                        f"You described the action in text but did not emit a tool_call. "
+                        f"This task requires one of these tools: {', '.join(required_tools)}. "
+                        f"You MUST select and use the appropriate tool. Do NOT describe or simulate the action."
+                    )
+                    messages.append({"role": "system", "content": hallucination_msg})
+                    self._force_tool_choice = "required"
+                    steps_count += 1
+                    continue
 
             if content:
                 yield Event(
@@ -273,8 +609,6 @@ class LiteLLMToolAgent(AgentInterface):
                     source="litellm_tool_agent",
                     payload={"content": content},
                 )
-
-            tool_calls = getattr(msg, "tool_calls", None) or []
 
             # ── No tool calls → task is complete ──────────────────────────
             if not tool_calls:
@@ -293,25 +627,70 @@ class LiteLLMToolAgent(AgentInterface):
                 return
 
             # ── Tool calls present → execute them ─────────────────────────
-            assistant_msg: dict = {"role": "assistant", "content": msg.content}
+            assistant_msg: dict = {"role": "assistant", "content": content}
             tc_list = []
             for tc in tool_calls:
                 tc_list.append({
-                    "id": tc.id,
+                    "id": tc["id"],
                     "type": "function",
-                    "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+                    "function": {"name": tc["function"]["name"], "arguments": tc["function"]["arguments"]},
                 })
             assistant_msg["tool_calls"] = tc_list
             messages.append(assistant_msg)
 
+            # ── Golden Rules Guard Check ───────────────────────────────────
+            guard_engine = get_guard_engine()
+            tool_call_dicts = []
+            for tc in tool_calls:
+                try:
+                    args = json.loads(tc["function"]["arguments"])
+                except (json.JSONDecodeError, TypeError):
+                    args = {}
+                tool_call_dicts.append({
+                    "name": tc["function"]["name"],
+                    "arguments": args,
+                })
+            
+            available_tools = [t.name for t in registry.get_all()]
+            user_message = task.description if task else ""
+            
+            guard_results = guard_engine.check_all(
+                user_message=user_message,
+                tool_calls=tool_call_dicts,
+                available_tools=available_tools,
+                llm_response=content,
+            )
+
+            blocked = guard_engine.any_failed(guard_results)
+            block_reason = "; ".join(
+                f"{r.rule_name}: {r.message}"
+                for r in guard_engine.get_failures(guard_results)
+            )
+            if blocked:
+                logger.warning(f"[GuardEngine] Blocked tool execution: {block_reason}")
+                yield Event(
+                    session_id=sid, task_id=task_id,
+                    type=EventType.TOOL_RESULT,
+                    source="guard_engine",
+                    payload={
+                        "tool": "guard_engine",
+                        "success": False,
+                        "stderr": f"Guard check failed: {block_reason}",
+                        "exit_code": 1,
+                    },
+                )
+                messages.append({"role": "tool", "tool_call_id": tool_calls[0]["id"], "content": f"Guard error: {block_reason}"})
+                steps_count += 1
+                continue
+
             for tc in tool_calls:
                 context.cancellation_token.raise_if_cancelled()
 
-                fn_name = tc.function.name
+                fn_name = tc["function"]["name"]
                 try:
-                    fn_args = json.loads(tc.function.arguments)
-                except json.JSONDecodeError:
-                    logger.warning(f"Invalid JSON args for {fn_name}: {tc.function.arguments}")
+                    fn_args = json.loads(tc["function"]["arguments"])
+                except (json.JSONDecodeError, TypeError):
+                    logger.warning(f"Invalid JSON args for {fn_name}: {tc['function']['arguments']}")
                     fn_args = {}
 
                 logger.info(f"[LiteLLMToolAgent] tool_call: {fn_name}({fn_args})")
@@ -335,12 +714,11 @@ class LiteLLMToolAgent(AgentInterface):
                 except Exception as e:
                     result = {"success": False, "stderr": str(e)}
 
-                # Strip large/binary blobs before feeding to LLM context
                 _llm_result = self._sanitize_tool_result(result)
                 result_str = json.dumps(_llm_result) if isinstance(_llm_result, dict) else str(_llm_result)
                 if len(result_str) > 50000:
                     result_str = result_str[:50000] + "\n... [truncated]"
-                messages.append({"role": "tool", "tool_call_id": tc.id, "content": result_str})
+                messages.append({"role": "tool", "tool_call_id": tc["id"], "content": result_str})
 
                 payload: dict = {"tool": fn_name}
                 if isinstance(result, dict):
@@ -359,7 +737,6 @@ class LiteLLMToolAgent(AgentInterface):
 
             steps_count += 1
 
-        # ── Max steps reached without task completion ─────────────────────
         logger.warning(f"[LiteLLMToolAgent] max_steps ({self._max_steps}) reached — terminating")
         yield Event(
             session_id=sid, task_id=task_id,

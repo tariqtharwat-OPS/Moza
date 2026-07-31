@@ -22,8 +22,8 @@ def load_constitution(path: Optional[str] = None) -> Dict[str, Any]:
         Parsed constitution dictionary
     """
     if path is None:
-        # Default to backend/constitution.yaml
-        path = Path(__file__).parent / "constitution.yaml"
+        # Default to root constitution.yaml (SSOT)
+        path = Path(__file__).resolve().parent.parent.parent.parent / "constitution.yaml"
     else:
         path = Path(path)
     

@@ -369,12 +369,12 @@ class LLMRouter:
                 model = last_call.get("model", "unknown")
                 rank = last_call.get("rank", 0)
             else:
-                # Fall back to top-ranked provider from constitution
+                # Fall back to top-ranked provider from root constitution.yaml (SSOT)
                 try:
                     import yaml
                     from pathlib import Path
-                    _backend_dir = Path(__file__).resolve().parent.parent.parent
-                    constitution = yaml.safe_load((_backend_dir / "constitution.yaml").read_text())
+                    _project_root = Path(__file__).resolve().parent.parent.parent.parent
+                    constitution = yaml.safe_load((_project_root / "constitution.yaml").read_text())
                     ranking = (constitution or {}).get("provider_ranking", [])
                     if ranking:
                         provider = f"{ranking[0].get('provider', 'unknown')}/{ranking[0].get('model', 'unknown')}"

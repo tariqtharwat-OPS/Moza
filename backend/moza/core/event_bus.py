@@ -6,6 +6,9 @@ from loguru import logger
 from moza.core.event_recorder import get_recorder
 from moza.core.models import Event
 
+# Reserved session for system-wide (non-user) events, e.g. provider health sync
+SYSTEM_SESSION = "__system__"
+
 
 class EventBus:
     def __init__(self) -> None:
@@ -30,6 +33,22 @@ class EventBus:
             logger.warning(f"EventBus: recorder failed for event {event.id}: {e}")
         for queue in self._queues.get(session_id, []):
             await queue.put(event)
+
+    def publish_nowait(self, session_id: str, event: Event) -> None:
+        """Synchronous publish for non-async callers (e.g., HealthTracker).
+
+        Uses non-blocking put_nowait on the (unbounded) subscriber queues so
+        producers are not coupled to the event loop.
+        """
+        try:
+            self._recorder.record(event)
+        except Exception as e:
+            logger.warning(f"EventBus: recorder failed for event {event.id}: {e}")
+        for queue in self._queues.get(session_id, []):
+            try:
+                queue.put_nowait(event)
+            except Exception as e:
+                logger.warning(f"EventBus: put_nowait failed for event {event.id}: {e}")
 
     async def publish_and_complete(self, session_id: str, event: Event) -> None:
         await self.publish(session_id, event)

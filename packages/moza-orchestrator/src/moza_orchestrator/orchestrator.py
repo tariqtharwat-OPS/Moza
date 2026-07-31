@@ -94,13 +94,16 @@ class MozaOrchestrator:
     Supports HTTP/HTTPS proxy for bypassing IP-based blocks.
     """
 
-    def __init__(self, ranking_config: Optional[Dict] = None):
+    def __init__(self, ranking_config: Optional[Dict] = None, health_tracker: Optional[Any] = None):
         cfg = ranking_config if ranking_config else RANKING_CONFIG
         self.ranking = cfg.get("ranking", [])
         raw_keys = cfg.get("apiKeys", {})
         self.keys = {}  # provider -> current key string
         self.key_lists = {}  # provider -> list of all keys
         self.key_index = {}  # provider -> current index
+        # ADR-006 Phase 3: unified health state. When a HealthTracker is
+        # provided it becomes the master source of truth for cooldowns.
+        self._health_tracker = health_tracker
         
         for provider, key_data in raw_keys.items():
             # Phase 1 of ADR-006: check env var first (env takes precedence)
@@ -152,12 +155,41 @@ class MozaOrchestrator:
             logger.info(f"Proxy configured: {self._proxy[:40]}...")
 
         # State management
-        self.cooldowns = {}      # provider -> unix_timestamp
+        self._cooldowns = {}   # local fallback when no HealthTracker provided
         self.dead_providers = set()   # permanent failures (auth, dead)
         self.blocked_providers = {}   # provider -> unix_timestamp (IP blocks)
         self.call_history = []
 
         self._setup_logging()
+
+    @property
+    def cooldowns(self) -> Dict[str, float]:
+        """Read-only proxy to the unified HealthTracker (ADR-006 Phase 3).
+
+        When a HealthTracker is attached, this returns its active cooldown
+        deadlines; otherwise it proxies the local fallback dictionary.
+        """
+        if self._health_tracker is not None:
+            return self._health_tracker.get_cooldowns()
+        return dict(self._cooldowns)
+
+    def _is_provider_on_cooldown(self, provider: str) -> bool:
+        if self._health_tracker is not None:
+            return self._health_tracker.is_on_cooldown(provider=provider)
+        return self._cooldowns.get(provider, 0) > time.time()
+
+    def _set_provider_cooldown(self, provider: str, model: str, duration: float, error_type: str) -> None:
+        """Set a cooldown on the unified HealthTracker (or local fallback)."""
+        if self._health_tracker is not None:
+            self._health_tracker.set_cooldown(provider, model, duration, error_type)
+        else:
+            self._cooldowns[provider] = time.time() + duration
+
+    def _clear_provider_cooldowns(self) -> None:
+        if self._health_tracker is not None:
+            self._health_tracker.reset()
+        else:
+            self._cooldowns.clear()
 
     def _setup_logging(self):
         logger.add(
@@ -176,7 +208,7 @@ class MozaOrchestrator:
             return False
 
         now = time.time()
-        if self.cooldowns.get(provider, 0) > now:
+        if self._is_provider_on_cooldown(provider):
             return False
         if self.blocked_providers.get(provider, 0) > now:
             return False
@@ -211,6 +243,7 @@ class MozaOrchestrator:
                 f"RANK {entry['rank']} {provider}/{entry['model']} IP_BLOCKED "
                 f"(cooldown {cooldown_duration}s)"
             )
+            self._set_provider_cooldown(provider, entry["model"], cooldown_duration, error.error_type)
             self._maybe_rotate_vpn()
             return
 
@@ -221,9 +254,9 @@ class MozaOrchestrator:
                 return  # Don't add to dead_providers, try next key
             else:
                 self.dead_providers.add(provider)
-                self.cooldowns[provider] = now + cooldown_duration
+                self._set_provider_cooldown(provider, entry["model"], cooldown_duration, error.error_type)
         else:
-            self.cooldowns[provider] = now + cooldown_duration
+            self._set_provider_cooldown(provider, entry["model"], cooldown_duration, error.error_type)
 
         logger.info(
             f"RANK {entry['rank']} {provider}/{entry['model']} "
@@ -293,6 +326,8 @@ class MozaOrchestrator:
             f"RANK {entry['rank']} {entry['provider']}/{entry['model']} "
             f"SUCCESS {duration:.1f}s {tokens} tokens"
         )
+        if self._health_tracker is not None:
+            self._health_tracker.record_success(entry["provider"], entry["model"], duration)
 
     def _make_request(self, entry: Dict, messages: List[Dict], **kwargs) -> str | Dict:
         result = self._make_request_raw(entry, messages, **kwargs)
@@ -570,7 +605,7 @@ class MozaOrchestrator:
     async def complete_with_tools(self, messages: List[Dict], **kwargs) -> Dict:
         """Complete request and return structured response (with auto-fallback)."""
         self.dead_providers.clear()
-        self.cooldowns.clear()
+        self._clear_provider_cooldowns()
 
         smart_entry = None
         try:

@@ -99,7 +99,7 @@ Each phase must pass all 94+ existing tests and 5 frozen benchmarks before proce
 - [x] Backward compatibility addressed (3-phase migration with deprecation warnings)
 - [x] Migration plan included (breaking change — 5 phases)
 - [x] Interfaces updated (new `RotationManager` interface in Phase 3)
-- [x] Tests updated (Phase 1: 8 new secret-loading unit tests in `backend/tests/unit/test_secret_loading.py`)
+- [x] Tests updated (Phase 1: 8 secret-loading tests in `test_secret_loading.py`; Phase 3: 13 health-sync tests in `test_health_sync.py`)
 - [x] Documentation updated (this ADR + constitution.yaml cleanup in Phase 2)
 - [ ] Manager approval obtained (PENDING)
 
@@ -121,7 +121,25 @@ Each phase must pass all 94+ existing tests and 5 frozen benchmarks before proce
 - **Comment added:** `# SSOT: Consolidated from duplicate sections per ADR-006 Phase 2` plus a reference to `config.json > ranking` as the live operational source.
 - **Backup:** `constitution.yaml.bak` created in repo root for rollback.
 - **No code changes required:** the removed section was comments only; all consumers (`moza.core.constitution.get_constitution`, `gateway/router.py` summary fallback) still read the `provider_ranking` key, which is unchanged.
-- **Open follow-up (out of scope of this task):** `backend/constitution.yaml` still carries its own separate 19-entry `provider_ranking`. Its only consumer is the `router.py` summary fallback (used only when no calls recorded yet). Consolidating it onto the root file is deferred to a dedicated task.
+- **Open follow-up (deferred to Phase 4):** `backend/constitution.yaml` still carries its own separate 19-entry `provider_ranking`. Its only consumer is the `router.py` summary fallback (used only when no calls recorded yet). Consolidating it onto the root file is now **scheduled for Phase 4** (see Phase 4 Status below).
+
+## Phase 3 Status (2026-07-31)
+- [x] `HealthTracker` is now the master source of truth for provider cooldowns
+- [x] `MozaOrchestrator` accepts an injected `health_tracker`; its `cooldowns` dict became a read-only `@property` that proxies to the tracker (local fallback kept for standalone use)
+- [x] `HealthTracker` publishes `provider_failed` / `provider_recovered` events to the EventBus on cooldown state transitions
+- [x] New `EventType` values (`provider_failed`, `provider_recovered`) and `EventBus.SYSTEM_SESSION` + `publish_nowait` (sync publish for non-async producers)
+- [x] `LLMRouter` now shares its `HealthTracker` (wired to the EventBus) with `MozaOrchestrator`
+- [x] Backward compatible: legacy 3-strike `record_failure(provider, model)` behaviour preserved; orchestrator without a tracker uses its local cooldown dict
+- [x] 13 new unit tests in `backend/tests/unit/test_health_sync.py` (event-driven sync, proxy property, backward compat)
+
+### Migration Note — Phase 3
+- **Unification strategy:** cooldown state is owned solely by `HealthTracker`. The orchestrator queries it directly (`is_on_cooldown`, `get_cooldowns`) rather than maintaining a parallel dict — synchronous querying avoids event-loop race conditions, while the tracker still emits events on the EventBus so any layer can react. `orchestrator.cooldowns` remains a read-only property for external readers.
+- **Event contract:** `provider_failed` (payload: provider, model, error_type, cooldown_until) on cooldown entry; `provider_recovered` (payload: provider, model, latency) when a success clears an active cooldown. Both use `EventBus.SYSTEM_SESSION = "__system__"`.
+- **Failover behaviour preserved:** error-type cooldown durations (rate_limit 60s, auth_error 3600s, ip_blocked 300s, etc.), key-cycling on auth errors, `dead_providers`, and `blocked_providers` (VPN rotation trigger) all unchanged — only the storage of cooldown deadlines moved.
+
+## Phase 4 Status (2026-07-31)
+- [ ] VPN rotation with IP-change confirmation (from migration table)
+- [ ] **Deferred from Phase 2:** consolidate `backend/constitution.yaml`'s separate 19-entry `provider_ranking` onto the root `constitution.yaml` (flagged for cleanup here; only consumer is the `router.py` summary fallback)
 
 ## Impact Analysis
 

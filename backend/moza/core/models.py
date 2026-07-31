@@ -40,6 +40,8 @@ class EventType(str, Enum):
     TASK_COMPLETED = "task_completed"
     TASK_FAILED = "task_failed"
     WAITING_APPROVAL = "waiting_approval"
+    PROVIDER_FAILED = "provider_failed"
+    PROVIDER_RECOVERED = "provider_recovered"
 
 
 class ArtifactType(str, Enum):

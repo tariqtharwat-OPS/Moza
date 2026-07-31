@@ -12,6 +12,7 @@ import litellm
 from loguru import logger
 
 from moza.config.models import MOZAConfig
+from moza.core.event_bus import get_event_bus
 from moza.gateway.health_tracker import HealthTracker
 
 
@@ -81,11 +82,13 @@ class ProviderEntry:
 class LLMRouter:
     def __init__(self, config: MOZAConfig) -> None:
         self._config = config
-        self._health = HealthTracker()
+        self._health = HealthTracker(event_bus=get_event_bus())
         self._network_recovery_done = False
         
         if ORCHESTRATOR_AVAILABLE and config.use_orchestrator:
-            self._orchestrator = MozaOrchestrator()
+            # ADR-006 Phase 3: share the HealthTracker so the orchestrator and
+            # gateway read provider health from one unified source of truth.
+            self._orchestrator = MozaOrchestrator(health_tracker=self._health)
             self._use_orchestrator = True
             models_count = len(self._orchestrator.ranking)
             providers_count = len({m["provider"] for m in self._orchestrator.ranking})

@@ -1,9 +1,33 @@
 # AGENT HANDOVER — Moza Project Status
 
-> **Generated:** 2026-07-31  
-> **Last commit:** `119cca7` — `feat(gateway): complete ADR-006 Phase 5 - formal circuit breaker and rate-limit key cycling with workflow test`  
+> **Generated:** 2026-08-01  
+> **Last commit:** `a3c6980` — `fix: remove ProviderSelector, contextual greetings, reconcile provider display (Issue #3)`  
 > **Branch:** `main`  
 > **Remote:** `origin` (`https://github.com/tariqtharwat-OPS/Moza.git`)
+
+---
+
+## Phase 1 — UX Fixes (Issues #1, #3, #7) — COMPLETE
+
+### Issue #1 — Launcher Terminal Closes
+- `launch_moza.py` rewritten: `resolve_python()` uses real Python (`shutil.which`) when frozen instead of `sys.executable` (which pointed at MozaLauncher.exe → backend never started → 20s timeout → window closed).
+- Removed `CREATE_NO_WINDOW` so backend/frontend logs inherit the launcher console (live logs).
+- `main()` has `finally: input("Press ENTER to close this window ...")` guard (EOFError/KeyboardInterrupt caught).
+- `MozaLauncher.exe` rebuilt (8.3 MB, tracked in git): backend on 8001, frontend on 3000, opens browser.
+
+### Issue #3 — Internal State Leaks
+- `ProviderSelector` component removed from `ChatInterface.tsx` (no more raw orchestrator telemetry: "0% success", dead_providers, rank badges).
+- `get_conversational_reply()` now contextual: random picks from `_ARABIC_REPLIES`, `_HOW_ARE_YOU_REPLIES`, `_RETURN_GREETING_REPLIES`, `_ENGLISH_REPLIES`; accepts `history` param (orchestrator passes `session.execution_history`); detects prior greeting → "Welcome back!" reply.
+- `router.py` `summary()` fallback now uses live `self._orchestrator.ranking[0]` instead of stale `constitution.yaml` rank 1 (groq-moza mismatch).
+
+### Issue #7 — Test Artifacts Cleanup
+- ~70 test artifacts deleted (repo root, `backend/`, `frontend/`): `chat_response*.txt`, `frontend_*.png`, `server_*.log`, `backend_8001*.txt`, `wiki_test*.png`, `startup*.log`, `e2e_server_*`, `echo_tool_output.txt`, `backend/Documents/moza.txt`.
+- 2 active server logs remain locked by running backend (PID 7484) — delete after next backend restart.
+
+### Phase 1 Commits
+- `af1ba0a` — `chore: delete test artifacts from E2E/manual testing (Issue #7)`
+- `32a53d9` — `fix(launcher): resolve real python in frozen mode, show live logs, add exit guard (Issue #1)`
+- `a3c6980` — `fix: remove ProviderSelector, contextual greetings, reconcile provider display (Issue #3)`
 
 ---
 
@@ -70,6 +94,29 @@
 
 ---
 
+## Last Completed Action
+
+- Phase 1 implementation, testing, and push to GitHub (Issues #1, #3, #7 complete).
+
+## Next Immediate Step
+
+- Phase 2: Issue #4 (Stop button), #5 (Queue indication), #6 (Slow responses), #2 (Browser preview).
+
+## Known Issues
+
+- 21 pre-existing Windows `tmp_path` test errors in `tests/unit` (unrelated to UX fixes).
+- Browser preview still broken (Phase 2 Issue #2).
+- 2 active backend log files locked by running backend (PID 7484) — delete after backend restart.
+
+## Pre-Commit Checklist (Phase 1)
+
+- [x] Phase 1 fixes implemented
+- [x] Backend tests pass (89/89 relevant)
+- [x] AGENT_HANDOVER.md updated
+- [ ] Phase 2 fixes pending
+
+---
+
 ## Test Results
 
 ```
@@ -81,6 +128,12 @@ $ python -m pytest tests/integration/test_circuit_breaker_workflow.py -v
 
 $ python -m pytest tests/unit tests/integration -q
 128 passed, 1 failed (test_sse_event_order - pre-existing flaky)
+
+# After Phase 1:
+$ python -m pytest tests/unit/ -q
+89 passed, 21 errors (pre-existing Windows tmp_path fixture errors)
+$ python -m pytest tests/unit/test_intent_classifier.py -v
+13 passed
 ```
 
 ---
@@ -99,8 +152,11 @@ python -m pytest tests/integration -v
 ## Git Log
  
 ```
-5481e86  fix: update MozaLauncher to start backend on port 8001 to match frontend expectations
-119cca7  feat(gateway): complete ADR-006 Phase 5 - formal circuit breaker and rate-limit key cycling with workflow test
+a3c6980  fix: remove ProviderSelector, contextual greetings, reconcile provider display (Issue #3)
+32a53d9  fix(launcher): resolve real python in frozen mode, show live logs, add exit guard (Issue #1)
+af1ba0a  chore: delete test artifacts from E2E/manual testing (Issue #7)
+efd5ffe  fix: update MozaLauncher to start backend on port 8001 and update AGENT_HANDOVER.md
+5481e86  feat(gateway): complete ADR-006 Phase 5 - formal circuit breaker and rate-limit key cycling with workflow test
 ab4d691  feat(gateway): implement Phase 4 of ADR-006 - VPN rotation with IP confirmation
 ... (earlier commits)
 ```
@@ -112,11 +168,13 @@ ab4d691  feat(gateway): implement Phase 4 of ADR-006 - VPN rotation with IP conf
 | File | Purpose |
 |------|---------|
 | `D:\Moza\MozaLauncher.exe` | **CRITICAL: Always use this to start the system.** Starts backend on port 8001, frontend on 3000, opens Chrome. |
+| `D:\Moza\launch_moza.py` | Launcher source (frozen-python resolve, live logs, ENTER exit guard). |
 | `backend/moza/gateway/health_tracker.py` | Health tracking + circuit breaker implementation |
 | `packages/moza-orchestrator/src/moza_orchestrator/orchestrator.py` | Orchestrator with failover + key cycling |
 | `backend/moza/gateway/router.py` | Router wiring HealthTracker → Orchestrator |
 | `backend/moza/core/event_bus.py` | EventBus (SYSTEM_SESSION, publish_nowait) |
 | `backend/moza/core/models.py` | EventType (PROVIDER_FAILED, PROVIDER_RECOVERED) |
+| `backend/moza/core/intent_classifier.py` | Contextual conversational replies |
 | `backend/tests/unit/test_health_sync.py` | Health sync unit tests (fixture patterns) |
 | `backend/tests/unit/test_vpn_rotation.py` | VPN rotation unit tests (FakeClock pattern) |
 | `backend/tests/integration/test_circuit_breaker_workflow.py` | Phase 5 workflow integration test |

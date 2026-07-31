@@ -17,9 +17,7 @@ from typing import Any
 from collections.abc import AsyncGenerator
 
 
-class from abc import ABC
-from abc import abstractmethod
-class CapabilityInterface(ABC):(ABC):
+class CapabilityInterface(ABC):
     """
     Interface for all MOZA capabilities.
     
@@ -107,12 +105,7 @@ class CapabilityInterface(ABC):(ABC):
         pass
 
 
-class from abc import ABC
-from abc import abstractmethod
 class ToolInterface(ABC):
-    @abstractmethod
-    def __init__(self):
-        pass(ABC):
     """
     Interface for all MOZA tools.
     
@@ -252,12 +245,7 @@ class ToolInterface(ABC):
         pass
 
 
-class from abc import ABC
-from abc import abstractmethod
 class ProviderInterface(ABC):
-    @abstractmethod
-    def __init__(self):
-        pass(ABC):
     """
     Interface for all LLM providers.
     

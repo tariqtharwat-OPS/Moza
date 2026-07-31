@@ -97,10 +97,20 @@ class BrowserTool(BaseTool):
             result = await self._dispatch(engine, action, kwargs)
             self._sync_state()
             elapsed = (time.monotonic() - start) * 1000
+            # Strip binary data from metadata before storing
+            meta = {}
+            for k, v in result.items():
+                if k == "stdout":
+                    continue
+                if k in ("screenshot_base64", "screenshot_path", "image_data", "image", "base64"):
+                    continue
+                if "screenshot" in k.lower() or "image" in k.lower() or "png" in k.lower():
+                    continue
+                meta[k] = v
             return ToolResultPayload.ok(
                 stdout=result.get("stdout", ""),
                 duration_ms=elapsed,
-                metadata={k: v for k, v in result.items() if k != "stdout"},
+                metadata=meta,
             ).model_dump()
         except RuntimeError as e:
             # Browser may have been closed — try restarting once
@@ -138,8 +148,12 @@ class BrowserTool(BaseTool):
     def _validate_params(self, action: str, kwargs: dict) -> str | None:
         if action in ("navigate",) and not kwargs.get("url"):
             return "'url' is required for navigate action."
-        if action in ("click", "type", "extract_text") and action == "type" and kwargs.get("text") is None:
-            return "'selector' and 'text' are required for type action."
+        if action in ("click",) and not kwargs.get("selector"):
+            return "'selector' is required for click action."
+        if action in ("type",) and not kwargs.get("selector"):
+            return "'selector' is required for type action."
+        if action in ("type",) and kwargs.get("text") is None:
+            return "'text' is required for type action."
         if action == "execute_js" and not kwargs.get("script"):
             return "'script' is required for execute_js action."
         return None
@@ -147,8 +161,8 @@ class BrowserTool(BaseTool):
     async def _dispatch(self, engine, action: str, kwargs: dict) -> dict:
         dispatch = {
             "navigate": lambda: engine.navigate(kwargs["url"]),
-            "click": lambda: engine.click(kwargs["selector"]),
-            "type": lambda: engine.type_text(kwargs["selector"], kwargs["text"]),
+            "click": lambda: engine.click(kwargs.get("selector", "")),
+            "type": lambda: engine.type_text(kwargs.get("selector", ""), kwargs.get("text", "")),
             "extract_text": lambda: engine.extract_text(kwargs.get("selector")),
             "screenshot": lambda: engine.screenshot(),
             "scroll": lambda: engine.scroll(kwargs.get("direction", "down"), kwargs.get("amount", 300)),

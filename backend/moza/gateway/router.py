@@ -87,7 +87,9 @@ class LLMRouter:
         if ORCHESTRATOR_AVAILABLE and config.use_orchestrator:
             self._orchestrator = MozaOrchestrator()
             self._use_orchestrator = True
-            logger.info("LLMRouter: MozaOrchestrator initialized with 19 ranked models across 7 providers")
+            models_count = len(self._orchestrator.ranking)
+            providers_count = len({m["provider"] for m in self._orchestrator.ranking})
+            logger.info(f"LLMRouter: MozaOrchestrator initialized with {models_count} ranked models across {providers_count} providers")
         else:
             self._orchestrator = None
             self._use_orchestrator = False
@@ -170,7 +172,7 @@ class LLMRouter:
             kwargs["temperature"] = temperature
         if max_tokens is not None:
             kwargs["max_tokens"] = max_tokens
-        if "groq" in base_url:
+        if base_url and "groq" in base_url:
             kwargs["custom_llm_provider"] = "groq"
         return kwargs
 
@@ -215,7 +217,7 @@ class LLMRouter:
                          Pass "required" to force the LLM to emit a tool call.
         """
         if self._use_orchestrator:
-            return await self._route_with_orchestrator(messages, tools, temperature, max_tokens)
+            return await self._route_with_orchestrator(messages, tools, temperature, max_tokens, tool_choice)
         else:
             return await self._route_with_fallback(messages, tools, temperature, max_tokens, browser_mode, tool_choice)
     
@@ -225,6 +227,7 @@ class LLMRouter:
         tools: list[dict] | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
+        tool_choice: str | None = None,
     ) -> NormalizedResponse:
         """Route request through MozaOrchestrator with intelligent failover."""
         try:
@@ -259,6 +262,8 @@ class LLMRouter:
                 kwargs["max_tokens"] = max_tokens
             if tools:
                 kwargs["tools"] = tools
+            if tool_choice:
+                kwargs["tool_choice"] = tool_choice
             
             # Make request through orchestrator
             start = time.monotonic()
@@ -339,27 +344,59 @@ class LLMRouter:
             tool_choice=tool_choice,
         )
         raw = await litellm.acompletion(**kwargs)
-        choice = raw.choices[0]
+        choice = raw.choices[0] if raw.choices else None
+        if choice is None:
+            raise RuntimeError("LLM returned empty choices list")
         msg = choice.message
         return NormalizedResponse(
             content=msg.content or "",
             tool_calls=[normalize_litellm_tool_call(tc) for tc in (msg.tool_calls or [])],
-            provider=provider.name or "fallback",
+            provider=provider.model or "fallback",
             model=provider.model,
             usage={"total_tokens": choice.usage.total_tokens if hasattr(choice, "usage") and choice.usage else 0},
         )
 
     def summary(self) -> dict:
-        """Return summary of router status."""
+        """Return summary of router status including current provider info."""
         if self._use_orchestrator:
             stats = self._orchestrator.get_stats()
+            last_call = self._orchestrator.call_history[-1] if self._orchestrator.call_history else {}
+            if last_call:
+                provider = last_call.get("provider", "unknown")
+                model = last_call.get("model", "unknown")
+                rank = last_call.get("rank", 0)
+            else:
+                # Fall back to top-ranked provider from constitution
+                try:
+                    import yaml
+                    from pathlib import Path
+                    _backend_dir = Path(__file__).resolve().parent.parent.parent
+                    constitution = yaml.safe_load((_backend_dir / "constitution.yaml").read_text())
+                    ranking = (constitution or {}).get("provider_ranking", [])
+                    if ranking:
+                        provider = f"{ranking[0].get('provider', 'unknown')}/{ranking[0].get('model', 'unknown')}"
+                        model = ranking[0].get("model", "unknown")
+                        rank = ranking[0].get("rank", 1)
+                    else:
+                        provider = "unknown"
+                        model = "unknown"
+                        rank = 0
+                except Exception:
+                    provider = "unknown"
+                    model = "unknown"
+                    rank = 0
+            models_count = len(self._orchestrator.ranking)
+            providers_count = len({m["provider"] for m in self._orchestrator.ranking})
             return {
                 "orchestrator": {
-                    "total_models": 19,
-                    "providers": 7,
+                    "total_models": models_count,
+                    "total_providers": providers_count,
                     "success_rate": stats["success_rate"],
                     "dead_providers": stats["dead_providers"],
                     "cooldown_providers": stats["cooldown_providers"],
+                    "current_provider": provider,
+                    "current_model": model,
+                    "current_rank": rank,
                 },
                 "health": self._health.summary(),
             }

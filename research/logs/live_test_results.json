@@ -1,0 +1,618 @@
+{
+  "timestamp": "2026-07-30T11:39:15.450539",
+  "total": 63,
+  "passed": 21,
+  "failed": 42,
+  "pass_rate": "33.3%",
+  "results": [
+    {
+      "model": "deepseek-v4-flash-free",
+      "provider": "opencode-zen",
+      "context": 1000000,
+      "status": "FAIL",
+      "time_s": 0.88,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "mimo-v2.5-free",
+      "provider": "opencode-zen",
+      "context": 1000000,
+      "status": "FAIL",
+      "time_s": 0.8,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "ling-3.0-flash-free",
+      "provider": "opencode-zen",
+      "context": 262144,
+      "status": "FAIL",
+      "time_s": 0.9,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "nemotron-3-ultra-free",
+      "provider": "opencode-zen",
+      "context": 1000000,
+      "status": "FAIL",
+      "time_s": 0.9,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "north-mini-code-free",
+      "provider": "opencode-zen",
+      "context": 256000,
+      "status": "FAIL",
+      "time_s": 0.88,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "laguna-s-2.1-free",
+      "provider": "opencode-zen",
+      "context": 262144,
+      "status": "FAIL",
+      "time_s": 0.88,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "big-pickle",
+      "provider": "opencode-zen",
+      "context": 512000,
+      "status": "FAIL",
+      "time_s": 0.83,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "llama-3.3-70b-versatile",
+      "provider": "groq",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 0.57,
+      "http_code": 403,
+      "error": "Forbidden: {\"error\":{\"message\":\"Access denied. Please check your network settings.\"}}"
+    },
+    {
+      "model": "llama-3.1-70b-versatile",
+      "provider": "groq",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 0.47,
+      "http_code": 403,
+      "error": "Forbidden: {\"error\":{\"message\":\"Access denied. Please check your network settings.\"}}"
+    },
+    {
+      "model": "mixtral-8x7b-32768",
+      "provider": "groq",
+      "context": 32768,
+      "status": "FAIL",
+      "time_s": 0.44,
+      "http_code": 403,
+      "error": "Forbidden: {\"error\":{\"message\":\"Access denied. Please check your network settings.\"}}"
+    },
+    {
+      "model": "gemma2-9b-it",
+      "provider": "groq",
+      "context": 8192,
+      "status": "FAIL",
+      "time_s": 0.42,
+      "http_code": 403,
+      "error": "Forbidden: {\"error\":{\"message\":\"Access denied. Please check your network settings.\"}}"
+    },
+    {
+      "model": "gpt-4o",
+      "provider": "github",
+      "context": 128000,
+      "status": "FAIL",
+      "time_s": 1.29,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "gpt-4o-mini",
+      "provider": "github",
+      "context": 128000,
+      "status": "FAIL",
+      "time_s": 1.42,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "Meta-Llama-3.1-405B-Instruct",
+      "provider": "github",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 1.16,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "Meta-Llama-3.3-70B-Instruct",
+      "provider": "github",
+      "context": 128000,
+      "status": "FAIL",
+      "time_s": 1.37,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "Meta-Llama-3.1-8B-Instruct",
+      "provider": "github",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 1.37,
+      "http_code": 401,
+      "error": "Unauthorized with all 3 keys"
+    },
+    {
+      "model": "qwen/qwen3.7-flash",
+      "provider": "openrouter",
+      "context": 1000000,
+      "status": "PASS",
+      "response": "OK - Context: 1000000",
+      "time_s": 3.23,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "provider": "openrouter",
+      "context": 1000000,
+      "status": "PASS",
+      "response": "The user asks: \"Reply with exactly: OK - Context: 1000000\". So they want the assistant to output exactly",
+      "time_s": 1.43,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "deepseek/deepseek-v4-flash",
+      "provider": "openrouter",
+      "context": 1000000,
+      "status": "PASS",
+      "response": "OK",
+      "time_s": 1.94,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "provider": "openrouter",
+      "context": 262144,
+      "status": "PASS",
+      "response": "We need to reply exactly: \"OK - Context: 262144\". No extra spaces or punctuation. Ensure exactly that string",
+      "time_s": 2.58,
+      "key_index": 1,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "google/gemma-4-26b-a4b-it:free",
+      "provider": "openrouter",
+      "context": 262144,
+      "status": "PASS",
+      "response": "OK - Context: 262144",
+      "time_s": 6.33,
+      "key_index": 1,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "poolside/laguna-s-2.1:free",
+      "provider": "openrouter",
+      "context": 262144,
+      "status": "PASS",
+      "response": "OK - Context: 262144",
+      "time_s": 1.73,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "cohere/north-mini-code:free",
+      "provider": "openrouter",
+      "context": 256000,
+      "status": "FAIL",
+      "time_s": 2.46,
+      "http_code": 0,
+      "error": "'NoneType' object has no attribute 'strip'"
+    },
+    {
+      "model": "inclusionai/ling-3.0-flash:free",
+      "provider": "openrouter",
+      "context": 262144,
+      "status": "FAIL",
+      "time_s": 1.92,
+      "http_code": 0,
+      "error": "'NoneType' object has no attribute 'strip'"
+    },
+    {
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "provider": "openrouter",
+      "context": 256000,
+      "status": "PASS",
+      "response": "OK - Context: 256000",
+      "time_s": 2.24,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "google/gemma-4-31b-it:free",
+      "provider": "openrouter",
+      "context": 262144,
+      "status": "FAIL",
+      "time_s": 0,
+      "http_code": 0,
+      "error": "Max retries exhausted"
+    },
+    {
+      "model": "mistral-medium-2604",
+      "provider": "mistral",
+      "context": 262144,
+      "status": "PASS",
+      "response": "OK",
+      "time_s": 1.56,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "codestral-latest",
+      "provider": "mistral",
+      "context": 256000,
+      "status": "PASS",
+      "response": "OK - Context: 256000",
+      "time_s": 1.23,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "mistral-large-latest",
+      "provider": "mistral",
+      "context": 262144,
+      "status": "PASS",
+      "response": "OK - Context: 262144",
+      "time_s": 3.35,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "ministral-8b-latest",
+      "provider": "mistral",
+      "context": 262144,
+      "status": "PASS",
+      "response": "OK - Context: 262144",
+      "time_s": 1.38,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "pixtral-large-latest",
+      "provider": "mistral",
+      "context": 128000,
+      "status": "FAIL",
+      "time_s": 1.18,
+      "http_code": 400,
+      "error": "{\"object\":\"error\",\"message\":\"Invalid model: pixtral-large-latest\",\"type\":\"invalid_model\",\"param\":null,\"code\":\"1500\",\"raw_status_code\":400}"
+    },
+    {
+      "model": "Meta-Llama-3.3-70B-Instruct",
+      "provider": "sambanova",
+      "context": 128000,
+      "status": "PASS",
+      "response": "OK - Context: 128000",
+      "time_s": 4.41,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "gemma-4-31B-it",
+      "provider": "sambanova",
+      "context": 262144,
+      "status": "PASS",
+      "response": "OK - Context: 262144",
+      "time_s": 8.04,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "Meta-Llama-3.1-8B-Instruct",
+      "provider": "sambanova",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 1.02,
+      "http_code": 410,
+      "error": "The requested model (Meta-Llama-3.1-8B-Instruct) is not available on SambaNova Cloud. For more information, please visit https://docs.sambanova.ai/clo"
+    },
+    {
+      "model": "Meta-Llama-3.1-405B-Instruct",
+      "provider": "sambanova",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 0.92,
+      "http_code": 410,
+      "error": "The requested model (Meta-Llama-3.1-405B-Instruct) is not available on SambaNova Cloud. For more information, please visit https://docs.sambanova.ai/c"
+    },
+    {
+      "model": "deepseek-ai/deepseek-v4-flash",
+      "provider": "nvidia",
+      "context": 1000000,
+      "status": "PASS",
+      "response": "OK",
+      "time_s": 1.54,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "deepseek-ai/deepseek-v4-pro",
+      "provider": "nvidia",
+      "context": 1000000,
+      "status": "PASS",
+      "response": "OK",
+      "time_s": 18.32,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "minimaxai/minimax-m3",
+      "provider": "nvidia",
+      "context": 1000000,
+      "status": "FAIL",
+      "time_s": 0.97,
+      "http_code": 502,
+      "error": "{\"type\":\"about:blank\",\"title\":\"Bad Gateway\",\"status\":502,\"detail\":\"Upstream request failed.\"}\n"
+    },
+    {
+      "model": "z-ai/glm-5.2",
+      "provider": "nvidia",
+      "context": 1000000,
+      "status": "FAIL",
+      "time_s": 30.69,
+      "http_code": 0,
+      "error": "Timeout after 30s"
+    },
+    {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "provider": "nvidia",
+      "context": 1000000,
+      "status": "PASS",
+      "response": "The user asks: \"Reply with exactly: OK - Context: 1000000\". So they want a response that exactly matches",
+      "time_s": 1.11,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "provider": "nvidia",
+      "context": 262144,
+      "status": "PASS",
+      "response": "We need to reply exactly: \"OK - Context: 262144\". No extra spaces or punctuation beyond that. Ensure exactly",
+      "time_s": 1.52,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "moonshotai/kimi-k2.6",
+      "provider": "nvidia",
+      "context": 262144,
+      "status": "FAIL",
+      "time_s": 0.9,
+      "http_code": 404,
+      "error": "Model not found: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function '23d4f03a-b8a6-4adb-a183-7daa083a09cc': Not fou"
+    },
+    {
+      "model": "google/gemma-4-31b-it",
+      "provider": "nvidia",
+      "context": 262144,
+      "status": "PASS",
+      "response": "OK - Context: 262144",
+      "time_s": 1.62,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "thinkingmachines/inkling",
+      "provider": "nvidia",
+      "context": 1000000,
+      "status": "FAIL",
+      "time_s": 1.62,
+      "http_code": 0,
+      "error": "'NoneType' object has no attribute 'strip'"
+    },
+    {
+      "model": "stepfun-ai/step-3.7-flash",
+      "provider": "nvidia",
+      "context": 256000,
+      "status": "FAIL",
+      "time_s": 1.51,
+      "http_code": 0,
+      "error": "'NoneType' object has no attribute 'strip'"
+    },
+    {
+      "model": "mistralai/mistral-medium-3.5-128b",
+      "provider": "nvidia",
+      "context": 262144,
+      "status": "PASS",
+      "response": "OK",
+      "time_s": 0.98,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "llama-3.3-70b-instruct",
+      "provider": "cerebras",
+      "context": 128000,
+      "status": "FAIL",
+      "time_s": 1.1,
+      "http_code": 404,
+      "error": "Model not found: {\"message\":\"Model does not exist or you do not have access to it.\",\"type\":\"not_found_error\",\"param\":"
+    },
+    {
+      "model": "llama-3.1-8b-instruct",
+      "provider": "cerebras",
+      "context": 128000,
+      "status": "FAIL",
+      "time_s": 0.99,
+      "http_code": 404,
+      "error": "Model not found: {\"message\":\"Model does not exist or you do not have access to it.\",\"type\":\"not_found_error\",\"param\":"
+    },
+    {
+      "model": "llama-3.1-70b-instruct",
+      "provider": "cerebras",
+      "context": 128000,
+      "status": "FAIL",
+      "time_s": 1.18,
+      "http_code": 404,
+      "error": "Model not found: {\"message\":\"Model does not exist or you do not have access to it.\",\"type\":\"not_found_error\",\"param\":"
+    },
+    {
+      "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "provider": "cloudflare",
+      "context": 128000,
+      "status": "PASS",
+      "response": "",
+      "time_s": 1.44,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "llama-4-scout-17b-16e-instruct",
+      "provider": "cloudflare",
+      "context": 3500000,
+      "status": "FAIL",
+      "time_s": 0.79,
+      "http_code": 400,
+      "error": "{\"success\":false,\"errors\":[{\"code\":7000,\"message\":\"No route for that URI\"}],\"messages\":[],\"result\":null}"
+    },
+    {
+      "model": "gemma-4-26b-a4b-it",
+      "provider": "cloudflare",
+      "context": 262144,
+      "status": "FAIL",
+      "time_s": 0.91,
+      "http_code": 400,
+      "error": "{\"success\":false,\"errors\":[{\"code\":7000,\"message\":\"No route for that URI\"}],\"messages\":[],\"result\":null}"
+    },
+    {
+      "model": "glm-5.2",
+      "provider": "cloudflare",
+      "context": 1000000,
+      "status": "FAIL",
+      "time_s": 0.96,
+      "http_code": 400,
+      "error": "{\"success\":false,\"errors\":[{\"code\":7000,\"message\":\"No route for that URI\"}],\"messages\":[],\"result\":null}"
+    },
+    {
+      "model": "gpt-oss-120b",
+      "provider": "cloudflare",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 0.99,
+      "http_code": 400,
+      "error": "{\"success\":false,\"errors\":[{\"code\":7000,\"message\":\"No route for that URI\"}],\"messages\":[],\"result\":null}"
+    },
+    {
+      "model": "gpt-oss-20b",
+      "provider": "cloudflare",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 1.31,
+      "http_code": 400,
+      "error": "{\"success\":false,\"errors\":[{\"code\":7000,\"message\":\"No route for that URI\"}],\"messages\":[],\"result\":null}"
+    },
+    {
+      "model": "kimi-k2.6",
+      "provider": "cloudflare",
+      "context": 262144,
+      "status": "FAIL",
+      "time_s": 0.71,
+      "http_code": 400,
+      "error": "{\"success\":false,\"errors\":[{\"code\":7000,\"message\":\"No route for that URI\"}],\"messages\":[],\"result\":null}"
+    },
+    {
+      "model": "glm-4-flash",
+      "provider": "zhipu",
+      "context": 131072,
+      "status": "PASS",
+      "response": "OK",
+      "time_s": 1.44,
+      "key_index": 0,
+      "http_code": 200,
+      "error": null
+    },
+    {
+      "model": "glm-4.7-flash",
+      "provider": "zhipu",
+      "context": 200000,
+      "status": "FAIL",
+      "time_s": 0,
+      "http_code": 0,
+      "error": "Max retries exhausted"
+    },
+    {
+      "model": "glm-5.2",
+      "provider": "zhipu",
+      "context": 1000000,
+      "status": "FAIL",
+      "time_s": 0,
+      "http_code": 0,
+      "error": "Max retries exhausted"
+    },
+    {
+      "model": "glm-4-plus",
+      "provider": "zhipu",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 0,
+      "http_code": 0,
+      "error": "Max retries exhausted"
+    },
+    {
+      "model": "glm-4-air",
+      "provider": "zhipu",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 0,
+      "http_code": 0,
+      "error": "Max retries exhausted"
+    },
+    {
+      "model": "glm-4-airx",
+      "provider": "zhipu",
+      "context": 131072,
+      "status": "FAIL",
+      "time_s": 0,
+      "http_code": 0,
+      "error": "Max retries exhausted"
+    },
+    {
+      "model": "glm-4.7-flashx",
+      "provider": "zhipu",
+      "context": 200000,
+      "status": "FAIL",
+      "time_s": 0,
+      "http_code": 0,
+      "error": "Max retries exhausted"
+    }
+  ]
+}

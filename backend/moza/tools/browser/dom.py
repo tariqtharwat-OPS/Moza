@@ -1,7 +1,13 @@
 async def extract_text(page, selector: str | None = None) -> str:
     if selector:
         elements = await page.query_selector_all(selector)
-        texts = [await el.inner_text() for el in elements]
+        texts = []
+        for el in elements:
+            try:
+                text = await el.inner_text()
+                texts.append(text)
+            except Exception:
+                texts.append("")
         return "\n".join(texts)
     return await page.inner_text("body")
 

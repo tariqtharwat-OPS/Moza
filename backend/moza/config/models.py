@@ -5,6 +5,7 @@ from typing import Any, Optional
 
 import yaml
 from dotenv import load_dotenv
+from loguru import logger
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
@@ -42,7 +43,7 @@ class LoggingConfig(BaseModel):
 class AgentConfig(BaseModel):
     default: str = "mock"
     allowed_tools: list[str] = Field(default_factory=list)
-    max_steps: int = 15
+    max_steps: int = 30
 
 
 class MOZAConfig(BaseSettings):
@@ -51,6 +52,7 @@ class MOZAConfig(BaseSettings):
     logging: LoggingConfig = LoggingConfig()
     agent_type: str = "litellm"
     agents: dict[str, AgentConfig] = Field(default_factory=dict)
+    use_orchestrator: bool = True  # Enable MozaOrchestrator integration
 
     @classmethod
     def from_yaml(cls, path: str | Path = "config.yaml") -> "MOZAConfig":
@@ -66,9 +68,13 @@ class MOZAConfig(BaseSettings):
             raw = yaml.safe_load(f)
         raw = _expand_env_vars(raw)
         providers_raw = raw.get("providers", {})
+        default_provider = None
         if isinstance(providers_raw.get("default"), str):
-            providers_raw.pop("default")
-        return cls(**raw)
+            default_provider = providers_raw.pop("default")
+        instance = cls(**raw)
+        if default_provider:
+            instance.providers["default"] = default_provider
+        return instance
 
     def get_provider(self, name: str | None = None) -> ProviderConfig:
         name = name or self.providers.get("default", "openrouter")
@@ -82,3 +88,42 @@ class MOZAConfig(BaseSettings):
         if isinstance(default_name, str):
             return self.providers.get(default_name, ProviderConfig())
         return ProviderConfig()
+    
+    def get_orchestrator_config(self) -> Optional[dict]:
+        """Get MozaOrchestrator configuration if enabled."""
+        if not self.use_orchestrator:
+            return None
+        
+        try:
+            from moza_orchestrator import RANKING_CONFIG
+            return RANKING_CONFIG
+        except ImportError:
+            logger.warning("MozaOrchestrator not available, falling back to single provider")
+            return None
+    
+    def get_orchestrator_provider_info(self) -> dict:
+        """Get current provider information from orchestrator."""
+        if not self.use_orchestrator:
+            return {"enabled": False}
+        
+        try:
+            from moza_orchestrator import MozaOrchestrator
+            orchestrator = MozaOrchestrator()
+            stats = orchestrator.get_stats()
+            last_call = orchestrator.call_history[-1] if orchestrator.call_history else {}
+            models_count = len(orchestrator.ranking)
+            providers_count = len({m["provider"] for m in orchestrator.ranking})
+            
+            return {
+                "enabled": True,
+                "current_provider": last_call.get("provider", "unknown"),
+                "current_model": last_call.get("model", "unknown"),
+                "current_rank": last_call.get("rank", 0),
+                "success_rate": stats["success_rate"],
+                "dead_providers": stats["dead_providers"],
+                "total_providers": providers_count,
+                "total_models": models_count,
+            }
+        except Exception as e:
+            logger.error(f"Failed to get orchestrator provider info: {e}")
+            return {"enabled": False, "error": str(e)}

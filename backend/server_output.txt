@@ -12,110 +12,292 @@ D:\Moza\backend\moza\main.py:73: DeprecationWarning:
         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
         
   @app.on_event("shutdown")
-INFO:     Started server process [4444]
+INFO:     Started server process [3504]
 INFO:     Waiting for application startup.
-2026-07-28 06:54:30.532 | INFO     | moza.main:startup:50 - Loaded config with providers: ['openrouter', 'openai', 'groq', 'anthropic', 'ollama', 'vllm', 'lm_studio', 'glm', 'sambanova', 'gemini', 'huggingface', 'deepseek', 'mistral']
-2026-07-28 06:54:30.532 | INFO     | moza.tools.registry:load:61 - Loading tool: filesystem v1.0.0
-2026-07-28 06:54:30.532 | INFO     | moza.tools.registry:load:61 - Loading tool: terminal v1.0.0
-2026-07-28 06:54:30.532 | INFO     | moza.tools.registry:load:61 - Loading tool: browser v1.0.0
-2026-07-28 06:54:30.532 | INFO     | moza.tools.browser_tool:on_load:59 - BrowserTool loaded (browser not started yet)
-2026-07-28 06:54:30.533 | INFO     | moza.main:startup:61 - Registered 3 tools: ['filesystem', 'terminal', 'browser']
+2026-07-28 08:16:34.590 | INFO     | moza.main:startup:50 - Loaded config with providers: ['groq', 'openai', 'anthropic', 'ollama', 'vllm', 'lm_studio', 'glm', 'sambanova', 'gemini', 'huggingface', 'deepseek', 'mistral', 'default']
+2026-07-28 08:16:34.590 | INFO     | moza.tools.registry:load:61 - Loading tool: filesystem v1.0.0
+2026-07-28 08:16:34.590 | INFO     | moza.tools.registry:load:61 - Loading tool: terminal v1.0.0
+2026-07-28 08:16:34.590 | INFO     | moza.tools.registry:load:61 - Loading tool: browser v1.0.0
+2026-07-28 08:16:34.590 | INFO     | moza.tools.browser_tool:on_load:59 - BrowserTool loaded (browser not started yet)
+2026-07-28 08:16:34.590 | INFO     | moza.main:startup:61 - Registered 3 tools: ['filesystem', 'terminal', 'browser']
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:56169 - "GET /docs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56169 - "GET /docs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56169 - "GET /docs HTTP/1.1" 200 OK
-2026-07-28 06:54:36.140 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 1/15 — 2 messages
-INFO:     127.0.0.1:56169 - "POST /v1/task/execute HTTP/1.1" 200 OK
-2026-07-28 06:54:39.016 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:39.018 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 2/15 — 3 messages
-2026-07-28 06:54:39.271 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:39.273 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 3/15 — 4 messages
-2026-07-28 06:54:39.794 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:39.795 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 4/15 — 5 messages
-2026-07-28 06:54:40.311 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:40.312 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 5/15 — 6 messages
-2026-07-28 06:54:40.838 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:40.839 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 6/15 — 7 messages
-2026-07-28 06:54:41.369 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:41.370 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 7/15 — 8 messages
-2026-07-28 06:54:41.898 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:41.900 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 8/15 — 9 messages
-2026-07-28 06:54:42.423 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:42.423 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 9/15 — 10 messages
-2026-07-28 06:54:42.942 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:42.944 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 10/15 — 11 messages
-2026-07-28 06:54:43.202 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:43.204 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 11/15 — 12 messages
-2026-07-28 06:54:43.730 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:43.732 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 12/15 — 13 messages
-2026-07-28 06:54:44.252 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:44.253 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 13/15 — 14 messages
-2026-07-28 06:54:44.509 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:44.511 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 14/15 — 15 messages
-2026-07-28 06:54:45.027 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:45.028 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 15/15 — 16 messages
-2026-07-28 06:54:45.544 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: OpenrouterException - Error code: 400 - {'error': {'message': 'qwen/qwen-3-32b is not a valid model ID', 'code': 400}, 'user_id': 'user_3GzLHW8Dj8cGb8pbRoSzoWZHBCf'}
-2026-07-28 06:54:45.545 | WARNING  | moza.agents.litellm_tool_agent:execute:356 - [LiteLLMToolAgent] max_steps (15) reached — terminating
+INFO:     127.0.0.1:54904 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64104 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63050 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63735 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62883 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61924 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61924 - "OPTIONS /v1/task/execute HTTP/1.1" 200 OK
+2026-07-28 09:10:51.540 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 1/15 — 2 messages
+2026-07-28 09:10:51.608 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.609 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 2/15 — 3 messages
+2026-07-28 09:10:51.616 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.618 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 3/15 — 4 messages
+2026-07-28 09:10:51.625 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.627 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 4/15 — 5 messages
+2026-07-28 09:10:51.631 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.632 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 5/15 — 6 messages
+2026-07-28 09:10:51.638 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.639 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 6/15 — 7 messages
+2026-07-28 09:10:51.643 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.644 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 7/15 — 8 messages
+2026-07-28 09:10:51.651 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.652 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 8/15 — 9 messages
+2026-07-28 09:10:51.660 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.662 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 9/15 — 10 messages
+2026-07-28 09:10:51.668 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.669 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 10/15 — 11 messages
+2026-07-28 09:10:51.674 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.675 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 11/15 — 12 messages
+2026-07-28 09:10:51.678 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.679 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 12/15 — 13 messages
+2026-07-28 09:10:51.686 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.687 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 13/15 — 14 messages
+2026-07-28 09:10:51.693 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.694 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 14/15 — 15 messages
+2026-07-28 09:10:51.699 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.699 | INFO     | moza.agents.litellm_tool_agent:execute:221 - [LiteLLMToolAgent] step 15/15 — 16 messages
+2026-07-28 09:10:51.709 | WARNING  | moza.agents.litellm_tool_agent:execute:247 - LLM API error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=llama-3.1-8b-instant
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+2026-07-28 09:10:51.711 | WARNING  | moza.agents.litellm_tool_agent:execute:356 - [LiteLLMToolAgent] max_steps (15) reached — terminating
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
-
-
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
-
-
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
-
-
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
-
-
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
-
-
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
 
-[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
-LiteLLM.Info: If you need to debug this error, use `litellm.set_verbose=True'.
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
 
-INFO:     127.0.0.1:56169 - "GET /docs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56169 - "GET /docs HTTP/1.1" 200 OK
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+INFO:     127.0.0.1:61924 - "POST /v1/task/execute HTTP/1.1" 200 OK

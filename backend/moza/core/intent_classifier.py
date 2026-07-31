@@ -143,12 +143,11 @@ def classify_intent(user_input: str) -> IntentType:
 
 
 def get_conversational_reply(user_input: str) -> str:
-    from random import choice
     text = user_input.strip()
     for g in _GREETING_AR:
         try:
             if g in text:
-                return choice(_ARABIC_REPLIES)
+                return _ARABIC_REPLIES[0]
         except Exception:
             pass
-    return choice(_ENGLISH_REPLIES)
+    return _ENGLISH_REPLIES[0]

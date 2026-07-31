@@ -6,23 +6,23 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   onSubmit: (e: FormEvent) => void;
-  disabled: boolean;
+  isProcessing?: boolean;
   placeholder?: string;
 }
 
-export default function InputArea({ value, onChange, onSubmit, disabled, placeholder }: Props) {
+export default function InputArea({ value, onChange, onSubmit, isProcessing, placeholder }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        if (!disabled && value.trim()) {
+        if (value.trim()) {
           onSubmit(e as unknown as FormEvent);
         }
       }
     },
-    [disabled, value, onSubmit]
+    [value, onSubmit]
   );
 
   const adjustHeight = useCallback(() => {
@@ -46,14 +46,13 @@ export default function InputArea({ value, onChange, onSubmit, disabled, placeho
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder || "Ask MOZA to perform a task..."}
-            disabled={disabled}
             rows={3}
-            className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 pr-12 text-sm leading-relaxed text-zinc-100 placeholder-zinc-500 outline-none transition-colors focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 disabled:opacity-50"
+            className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 pr-12 text-sm leading-relaxed text-zinc-100 placeholder-zinc-500 outline-none transition-colors focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
           />
         </div>
         <button
           type="submit"
-          disabled={disabled || !value.trim()}
+          disabled={!value.trim()}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white transition-all hover:bg-indigo-500 disabled:opacity-40 disabled:hover:bg-indigo-600"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -61,11 +60,6 @@ export default function InputArea({ value, onChange, onSubmit, disabled, placeho
           </svg>
         </button>
       </div>
-      {disabled && (
-        <p className="mx-auto mt-1.5 max-w-3xl text-center text-[10px] text-zinc-600">
-          Press Enter to send, Shift+Enter for newline
-        </p>
-      )}
     </form>
   );
 }

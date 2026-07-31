@@ -1,0 +1,23 @@
+
+id                                                 context pricing_in pricing_out tools vision
+--                                                 ------- ---------- ----------- ----- ------
+inclusionai/ling-3.0-flash:free                     262144 0          0            True  False
+poolside/laguna-s-2.1:free                          262144 0          0            True  False
+poolside/laguna-xs-2.1:free                         262144 0          0            True  False
+cohere/north-mini-code:free                         256000 0          0            True  False
+nvidia/nemotron-3.5-content-safety:free             128000 0          0           False   True
+nvidia/nemotron-3-ultra-550b-a55b:free             1000000 0          0            True  False
+nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free  256000 0          0            True   True
+google/gemma-4-26b-a4b-it:free                      262144 0          0            True   True
+google/gemma-4-31b-it:free                          262144 0          0            True   True
+google/lyria-3-pro-preview                         1048576 0          0           False   True
+google/lyria-3-clip-preview                        1048576 0          0           False   True
+nvidia/nemotron-3-super-120b-a12b:free              262144 0          0            True  False
+openrouter/free                                     200000 0          0            True   True
+nvidia/nemotron-3-nano-30b-a3b:free                 256000 0          0            True  False
+nvidia/nemotron-nano-12b-v2-vl:free                 128000 0          0            True   True
+nvidia/nemotron-nano-9b-v2:free                     128000 0          0            True  False
+openai/gpt-oss-20b:free                             131072 0          0            True  False
+
+
+

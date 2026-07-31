@@ -1,0 +1,260 @@
+INFO:     Started server process [18148]
+INFO:     Waiting for application startup.
+2026-07-29 22:01:55.026 | INFO     | moza.main:startup:69 - Loaded config with providers: ['groq', 'openai', 'anthropic', 'ollama', 'vllm', 'lm_studio', 'glm', 'sambanova', 'gemini', 'huggingface', 'deepseek', 'mistral', 'openrouter', 'browser_openrouter', 'default']
+2026-07-29 22:01:55.080 | INFO     | moza.main:startup:73 - Loaded constitution v0.1.0
+2026-07-29 22:01:55.089 | INFO     | moza.gateway.router:__init__:90 - LLMRouter: MozaOrchestrator initialized with 19 ranked models across 7 providers
+2026-07-29 22:01:55.091 | INFO     | moza.tools.registry:load:61 - Loading tool: filesystem v1.0.0
+2026-07-29 22:01:55.091 | INFO     | moza.tools.registry:load:61 - Loading tool: terminal v1.0.0
+2026-07-29 22:01:55.091 | INFO     | moza.tools.registry:load:61 - Loading tool: browser v1.0.0
+2026-07-29 22:01:55.091 | INFO     | moza.tools.browser_tool:on_load:59 - BrowserTool loaded (browser not started yet)
+2026-07-29 22:01:55.091 | INFO     | moza.main:startup:87 - Registered 3 tools: ['filesystem', 'terminal', 'browser']
+2026-07-29 22:01:55.091 | WARNING  | moza.plugins.plugin_manager:discover_plugins:119 - Failed to load plugin plugins.echo_plugin: No module named 'plugins'
+2026-07-29 22:01:55.091 | INFO     | moza.main:startup:105 - No plugins discovered (plugins/ directory may not exist)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50833 - "OPTIONS /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64928 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50833 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52619 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63229 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59754 - "OPTIONS /v1/task/execute HTTP/1.1" 200 OK
+2026-07-29 22:02:28.906 | INFO     | moza.gateway.router:__init__:90 - LLMRouter: MozaOrchestrator initialized with 19 ranked models across 7 providers
+INFO:     127.0.0.1:59754 - "POST /v1/task/execute HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59754 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49264 - "GET /docs HTTP/1.1" 200 OK
+2026-07-29 22:02:43.247 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 1/15 — 4 messages
+2026-07-29 22:02:44.743 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:02:46.655 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:02:49.091 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:03:21.153 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:03:25.296 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 4.1s 2303 tokens
+2026-07-29 22:03:25.297 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (42.05s)
+2026-07-29 22:03:25.298 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:03:25.329 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'navigate', 'url': 'https://www.tripadvisor.com/Restaurants-g295424-Jeddah_Makkah_Province.html'})
+2026-07-29 22:03:25.333 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:50459 - "POST /v1/task/execute HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62394 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62609 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56070 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58268 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57418 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60016 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64495 - "OPTIONS /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56229 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50849 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+2026-07-29 22:03:30.257 | INFO     | moza.tools.playwright_engine:ensure_browser:54 - PlaywrightEngine: browser started (headless=True, persistent_context)
+INFO:     127.0.0.1:64776 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59703 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65052 - "GET /docs HTTP/1.1" 200 OK
+2026-07-29 22:03:44.916 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:03:44.919 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:03:44.919 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 2/15 — 6 messages
+2026-07-29 22:03:46.532 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:03:48.237 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:03:50.569 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:04:21.797 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:04:26.355 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 4.6s 2652 tokens
+2026-07-29 22:04:26.355 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (41.44s)
+2026-07-29 22:04:26.356 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:04:26.361 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:04:26.365 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:04:26.369 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:65052 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59703 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64776 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50885 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52376 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54204 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65052 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61989 - "GET /docs HTTP/1.1" 200 OK
+2026-07-29 22:04:26.698 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:04:26.701 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:04:26.701 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 3/15 — 8 messages
+2026-07-29 22:04:29.206 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:04:31.873 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:04:34.917 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:05:07.623 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:05:11.875 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 4.3s 2681 tokens
+2026-07-29 22:05:11.876 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (45.17s)
+2026-07-29 22:05:11.877 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:05:11.877 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:05:11.877 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:05:11.877 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:64776 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65052 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50736 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50914 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62995 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56201 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55868 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59798 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54745 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57948 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55868 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+2026-07-29 22:05:12.076 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:05:12.076 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:05:12.076 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 4/15 — 10 messages
+2026-07-29 22:05:14.729 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:05:16.463 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:05:19.146 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:05:50.967 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:05:54.313 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 3.3s 2591 tokens
+2026-07-29 22:05:54.314 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (42.23s)
+2026-07-29 22:05:54.314 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:05:54.322 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:05:54.329 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:05:54.330 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:55868 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57948 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61416 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51530 - "OPTIONS /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59468 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55341 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+2026-07-29 22:05:54.555 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:05:54.559 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:05:54.559 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 5/15 — 12 messages
+2026-07-29 22:05:56.926 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:05:58.861 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:06:01.716 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:06:32.948 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:06:35.817 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 2.9s 2691 tokens
+2026-07-29 22:06:35.818 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (41.27s)
+2026-07-29 22:06:35.818 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:06:35.820 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:06:35.822 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:06:35.823 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:61416 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55341 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57948 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51530 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63604 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51003 - "GET /docs HTTP/1.1" 200 OK
+2026-07-29 22:06:35.949 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:06:35.950 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:06:35.950 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 6/15 — 14 messages
+2026-07-29 22:06:37.975 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:06:39.823 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:06:42.521 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:07:13.933 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:07:16.215 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 2.3s 2785 tokens
+2026-07-29 22:07:16.215 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (40.27s)
+2026-07-29 22:07:16.216 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:07:16.218 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:07:16.219 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:07:16.220 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:51530 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63604 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57948 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56753 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59835 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63604 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59303 - "OPTIONS /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60396 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60585 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+2026-07-29 22:07:16.444 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:07:16.447 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:07:16.447 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 7/15 — 16 messages
+2026-07-29 22:07:19.641 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:07:22.014 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:07:24.556 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:07:56.151 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:07:58.275 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 2.1s 2901 tokens
+2026-07-29 22:07:58.276 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (41.83s)
+2026-07-29 22:07:58.276 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:07:58.279 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:07:58.281 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:07:58.283 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:59303 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63604 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57948 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63794 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63221 - "OPTIONS /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52169 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61197 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63221 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+2026-07-29 22:07:58.383 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:07:58.384 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:07:58.384 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 8/15 — 18 messages
+2026-07-29 22:08:00.390 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:08:02.722 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:08:07.002 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:08:40.086 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:08:43.090 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 3.0s 3026 tokens
+2026-07-29 22:08:43.092 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (44.70s)
+2026-07-29 22:08:43.094 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:08:43.097 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:08:43.100 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:08:43.102 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:63794 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63604 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59109 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63794 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64690 - "GET /docs HTTP/1.1" 200 OK
+2026-07-29 22:08:43.305 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:08:43.308 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:08:43.308 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 9/15 — 20 messages
+2026-07-29 22:08:46.386 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:08:49.406 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:08:52.567 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:09:25.226 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:09:28.117 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 2.9s 3142 tokens
+2026-07-29 22:09:28.118 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (44.81s)
+2026-07-29 22:09:28.118 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:09:28.121 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:09:28.123 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:09:28.124 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:63794 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62098 - "OPTIONS /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50799 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59069 - "OPTIONS /v1/task/execute HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62098 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+2026-07-29 22:09:28.206 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 1/15 — 2 messages
+2026-07-29 22:09:29.853 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:09:31.867 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:09:33.916 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:10:05.118 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:10:07.412 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 2.3s 2010 tokens
+2026-07-29 22:10:07.413 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (39.22s)
+2026-07-29 22:10:07.413 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:10:07.415 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'navigate', 'url': 'https://www.google.com/search?q=top+rated+arab+restaurants+in+bali'})
+2026-07-29 22:10:07.416 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:59069 - "POST /v1/task/execute HTTP/1.1" 200 OK
+2026-07-29 22:10:07.431 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:10:07.432 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:10:07.432 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 10/15 — 22 messages
+2026-07-29 22:10:09.380 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:10:11.056 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:10:13.466 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:10:44.880 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:10:48.327 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 3.4s 3258 tokens
+2026-07-29 22:10:48.327 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (40.89s)
+2026-07-29 22:10:48.329 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:10:48.332 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:10:48.334 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:10:48.336 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:62098 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53312 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54889 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55536 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55536 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+2026-07-29 22:10:48.509 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:10:48.511 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:10:48.512 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 11/15 — 24 messages
+2026-07-29 22:10:51.173 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:10:53.236 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:10:57.592 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover
+2026-07-29 22:11:29.048 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 5 nvidia/meta/llama-3.3-70b-instruct TIMEOUT -> failover
+2026-07-29 22:11:32.089 | INFO     | moza_orchestrator.orchestrator:_record_success:170 - RANK 7 mistral/codestral-latest SUCCESS 3.0s 3586 tokens
+2026-07-29 22:11:32.089 | INFO     | moza.gateway.router:_route_with_orchestrator:273 - Router: mistral/codestral-latest OK (43.58s)
+2026-07-29 22:11:32.090 | INFO     | moza.agents.litellm_tool_agent:execute:479 - [LiteLLMToolAgent] using provider: mistral/codestral-latest
+2026-07-29 22:11:32.090 | INFO     | moza.agents.litellm_tool_agent:execute:559 - [LiteLLMToolAgent] text-to-tool: parsed 1 tool calls from text response
+2026-07-29 22:11:32.094 | INFO     | moza.agents.litellm_tool_agent:execute:718 - [LiteLLMToolAgent] tool_call: browser({'action': 'extract_text'})
+2026-07-29 22:11:32.098 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: running -> waiting_tool (accepted)
+INFO:     127.0.0.1:55536 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50311 - "GET /v1/orchestrator/info HTTP/1.1" 200 OK
+2026-07-29 22:11:32.266 | INFO     | moza.agents.litellm_tool_agent:execute:751 - [LiteLLMToolAgent] tool_result: browser success=True
+2026-07-29 22:11:32.270 | DEBUG    | moza.orchestrator.orchestrator:_update_task_state:239 - FSM: waiting_tool -> running (accepted)
+2026-07-29 22:11:32.270 | INFO     | moza.agents.litellm_tool_agent:execute:459 - [LiteLLMToolAgent] step 2/15 — 4 messages
+2026-07-29 22:11:34.828 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 1 groq-moza/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:11:37.140 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 2 groq-youssef/llama-3.3-70b-versatile RATE_LIMIT -> failover
+2026-07-29 22:11:42.642 | INFO     | moza_orchestrator.orchestrator:_handle_failover:144 - RANK 3 sambanova/Meta-Llama-3.3-70B-Instruct RATE_LIMIT -> failover

@@ -11,6 +11,7 @@ from moza.agents.mock_agent import MockAgent
 from moza.config.models import MOZAConfig
 from moza.core.event_bus import get_event_bus
 from moza.core.models import Environment, Task
+from moza.gateway.router import LLMRouter
 from moza.orchestrator.orchestrator import get_orchestrator
 from moza.orchestrator.service import TaskService, get_task_service
 
@@ -23,12 +24,12 @@ class TaskRequest(BaseModel):
     workspace_path: str = ""
 
 
-def _create_agent(agent_type: str, config: MOZAConfig | None = None) -> AgentInterface:
+def _create_agent(agent_type: str, config: MOZAConfig | None = None, browser_mode: bool = False) -> AgentInterface:
     if agent_type == "litellm" or agent_type == "groq" or agent_type == "openrouter":
         provider = None
         if agent_type != "litellm":
             provider = agent_type
-        return LiteLLMToolAgent(config, provider_name=provider, max_steps=15) if config else MockAgent()
+        return LiteLLMToolAgent(config, provider_name=provider, max_steps=30, browser_mode=browser_mode) if config else MockAgent()
     if agent_type == "openhands":
         from moza.agents.openhands_adapter import OpenHandsAdapter
         return OpenHandsAdapter()
@@ -56,10 +57,20 @@ async def task_execute(request: Request, body: TaskRequest):
     async def event_stream():
         try:
             while True:
-                event = await queue.get()
+                get_task = asyncio.create_task(queue.get())
+                done, _ = await asyncio.wait(
+                    [get_task, asyncio.create_task(request.is_disconnected())],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                if request.client is not None and await request.is_disconnected():
+                    get_task.cancel()
+                    break
+                event = await get_task
                 if event is None:
                     break
                 yield {"event": "step", "data": event.model_dump_json()}
+        except asyncio.CancelledError:
+            pass
         finally:
             event_bus.unsubscribe(session_id, queue)
 
@@ -73,6 +84,14 @@ async def approve_tool(task_id: str):
     if not ok:
         raise HTTPException(status_code=404, detail=f"No pending approval for task {task_id}")
     return {"ok": True, "task_id": task_id, "action": "approved"}
+
+
+@router.get("/router/health")
+async def router_health(request: Request):
+    router: LLMRouter | None = getattr(request.app.state, "router", None)
+    if not router:
+        return {"error": "Router not initialized"}
+    return router.summary()
 
 
 @router.post("/task/{task_id}/reject")

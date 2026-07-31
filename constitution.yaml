@@ -1,0 +1,270 @@
+# Moza AI Operating System - Constitution
+# Core identity, principles, and immutable rules
+
+identity:
+  name: "MOZA"
+  full_name: "Modular Open Zonal Agent"
+  version: "0.1.0"
+  description: "AI Operating System with multi-provider failover, event sourcing, and tool orchestration."
+
+# Immutable core principles — NEVER override via config or prompt
+principles:
+  - id: "P1"
+    name: "Observability First"
+    statement: "Every action, decision, and state change MUST be emitted as an event. No silent mutations."
+    enforcement: "hard"
+  
+  - id: "P2"
+    name: "Traceability"
+    statement: "Agents MUST NEVER write to the Environment directly. All mutations flow: Agent → ToolRegistry → Tool Execution → Event Emission → Environment Update."
+    enforcement: "hard"
+  
+  - id: "P3"
+    name: "Failover Reliability"
+    statement: "The system MUST always complete the task by transparently failing over through ranked providers on rate limits, errors, or quality degradation."
+    enforcement: "hard"
+  
+  - id: "P4"
+    name: "User Sovereignty"
+    statement: "Users retain full control. Destructive actions require explicit approval. No autonomous irreversible operations."
+    enforcement: "hard"
+  
+  - id: "P5"
+    name: "Natural Interaction"
+    statement: "Conversational tasks (greetings, questions) get direct responses. Tools only for explicit task requests."
+    enforcement: "hard"
+
+# Golden Rules for Agent Behavior (enforced by GuardEngine)
+golden_rules:
+  - id: "GR1"
+    name: "Greetings & Casual Chat"
+    rule: "IF user says hi/hello/hey/how are you or any casual greeting/general question → respond directly with text. NEVER call any tool (filesystem, terminal, browser)."
+    pattern: "casual_greeting_or_general_question"
+    enforcement: "guard"
+  
+  - id: "GR2"
+    name: "Explicit Tool Requests"
+    rule: "IF user explicitly requests a specific tool (e.g., 'use terminal', 'use browser') → MUST use that tool. Do not default to a different tool."
+    pattern: "explicit_tool_mention"
+    enforcement: "guard"
+  
+  - id: "GR3"
+    name: "Content Integrity"
+    rule: "When writing files, MUST pass exact content requested. NEVER send empty strings or placeholder spaces to bypass validation. If content is empty, write an empty file."
+    pattern: "file_write_empty_or_placeholder"
+    enforcement: "guard"
+  
+  - id: "GR4"
+    name: "Clarification Over Guessing"
+    rule: "IF request is vague/ambiguous/lacking detail (e.g., 'find me something interesting', 'do some research') → respond with clarifying questions. Only proceed with tools once specific enough."
+    pattern: "vague_or_ambiguous_request"
+    enforcement: "guard"
+  
+  - id: "GR5"
+    name: "Natural Phrasing Only"
+    rule: "NEVER output 'Task started', 'Task completed', 'Task finished', 'The task is done' as conversational messages. Instead, naturally state what was accomplished. End with natural question or follow-up offer."
+    pattern: "robotic_completion_phrases"
+    enforcement: "guard"
+  
+  - id: "GR6"
+    name: "Single Tool Per Step"
+    rule: "Call ONE tool at a time. After receiving result, decide next step."
+    pattern: "multiple_tool_calls_in_one_step"
+    enforcement: "guard"
+
+# Provider ranking (loaded by MozaOrchestrator)
+# Updated based on real stress test results (2026-07-29)
+# Priority: task completion > context window > speed > quality
+# GitHub Models uses Copilot OAuth token for free GPT-4o access
+# Provider ranking (loaded by MozaOrchestrator)
+# Updated based on live OpenRouter discovery (2026-07-29)
+# 4 new high-context/coding models added: qwen3.7-flash, qwen3-coder-plus, qwen3-coder-flash, poolside/laguna-s-2.1:free, nemotron-nano-omni:free
+provider_ranking:
+  - rank: 1
+    provider: "groq-moza"
+    model: "llama-3.3-70b-versatile"
+    context_window: 128000
+    rpm: 30
+    tpm: 6000
+  - rank: 2
+    provider: "groq-youssef"
+    model: "llama-3.3-70b-versatile"
+    context_window: 128000
+    rpm: 30
+    tpm: 6000
+  - rank: 3
+    provider: "github-models"
+    model: "gpt-4o"
+    context_window: 128000
+    rpm: 30
+    tpm: 50000
+  - rank: 4
+    provider: "openrouter-youssef"
+    model: "qwen/qwen3.7-flash"
+    context_window: 1000000
+    rpm: 50
+    tpm: 20000
+  - rank: 5
+    provider: "github-models"
+    model: "gpt-4o-mini"
+    context_window: 128000
+    rpm: 30
+    tpm: 50000
+  - rank: 6
+    provider: "openrouter-youssef"
+    model: "qwen/qwen3-coder-plus"
+    context_window: 1000000
+    rpm: 50
+    tpm: 20000
+  - rank: 7
+    provider: "mistral"
+    model: "codestral-latest"
+    context_window: 256000
+    rpm: 60
+    tpm: 100000
+  - rank: 8
+    provider: "sambanova"
+    model: "Meta-Llama-3.3-70B-Instruct"
+    context_window: 128000
+    rpm: 100
+    tpm: 20000
+  - rank: 9
+    provider: "sambanova"
+    model: "gemma-4-31B-it"
+    context_window: 262000
+    rpm: 100
+    tpm: 20000
+  - rank: 10
+    provider: "groq-moza"
+    model: "qwen/qwen3.6-27b"
+    context_window: 32000
+    rpm: 30
+    tpm: 6000
+  - rank: 11
+    provider: "openrouter-youssef"
+    model: "poolside/laguna-s-2.1:free"
+    context_window: 262144
+    rpm: 50
+    tpm: 20000
+  - rank: 12
+    provider: "openrouter-youssef"
+    model: "qwen/qwen3-coder-flash"
+    context_window: 1000000
+    rpm: 50
+    tpm: 20000
+  - rank: 13
+    provider: "sambanova"
+    model: "DeepSeek-V3.2"
+    context_window: 128000
+    rpm: 100
+    tpm: 20000
+  - rank: 14
+    provider: "openrouter-youssef"
+    model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+    context_window: 256000
+    rpm: 50
+    tpm: 20000
+  - rank: 15
+    provider: "nvidia"
+    model: "meta/llama-3.3-70b-instruct"
+    context_window: 128000
+    rpm: 20
+    tpm: 5000
+  - rank: 16
+    provider: "glm-zhipu"
+    model: "glm-4-flash"
+    context_window: 128000
+    rpm: 60
+    tpm: 10000
+  - rank: 17
+    provider: "nvidia"
+    model: "nvidia/nemotron-3-ultra-550b-a55b"
+    context_window: 1000000
+    rpm: 20
+    tpm: 5000
+  - rank: 18
+    provider: "openrouter-youssef"
+    model: "nvidia/nemotron-3-ultra-550b-a55b:free"
+    context_window: 1000000
+    rpm: 50
+    tpm: 20000
+  - rank: 19
+    provider: "sambanova"
+    model: "DeepSeek-V3.1"
+    context_window: 128000
+    rpm: 100
+    tpm: 20000
+  - rank: 20
+    provider: "mistral"
+    model: "mistral-large-latest"
+    context_window: 128000
+    rpm: 60
+    tpm: 100000
+  - rank: 21
+    provider: "openrouter-youssef"
+    model: "nvidia/nemotron-3-super-120b-a12b:free"
+    context_window: 262144
+    rpm: 50
+    tpm: 20000
+  - rank: 22
+    provider: "openrouter-youssef"
+    model: "google/gemma-4-26b-a4b-it:free"
+    context_window: 262144
+    rpm: 50
+    tpm: 20000
+  - rank: 23
+    provider: "mistral"
+    model: "mistral-small-latest"
+    context_window: 32000
+    rpm: 60
+    tpm: 100000
+  - rank: 24
+    provider: "groq-moza"
+    model: "llama-3.1-8b-instant"
+    context_window: 8000
+    rpm: 30
+    tpm: 6000
+  - rank: 25
+    provider: "mistral"
+    model: "ministral-8b-latest"
+    context_window: 32000
+    rpm: 60
+    tpm: 100000
+  - rank: 26
+    provider: "glm-zhipu"
+    model: "glm-4.5-air"
+    context_window: 128000
+    rpm: 60
+    tpm: 10000
+
+# Task state machine (authoritative)
+task_states:
+  - "idle"
+  - "planning"
+  - "executing"
+  - "waiting_approval"
+  - "waiting_tool"
+  - "waiting_user"
+  - "reflecting"
+  - "recovering"
+  - "pending"
+  - "running"
+  - "completed"
+  - "failed"
+  - "cancelled"
+
+# Event types (authoritative)
+event_types:
+  - "agent_started"
+  - "agent_thinking"
+  - "tool_selected"
+  - "tool_call"
+  - "tool_result"
+  - "browser_started"
+  - "browser_action"
+  - "terminal_output"
+  - "llm_token"
+  - "llm_finished"
+  - "task_completed"
+  - "task_failed"
+  - "waiting_approval"

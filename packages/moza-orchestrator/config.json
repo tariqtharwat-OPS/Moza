@@ -1,0 +1,193 @@
+{
+  "ranking": [
+    {"rank": 1, "provider": "openrouter", "model": "nvidia/nemotron-3-ultra-550b-a55b:free", "ctx": 1000000, "rpm": 50, "tpm": 20000, "tested": true, "time_s": 1.43},
+    {"rank": 2, "provider": "nvidia", "model": "deepseek-ai/deepseek-v4-flash", "ctx": 1000000, "rpm": 40, "tpm": 10000, "tested": true, "time_s": 1.54},
+    {"rank": 3, "provider": "nvidia", "model": "nvidia/nemotron-3-ultra-550b-a55b", "ctx": 1000000, "rpm": 40, "tpm": 10000, "tested": true, "time_s": 1.11},
+    {"rank": 4, "provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "ctx": 1000000, "rpm": 50, "tpm": 20000, "tested": true, "time_s": 1.94},
+    {"rank": 5, "provider": "openrouter", "model": "qwen/qwen3.7-flash", "ctx": 1000000, "rpm": 50, "tpm": 20000, "tested": true, "time_s": 3.23},
+    {"rank": 6, "provider": "nvidia", "model": "deepseek-ai/deepseek-v4-pro", "ctx": 1000000, "rpm": 40, "tpm": 10000, "tested": true, "time_s": 18.32},
+    {"rank": 7, "provider": "nvidia", "model": "mistralai/mistral-medium-3.5-128b", "ctx": 262144, "rpm": 40, "tpm": 10000, "tested": true, "time_s": 0.98},
+    {"rank": 8, "provider": "nvidia", "model": "nvidia/nemotron-3-super-120b-a12b", "ctx": 262144, "rpm": 40, "tpm": 10000, "tested": true, "time_s": 1.52},
+    {"rank": 9, "provider": "nvidia", "model": "google/gemma-4-31b-it", "ctx": 262144, "rpm": 40, "tpm": 10000, "tested": true, "time_s": 1.62},
+    {"rank": 10, "provider": "openrouter", "model": "poolside/laguna-s-2.1:free", "ctx": 262144, "rpm": 50, "tpm": 20000, "tested": true, "time_s": 1.73},
+    {"rank": 11, "provider": "openrouter", "model": "nvidia/nemotron-3-super-120b-a12b:free", "ctx": 262144, "rpm": 50, "tpm": 20000, "tested": true, "time_s": 2.58},
+    {"rank": 12, "provider": "openrouter", "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "ctx": 256000, "rpm": 50, "tpm": 20000, "tested": true, "time_s": 2.24},
+    {"rank": 13, "provider": "openrouter", "model": "google/gemma-4-26b-a4b-it:free", "ctx": 262144, "rpm": 50, "tpm": 20000, "tested": true, "time_s": 6.33},
+    {"rank": 14, "provider": "mistral", "model": "ministral-8b-latest", "ctx": 262144, "rpm": 60, "tpm": 100000, "tested": true, "time_s": 1.38},
+    {"rank": 15, "provider": "mistral", "model": "mistral-medium-2604", "ctx": 262144, "rpm": 60, "tpm": 100000, "tested": true, "time_s": 1.56},
+    {"rank": 16, "provider": "mistral", "model": "codestral-latest", "ctx": 256000, "rpm": 60, "tpm": 100000, "tested": true, "time_s": 1.23},
+    {"rank": 17, "provider": "mistral", "model": "mistral-large-latest", "ctx": 262144, "rpm": 60, "tpm": 100000, "tested": true, "time_s": 3.35},
+    {"rank": 18, "provider": "sambanova", "model": "Meta-Llama-3.3-70B-Instruct", "ctx": 128000, "rpm": 100, "tpm": 20000, "tested": true, "time_s": 4.41},
+    {"rank": 19, "provider": "sambanova", "model": "gemma-4-31B-it", "ctx": 262144, "rpm": 100, "tpm": 20000, "tested": true, "time_s": 8.04},
+    {"rank": 20, "provider": "zhipu", "model": "glm-4.7-flash", "ctx": 200000, "rpm": 60, "tpm": 10000, "tested": true, "time_s": 1.44},
+    {"rank": 21, "provider": "cloudflare", "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast", "ctx": 128000, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 1.44},
+    {"rank": 22, "provider": "cloudflare", "model": "@cf/meta/llama-4-scout-17b-16e-instruct", "ctx": 3500000, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 2.0},
+    {"rank": 23, "provider": "cloudflare", "model": "@cf/meta/llama-3.1-70b-instruct", "ctx": 128000, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 1.5},
+    {"rank": 24, "provider": "cloudflare", "model": "@cf/google/gemma-4-26b-a4b-it", "ctx": 262144, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 2.0},
+    {"rank": 25, "provider": "cloudflare", "model": "@cf/nvidia/nemotron-3-120b-a12b", "ctx": 256000, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 2.0},
+    {"rank": 26, "provider": "cloudflare", "model": "@cf/openai/gpt-oss-120b", "ctx": 131072, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 2.0},
+    {"rank": 27, "provider": "cloudflare", "model": "@cf/qwen/qwen3-30b-a3b-fp8", "ctx": 131072, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 2.0},
+    {"rank": 28, "provider": "cloudflare", "model": "@cf/zai-org/glm-4.7-flash", "ctx": 131072, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 2.0},
+    {"rank": 29, "provider": "opencode-zen", "model": "laguna-s-2.1-free", "ctx": 262144, "rpm": 20, "tpm": 5000, "tested": true, "time_s": 1.5},
+    {"rank": 30, "provider": "opencode-zen", "model": "nemotron-3-ultra-free", "ctx": 1000000, "rpm": 20, "tpm": 5000, "tested": true, "time_s": 1.5},
+    {"rank": 31, "provider": "github", "model": "gpt-4o", "ctx": 128000, "rpm": 50, "tpm": 20000, "tested": true, "time_s": 2.48},
+    {"rank": 32, "provider": "github", "model": "gpt-4o-mini", "ctx": 128000, "rpm": 50, "tpm": 20000, "tested": true, "time_s": 1.70},
+    {"rank": 33, "provider": "groq", "model": "llama-3.3-70b-versatile", "ctx": 128000, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 0.30},
+    {"rank": 34, "provider": "groq", "model": "qwen/qwen3.6-27b", "ctx": 128000, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 0.30},
+    {"rank": 35, "provider": "groq", "model": "llama-3.1-8b-instant", "ctx": 128000, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 0.25},
+    {"rank": 36, "provider": "groq", "model": "openai/gpt-oss-120b", "ctx": 128000, "rpm": 30, "tpm": 5000, "tested": true, "time_s": 0.30}
+  ],
+  "apiKeys": {
+    "opencode-zen": {
+      "Tharwat-Moza": "YOUR_OPENCODE_ZEN_KEY_THARWAT",
+      "OPS-Moza": "YOUR_OPENCODE_ZEN_KEY_OPS",
+      "Youssef-Moza": "YOUR_OPENCODE_ZEN_KEY_YOUSSEF"
+    },
+    "groq": {
+      "Tharwat-Moza": "YOUR_GROQ_KEY_THARWAT",
+      "OPS-Moza": "YOUR_GROQ_KEY_OPS",
+      "Youssef-Moza": "YOUR_GROQ_KEY_YOUSSEF"
+    },
+    "github": {
+      "Tharwat-Moza": "YOUR_GITHUB_PAT_THARWAT",
+      "OPS-Moza": "YOUR_GITHUB_PAT_OPS",
+      "Youssef-Moza": "YOUR_GITHUB_PAT_YOUSSEF"
+    },
+    "openrouter": {
+      "Tharwat-Moza": "YOUR_OPENROUTER_KEY_THARWAT",
+      "OPS-Moza": "YOUR_OPENROUTER_KEY_OPS",
+      "Youssef-Moza": "YOUR_OPENROUTER_KEY_YOUSSEF"
+    },
+    "mistral": {
+      "Tharwat-Moza": "YOUR_MISTRAL_KEY_THARWAT",
+      "OPS-Moza": "YOUR_MISTRAL_KEY_OPS",
+      "Youssef-Moza": "YOUR_MISTRAL_KEY_YOUSSEF"
+    },
+    "sambanova": {
+      "Tharwat-Moza": "YOUR_SAMBANOVA_KEY_THARWAT",
+      "OPS-Moza": "YOUR_SAMBANOVA_KEY_OPS",
+      "Youssef-Moza": "YOUR_SAMBANOVA_KEY_YOUSSEF"
+    },
+    "nvidia": {
+      "Tharwat-Moza": "YOUR_NVIDIA_KEY_THARWAT",
+      "OPS-Moza": "YOUR_NVIDIA_KEY_OPS",
+      "Youssef-Moza": "YOUR_NVIDIA_KEY_YOUSSEF"
+    },
+    "cerebras": {
+      "Tharwat-Moza": "YOUR_CEREBRAS_KEY_THARWAT",
+      "OPS-Moza": "YOUR_CEREBRAS_KEY_OPS",
+      "Youssef-Moza": "YOUR_CEREBRAS_KEY_YOUSSEF"
+    },
+    "cloudflare": {
+      "Julia-Moza": { "account_id": "YOUR_CLOUDFLARE_ACCOUNT_ID_JULIA", "token": "YOUR_CLOUDFLARE_TOKEN_JULIA" },
+      "OPS-Moza": { "account_id": "YOUR_CLOUDFLARE_ACCOUNT_ID_OPS", "token": "YOUR_CLOUDFLARE_TOKEN_OPS" },
+      "Youssef-Moza": { "account_id": "YOUR_CLOUDFLARE_ACCOUNT_ID_YOUSSEF", "token": "YOUR_CLOUDFLARE_TOKEN_YOUSSEF" }
+    },
+    "zhipu": {
+      "Tharwat-Moza": "YOUR_ZHIPU_KEY_THARWAT",
+      "OPS-Moza": "YOUR_ZHIPU_KEY_OPS",
+      "Youssef-Moza": null
+    }
+  },
+  "baseURLs": {
+    "groq": "https://api.groq.com/openai/v1",
+    "github": "https://models.inference.ai.azure.com",
+    "openrouter": "https://openrouter.ai/api/v1",
+    "mistral": "https://api.mistral.ai/v1",
+    "sambanova": "https://api.sambanova.ai/v1",
+    "nvidia": "https://integrate.api.nvidia.com/v1",
+    "zhipu": "https://open.bigmodel.cn/api/paas/v4",
+    "cerebras": "https://api.cerebras.ai/v1",
+    "cloudflare": "https://api.cloudflare.com/client/v4/accounts",
+    "opencode-zen": "https://opencode.ai/zen/v1"
+  },
+  "routing_rules": [
+    {
+      "rule": "Vision/Images",
+      "trigger_keywords": ["image", "screenshot", "ui design", "picture", "photo", "visual design", "see image", "look at image", "draw", "render", "analyze image", "describe image"],
+      "target_models": [
+        {"provider": "nvidia", "model": "google/gemma-4-31b-it", "reason": "Live-tested 1.62s, 262K ctx, vision"},
+        {"provider": "cloudflare", "model": "@cf/google/gemma-4-26b-a4b-it", "reason": "Free plan, vision"},
+        {"provider": "openrouter", "model": "google/gemma-4-26b-a4b-it:free", "reason": "Live-tested 6.33s, 262K ctx, vision, free"},
+        {"provider": "sambanova", "model": "gemma-4-31B-it", "reason": "Live-tested 8.04s, 262K ctx, vision"},
+        {"provider": "openrouter", "model": "qwen/qwen3.7-flash", "reason": "Live-tested 3.23s, 1M ctx, vision"}
+      ]
+    },
+    {
+      "rule": "Large Context / Repo Analysis",
+      "trigger_keywords": ["entire repo", "entire repository", "all files", "full codebase", "large context", "1M", "million tokens", "whole project", "complex", "comprehensive", "monorepo"],
+      "target_models": [
+        {"provider": "cloudflare", "model": "@cf/meta/llama-4-scout-17b-16e-instruct", "reason": "3.5M ctx on free plan"},
+        {"provider": "openrouter", "model": "qwen/qwen3.7-flash", "reason": "Live-tested 3.23s, 1M ctx"},
+        {"provider": "nvidia", "model": "deepseek-ai/deepseek-v4-flash", "reason": "Live-tested 1.54s, 1M ctx"},
+        {"provider": "nvidia", "model": "nvidia/nemotron-3-ultra-550b-a55b", "reason": "Live-tested 1.11s, 1M ctx"},
+        {"provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "reason": "Live-tested 1.94s, 1M ctx"}
+      ]
+    },
+    {
+      "rule": "Coding / Debugging",
+      "trigger_keywords": ["code", "function", "class", "python", "javascript", "implement", "debug", "bug", "refactor", "api", "endpoint", "flask", "django", "sql", "alchemy", "docker", "celery"],
+      "target_models": [
+        {"provider": "nvidia", "model": "deepseek-ai/deepseek-v4-flash", "reason": "Live-tested 1.54s, 1M ctx, best coding"},
+        {"provider": "nvidia", "model": "deepseek-ai/deepseek-v4-pro", "reason": "Live-tested 18.32s, 1M ctx, deeper reasoning"},
+        {"provider": "mistral", "model": "codestral-latest", "reason": "Live-tested 1.23s, 256K ctx, code specialist"},
+        {"provider": "openrouter", "model": "poolside/laguna-s-2.1:free", "reason": "Live-tested 1.73s, 262K ctx, free"},
+        {"provider": "opencode-zen", "model": "laguna-s-2.1-free", "reason": "Free tier via OpenCode Zen"}
+      ]
+    },
+    {
+      "rule": "Default / Fast",
+      "trigger_keywords": [],
+      "target_models": [
+        {"provider": "nvidia", "model": "mistralai/mistral-medium-3.5-128b", "reason": "Fastest tested at 0.98s"},
+        {"provider": "nvidia", "model": "nvidia/nemotron-3-ultra-550b-a55b", "reason": "1.11s, 1M ctx"},
+        {"provider": "mistral", "model": "ministral-8b-latest", "reason": "1.38s, 262K ctx"},
+        {"provider": "openrouter", "model": "nvidia/nemotron-3-ultra-550b-a55b:free", "reason": "1.43s, 1M ctx, free"},
+        {"provider": "cloudflare", "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast", "reason": "1.44s, 128K ctx, free"},
+        {"provider": "cloudflare", "model": "@cf/meta/llama-3.1-70b-instruct", "reason": "Free plan, 128K ctx"},
+        {"provider": "zhipu", "model": "glm-4.7-flash", "reason": "1.44s, 200K ctx, free (OPS key)"},
+        {"provider": "opencode-zen", "model": "nemotron-3-ultra-free", "reason": "Free tier via OpenCode Zen"}
+      ]
+    }
+  ],
+  "fallback_chain": [
+    {"provider": "nvidia", "model": "nvidia/nemotron-3-ultra-550b-a55b", "reason": "#1 Fastest 1M ctx (1.11s)"},
+    {"provider": "nvidia", "model": "deepseek-ai/deepseek-v4-flash", "reason": "#2 Best coding 1M ctx (1.54s)"},
+    {"provider": "openrouter", "model": "nvidia/nemotron-3-ultra-550b-a55b:free", "reason": "#3 Free 1M ctx (1.43s)"},
+    {"provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "reason": "#4 Free 1M ctx backup (1.94s)"},
+    {"provider": "cloudflare", "model": "@cf/meta/llama-4-scout-17b-16e-instruct", "reason": "#5 3.5M ctx free plan"},
+    {"provider": "openrouter", "model": "qwen/qwen3.7-flash", "reason": "#6 Vision 1M ctx (3.23s)"},
+    {"provider": "nvidia", "model": "deepseek-ai/deepseek-v4-pro", "reason": "#7 Deep reasoning 1M ctx (18.32s)"},
+    {"provider": "nvidia", "model": "mistralai/mistral-medium-3.5-128b", "reason": "#8 Fastest overall (0.98s)"},
+    {"provider": "nvidia", "model": "nvidia/nemotron-3-super-120b-a12b", "reason": "#9 Fast 262K (1.52s)"},
+    {"provider": "nvidia", "model": "google/gemma-4-31b-it", "reason": "#10 Vision 262K (1.62s)"},
+    {"provider": "openrouter", "model": "poolside/laguna-s-2.1:free", "reason": "#11 Free coding 262K (1.73s)"},
+    {"provider": "openrouter", "model": "nvidia/nemotron-3-super-120b-a12b:free", "reason": "#12 Free 262K (2.58s)"},
+    {"provider": "openrouter", "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "reason": "#13 Free reasoning 256K (2.24s)"},
+    {"provider": "mistral", "model": "ministral-8b-latest", "reason": "#14 Fast 262K (1.38s)"},
+    {"provider": "mistral", "model": "codestral-latest", "reason": "#15 Code specialist 256K (1.23s)"},
+    {"provider": "mistral", "model": "mistral-large-latest", "reason": "#16 High quality 262K (3.35s)"},
+    {"provider": "cloudflare", "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast", "reason": "#17 Free fast 128K (1.44s)"},
+    {"provider": "cloudflare", "model": "@cf/meta/llama-3.1-70b-instruct", "reason": "#18 Free 128K"},
+    {"provider": "cloudflare", "model": "@cf/google/gemma-4-26b-a4b-it", "reason": "#19 Free vision 262K"},
+    {"provider": "cloudflare", "model": "@cf/nvidia/nemotron-3-120b-a12b", "reason": "#20 Free 256K"},
+    {"provider": "cloudflare", "model": "@cf/openai/gpt-oss-120b", "reason": "#21 Free 131K"},
+    {"provider": "cloudflare", "model": "@cf/qwen/qwen3-30b-a3b-fp8", "reason": "#22 Free 131K"},
+    {"provider": "cloudflare", "model": "@cf/zai-org/glm-4.7-flash", "reason": "#23 Free 131K"},
+    {"provider": "sambanova", "model": "Meta-Llama-3.3-70B-Instruct", "reason": "#24 Free Llama (4.41s)"},
+    {"provider": "sambanova", "model": "gemma-4-31B-it", "reason": "#25 Free vision 262K (8.04s)"},
+    {"provider": "zhipu", "model": "glm-4.7-flash", "reason": "#26 Free fallback 200K (OPS key)"},
+    {"provider": "opencode-zen", "model": "laguna-s-2.1-free", "reason": "#27 Free via OpenCode Zen"},
+    {"provider": "opencode-zen", "model": "nemotron-3-ultra-free", "reason": "#28 Free via OpenCode Zen"},
+    {"provider": "github", "model": "gpt-4o", "reason": "#29 GPT-4o (2.48s - 128K ctx)"},
+    {"provider": "github", "model": "gpt-4o-mini", "reason": "#30 GPT-4o Mini (1.70s - 128K ctx)"},
+    {"provider": "groq", "model": "llama-3.3-70b-versatile", "reason": "#31 Groq Llama 3.3 70B (0.30s - 128K ctx) [via WARP]"},
+    {"provider": "groq", "model": "qwen/qwen3.6-27b", "reason": "#32 Groq Qwen 3.6 27B (0.30s)"},
+    {"provider": "groq", "model": "openai/gpt-oss-120b", "reason": "#33 Groq GPT-OSS 120B (0.30s)"}
+  ],
+  "broken_providers": {
+    "cerebras": {"status": "payment_required", "fix": "Free tier exhausted on all 3 keys. Visit api.cerebras.ai/billing to add credits."},
+    "opencode-zen_premium": {"status": "subscription_required", "fix": "60 models listed but only free-suffix models respond. Premium models (Claude, GPT-5, Gemini) need OpenCode Zen subscription."},
+    "github_llama": {"status": "model_id_mismatch", "fix": "Llama models listed in /models endpoint but not accessible via /chat/completions. Only gpt-4o and gpt-4o-mini work for chat."}
+  }
+}

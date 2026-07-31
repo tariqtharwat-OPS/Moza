@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "mode": "assistant",
+  "keySource": "vscode_user_settings",
+  "keyNamespace": "moza.agent.providers",
+  "context": {
+    "projectRoot": "D:\\Moza",
+    "constitutionFile": "docs/MOZA_MASTER_PLAN.md",
+    "readOnlyConfigFiles": [
+      "backend/.env",
+      "config.yaml",
+      "opencode.json"
+    ]
+  },
+  "rules": {
+    "respectProjectFailover": true,
+    "neverModifyProjectSecrets": true
+  }
+}

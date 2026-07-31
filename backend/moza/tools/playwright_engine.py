@@ -131,15 +131,6 @@ class PlaywrightEngine(BrowserEngine):
                 "error": str(e),
             }
 
-        except Exception as e:
-            logger.error(f"PlaywrightEngine: unexpected error during navigation: {e}")
-            return {
-                "stdout": f"Unexpected error navigating to {url}",
-                "title": "",
-                "url": url,
-                "error": str(e),
-            }
-
     async def click(self, selector: str) -> dict:
         await self.ensure_browser()
         await forms.click_element(self._page, selector)

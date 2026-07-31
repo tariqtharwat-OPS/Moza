@@ -1,0 +1,24 @@
+INFO:     Started server process [5544]
+INFO:     Waiting for application startup.
+2026-07-29 23:08:48.776 | INFO     | moza.main:startup:69 - Loaded config with providers: ['groq', 'openai', 'anthropic', 'ollama', 'vllm', 'lm_studio', 'glm', 'sambanova', 'gemini', 'huggingface', 'deepseek', 'mistral', 'openrouter', 'browser_openrouter', 'default']
+2026-07-29 23:08:48.797 | INFO     | moza.main:startup:73 - Loaded constitution v0.1.0
+2026-07-29 23:08:48.799 | INFO     | moza.gateway.router:__init__:90 - LLMRouter: MozaOrchestrator initialized with 19 ranked models across 7 providers
+2026-07-29 23:08:48.802 | INFO     | moza.tools.registry:load:61 - Loading tool: filesystem v1.0.0
+2026-07-29 23:08:48.803 | INFO     | moza.tools.registry:load:61 - Loading tool: terminal v1.0.0
+2026-07-29 23:08:48.803 | INFO     | moza.tools.registry:load:61 - Loading tool: browser v1.0.0
+2026-07-29 23:08:48.803 | INFO     | moza.tools.browser_tool:on_load:59 - BrowserTool loaded (browser not started yet)
+2026-07-29 23:08:48.804 | INFO     | moza.main:startup:87 - Registered 3 tools: ['filesystem', 'terminal', 'browser']
+2026-07-29 23:08:48.806 | WARNING  | moza.plugins.plugin_manager:discover_plugins:119 - Failed to load plugin plugins.echo_plugin: No module named 'plugins'
+2026-07-29 23:08:48.806 | INFO     | moza.main:startup:105 - No plugins discovered (plugins/ directory may not exist)
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8001): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+2026-07-29 23:08:48.870 | INFO     | moza.tools.playwright_engine:close:90 - PlaywrightEngine: browser closed
+2026-07-29 23:08:48.870 | INFO     | moza.plugins.registry:cleanup:246 - PluginRegistry cleanup complete
+2026-07-29 23:08:48.870 | INFO     | moza.plugins.plugin_manager:cleanup:309 - PluginManager cleanup complete
+2026-07-29 23:08:48.870 | INFO     | moza.tools.registry:unload:72 - Unloading tool: filesystem
+2026-07-29 23:08:48.871 | INFO     | moza.tools.registry:unload:72 - Unloading tool: terminal
+2026-07-29 23:08:48.871 | INFO     | moza.tools.registry:unload:72 - Unloading tool: browser
+2026-07-29 23:08:48.871 | INFO     | moza.tools.playwright_engine:close:90 - PlaywrightEngine: browser closed
+2026-07-29 23:08:48.871 | INFO     | moza.main:shutdown:135 - MOZA Backend shutting down
+INFO:     Application shutdown complete.

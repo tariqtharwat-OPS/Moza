@@ -27,6 +27,7 @@ from moza.core.context import ExecutionContext
 from moza.core.event_bus import EventBus, get_event_bus
 from moza.core.intent_classifier import IntentType, classify_intent, get_conversational_reply
 from moza.core.models import Environment, Event, EventType, Session, Task, TaskStatus
+from moza.core.state_machine import transition as fsm_transition
 from moza.tools.registry import ToolRegistry, get_tool_registry
 
 
@@ -217,21 +218,28 @@ class Orchestrator:
     @staticmethod
     def _update_task_state(task: Task, event: Event) -> None:
         """Drive the task state machine based on emitted events."""
+        new_status = None
         if event.type == EventType.TOOL_CALL:
             tool = event.payload.get("tool", "")
             requires_confirmation = event.payload.get("requires_confirmation", False)
-            if requires_confirmation:
-                _transition_task_status(task, TaskStatus.WAITING_USER, event.type)
-            else:
-                _transition_task_status(task, TaskStatus.WAITING_TOOL, event.type)
+            new_status = TaskStatus.WAITING_USER if requires_confirmation else TaskStatus.WAITING_TOOL
         elif event.type == EventType.TOOL_RESULT:
-            _transition_task_status(task, TaskStatus.RUNNING, event.type)
+            new_status = TaskStatus.RUNNING
         elif event.type == EventType.TOOL_SELECTED:
-            _transition_task_status(task, TaskStatus.RUNNING, event.type)
+            new_status = TaskStatus.RUNNING
         elif event.type in (EventType.BROWSER_STARTED, EventType.BROWSER_ACTION):
-            _transition_task_status(task, TaskStatus.WAITING_TOOL, event.type)
+            new_status = TaskStatus.WAITING_TOOL
         elif event.type in (EventType.TASK_COMPLETED, EventType.TASK_FAILED, EventType.WAITING_APPROVAL):
             pass
+
+        if new_status is not None:
+            prev = task.status
+            try:
+                fsm_transition(prev, new_status)
+                logger.debug(f"FSM: {prev.value} -> {new_status.value} (accepted)")
+            except ValueError as e:
+                logger.critical(f"FSM rejected {prev.value} -> {new_status.value}: {e}. Applying manually.")
+            _transition_task_status(task, new_status, event.type)
 
     async def cancel_task(self, task_id: str) -> bool:
         asyncio_task = self._running_tasks.get(task_id)

@@ -1,0 +1,28 @@
+=== MODELS.DEV RESEARCH ===
+Source: models.dev (scraped)
+Free models with high context (>=128K):
+- poolside/laguna-s-2.1 - 1M ctx - FREE
+- moonshotai/kimi-k3 - 1M ctx - FREE
+- thinkingmachines/inkling - 1M ctx - FREE
+- zhipuai/glm-5.2 - 1M ctx - FREE
+- nvidia/nemotron-3-ultra-550b-a55b - 1M ctx - FREE
+- deepseek/deepseek-v4-flash - 1M ctx - FREE (pricing 0)
+- deepseek/deepseek-v4-pro - 1M ctx - FREE (pricing 0)
+- xiaomi/mimo-v2.5 - 1M ctx - FREE
+- xiaomi/mimo-v2.5-pro - 1M ctx - FREE
+- nvidia/nemotron-3-super-120b-a12b - 262K ctx - FREE
+- zhipuai/glm-5.1 - 200K ctx - FREE
+- zhipuai/glm-4.7-flash - 200K ctx - FREE
+- cohere/north-mini-code-1-0 - 256K ctx - FREE
+- openai/gpt-oss-120b - 131K ctx - FREE
+- openai/gpt-oss-20b - 131K ctx - FREE
+- nvidia/nemotron-3-nano-30b-a3b - 262K ctx - FREE
+- nvidia/nemotron-3-nano-omni-30b-a3b-reasoning - 256K ctx - FREE
+- stepfun/step-3.7-flash - 256K ctx - FREE
+- google/gemma-4-31b-it - 262K ctx - FREE
+- google/gemma-4-26b-a4b-it - 262K ctx - FREE
+- minimax/MiniMax-M3 - 512K ctx - FREE
+- nvidia/nemotron-nano-9b-v2 - 131K ctx - FREE
+- nvidia/llama-3.3-nemotron-super-49b-v1.5 - 131K ctx - FREE
+- meta/llama-3.3-70b-instruct - 128K ctx - FREE
+- openai/gpt-5.5 - 1M ctx - FREE

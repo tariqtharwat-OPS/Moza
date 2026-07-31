@@ -6,7 +6,7 @@ export default function Logo({ className }: { className?: string }) {
       <img
         src="/logo.png"
         alt="MOZA"
-        className="h-auto w-full object-contain"
+        className="h-12 w-auto object-contain"
       />
     </div>
   );

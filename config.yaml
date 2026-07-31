@@ -1,19 +1,14 @@
 providers:
-  default: openrouter
-
-  openrouter:
-    api_key: ${OPENROUTER_API_KEY}
-    model: openrouter/meta-llama/llama-3.1-8b-instruct
-    base_url: https://openrouter.ai/api/v1
-
-  openai:
-    api_key: ${OPENAI_API_KEY}
-    model: openai/gpt-4o
+  default: groq
 
   groq:
     api_key: ${GROQ_API_KEY}
     model: groq/llama-3.3-70b-versatile
     base_url: https://api.groq.com/openai/v1
+
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    model: gpt-4o
 
   anthropic:
     api_key: ${ANTHROPIC_API_KEY}
@@ -60,6 +55,16 @@ providers:
     api_key: ${MISTRAL_API_KEY}
     model: mistral/mistral-large-latest
     base_url: https://api.mistral.ai/v1
+
+  openrouter:
+    api_key: ${OPENROUTER_API_KEY}
+    model: openrouter/deepseek/deepseek-chat:free
+    base_url: https://openrouter.ai/api/v1
+
+  browser_openrouter:
+    api_key: ${BROWSER_OPENROUTER_API_KEY}
+    model: openrouter/deepseek/deepseek-chat:free
+    base_url: https://openrouter.ai/api/v1
 
 litellm:
   port: 4000

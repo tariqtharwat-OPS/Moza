@@ -1,0 +1,234 @@
+{
+  "discovery_date": "2026-07-30T23:05:53.608735",
+  "total_providers": 10,
+  "total_models_tested": 36,
+  "high_context_models": [
+    {
+      "provider": "nvidia",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "context_tokens": 1000000,
+      "ping_response": "We need to respond:",
+      "latency_seconds": 10.84
+    },
+    {
+      "provider": "openrouter",
+      "model": "deepseek/deepseek-v4-flash",
+      "context_tokens": 1000000,
+      "ping_response": "\u597d\u7684\uff0c\u6211\u5df2\u7ecf\u51c6\u5907\u597d\u4e86\u3002",
+      "latency_seconds": 2.63
+    },
+    {
+      "provider": "openrouter",
+      "model": "qwen/qwen3.7-flash",
+      "context_tokens": 1000000,
+      "ping_response": "Ready when you are! What can",
+      "latency_seconds": 2.81
+    },
+    {
+      "provider": "opencode-zen",
+      "model": "nemotron-3-ultra-free",
+      "context_tokens": 1000000,
+      "ping_response": "The user just said \"",
+      "latency_seconds": 2.93
+    },
+    {
+      "provider": "nvidia",
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "context_tokens": 262144,
+      "ping_response": "Okay, the user sent",
+      "latency_seconds": 0.65
+    },
+    {
+      "provider": "sambanova",
+      "model": "gemma-4-31B-it",
+      "context_tokens": 262144,
+      "ping_response": "How can I help you",
+      "latency_seconds": 1.68
+    },
+    {
+      "provider": "opencode-zen",
+      "model": "laguna-s-2.1-free",
+      "context_tokens": 262144,
+      "ping_response": "Hello! How can",
+      "latency_seconds": 2.5
+    },
+    {
+      "provider": "sambanova",
+      "model": "Meta-Llama-3.3-70B-Instruct",
+      "context_tokens": 128000,
+      "ping_response": "It seems like you're",
+      "latency_seconds": 1.7
+    }
+  ],
+  "failed_models": [
+    {
+      "provider": "openrouter",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "ctx": 1000000,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free mo"
+    },
+    {
+      "provider": "nvidia",
+      "model": "deepseek-ai/deepseek-v4-flash",
+      "ctx": 1000000,
+      "error": "HTTP 529: {\"message\":\"Service temporarily overloaded\",\"type\":\"Overloaded\",\"code\":529}"
+    },
+    {
+      "provider": "nvidia",
+      "model": "deepseek-ai/deepseek-v4-pro",
+      "ctx": 1000000,
+      "error": ""
+    },
+    {
+      "provider": "nvidia",
+      "model": "mistralai/mistral-medium-3.5-128b",
+      "ctx": 262144,
+      "error": ""
+    },
+    {
+      "provider": "nvidia",
+      "model": "google/gemma-4-31b-it",
+      "ctx": 262144,
+      "error": "HTTP 500: {\"type\":\"urn:inference-connection:problem-details:internal-server-error\", \"title\":\"Internal Server E"
+    },
+    {
+      "provider": "openrouter",
+      "model": "poolside/laguna-s-2.1:free",
+      "ctx": 262144,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free mo"
+    },
+    {
+      "provider": "openrouter",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "ctx": 262144,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free mo"
+    },
+    {
+      "provider": "openrouter",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "ctx": 256000,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free mo"
+    },
+    {
+      "provider": "openrouter",
+      "model": "google/gemma-4-26b-a4b-it:free",
+      "ctx": 262144,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free mo"
+    },
+    {
+      "provider": "mistral",
+      "model": "ministral-8b-latest",
+      "ctx": 262144,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-medium-2604",
+      "ctx": 262144,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "mistral",
+      "model": "codestral-latest",
+      "ctx": 256000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-large-latest",
+      "ctx": 262144,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "zhipu",
+      "model": "glm-4.7-flash",
+      "ctx": 200000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "cloudflare",
+      "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "ctx": 128000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "cloudflare",
+      "model": "@cf/meta/llama-4-scout-17b-16e-instruct",
+      "ctx": 3500000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "cloudflare",
+      "model": "@cf/meta/llama-3.1-70b-instruct",
+      "ctx": 128000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "cloudflare",
+      "model": "@cf/google/gemma-4-26b-a4b-it",
+      "ctx": 262144,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "cloudflare",
+      "model": "@cf/nvidia/nemotron-3-120b-a12b",
+      "ctx": 256000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "cloudflare",
+      "model": "@cf/openai/gpt-oss-120b",
+      "ctx": 131072,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "cloudflare",
+      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "ctx": 131072,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "cloudflare",
+      "model": "@cf/zai-org/glm-4.7-flash",
+      "ctx": 131072,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "github",
+      "model": "gpt-4o",
+      "ctx": 128000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "github",
+      "model": "gpt-4o-mini",
+      "ctx": 128000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "ctx": 128000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "groq",
+      "model": "qwen/qwen3.6-27b",
+      "ctx": 128000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "groq",
+      "model": "llama-3.1-8b-instant",
+      "ctx": 128000,
+      "error": "Provider not accessible"
+    },
+    {
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "ctx": 128000,
+      "error": "Provider not accessible"
+    }
+  ],
+  "requires_normalization": []
+}

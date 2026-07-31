@@ -20,7 +20,7 @@ from typing import Any, Type
 from loguru import logger
 
 from .interfaces import CapabilityInterface, ToolInterface, ProviderInterface
-from ..tools.registry import ToolRegistry, BaseTool
+from ..tools.registry import ToolRegistry, BaseTool, get_tool_registry
 
 
 class PluginRegistry:
@@ -38,7 +38,7 @@ class PluginRegistry:
         """Initialize the PluginRegistry."""
         self._plugins: dict[str, dict[str, Any]] = {}
         self._capabilities: dict[str, list[str]] = {}
-        self._tool_registry = ToolRegistry()
+        self._tool_registry = get_tool_registry()
 
     async def register_plugin(self, plugin: Any) -> None:
         """

@@ -5,9 +5,10 @@ import { useState, useRef, useCallback, useEffect, type FormEvent } from "react"
 import { streamTask, approveTask, rejectTask, type MozaEvent } from "@/lib/api";
 import MainLayout from "@/components/Layout/MainLayout";
 import MessageBubble from "@/components/ui/MessageBubble";
-import TypingIndicator from "@/components/ui/TypingIndicator";
+
 import InputArea from "@/components/chat/InputArea";
 import BrowserVisualizer from "@/components/browser/BrowserVisualizer";
+import ProviderSelector from "@/components/ui/ProviderSelector";
 
 const TerminalComponent = dynamic(
   () => import("@/components/terminal/TerminalComponent"),
@@ -325,8 +326,6 @@ async function handleSubmit(e: FormEvent | string) {
 
   function renderEvent(event: MozaEvent, idx: number) {
     switch (event.type) {
-      case "agent_thinking":
-        return <TypingIndicator key={idx} />;
       case "waiting_approval":
         const tool = (event.payload.tool as string) || "";
         const action = (event.payload.args as Record<string, unknown>)?.action as string | undefined;
@@ -344,6 +343,7 @@ async function handleSubmit(e: FormEvent | string) {
   /* ── Build left panel content ───────────────────────────────── */
   const leftPanel = (
     <>
+      <ProviderSelector />
       {!hasContent && <WelcomeCard onChipClick={(text) => handleSubmit(text)} />}
       {conversation.map((msg, i) => (
         <MessageBubble
@@ -354,6 +354,15 @@ async function handleSubmit(e: FormEvent | string) {
       ))}
       {events.map((ev, i) => renderEvent(ev, i))}
       {streamingContent && <StreamingMessage content={streamingContent} />}
+      {(agentStatus === "Thinking" || agentStatus === "Executing Tool") && !streamingContent && (
+        <div className="flex items-center gap-2 text-sm text-indigo-400 p-2 bg-indigo-950/30 rounded-lg w-fit">
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+          </span>
+          <span>MOZA is processing task...</span>
+        </div>
+      )}
       {waitingApproval && (
         <ApprovalBanner
           waiting={{ tool: waitingApproval.tool, description: waitingApproval.description }}
@@ -368,9 +377,11 @@ async function handleSubmit(e: FormEvent | string) {
   /* ── Build right panel content ──────────────────────────────── */
   const rightPanel = (
     <>
-      <div className="mb-3">
-        <BrowserVisualizer events={browserEvents} />
-      </div>
+      {browserEvents.length > 0 && (
+        <div className="mb-3">
+          <BrowserVisualizer events={browserEvents} />
+        </div>
+      )}
       {terminalEvents.length > 0 && (
         <div className="mb-3">
           <div className="mb-1 text-[10px] font-medium uppercase tracking-widest text-slate-500">
@@ -414,8 +425,8 @@ async function handleSubmit(e: FormEvent | string) {
           value={input}
           onChange={setInput}
           onSubmit={(e) => handleSubmit(e)}
-          disabled={streaming}
-          placeholder="Ask MOZA to perform a task..."
+          isProcessing={streaming}
+          placeholder={streaming ? "Type to interrupt or guide MOZA..." : "Ask MOZA to perform a task..."}
         />
       }
       agentStatus={agentStatus}

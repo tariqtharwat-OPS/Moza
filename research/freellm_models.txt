@@ -1,0 +1,9 @@
+=== FRELLM.NET RESEARCH ===
+Source: freellm.net (scraped)
+Key findings:
+- 388 models tracked, 303 free & online, 30 providers
+- NVIDIA NIM: z-ai/glm-5.2 (1M ctx), minimaxai/minimax-m3 (1M ctx), deepseek-ai/deepseek-v4-pro (1M ctx), deepseek-ai/deepseek-v4-flash (1M ctx)
+- OpenRouter: NVIDIA Nemotron 3 Ultra free (1M ctx, 200 req/day)
+- Google Gemini: 3.6 Flash (1M ctx), 3.5 Flash (1M ctx)
+- Agnes AI: agnes-2.0-flash (256K ctx)
+- OVHcloud: Qwen3.6-27B (131K ctx)

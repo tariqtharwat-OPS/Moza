@@ -1,3 +1,22 @@
+# GOVERNANCE NOTICE
+
+This Execution Plan is governed by and strictly subordinate to the `docs/MOZA_MASTER_PLAN.md`.
+
+All execution steps, feature additions, and architectural decisions must strictly align with the Architectural Principles, Capability Contracts, and Quality Gates defined in the Master Plan. Any conflict between this document and the Master Plan must be resolved in favor of the Master Plan for architectural matters, and an ADR must be raised if unresolved.
+
+---
+
+# GOVERNANCE ALIGNMENT NOTE
+
+**Status:** Aligned with Master Plan v1.0-RATIFIED  
+**Date:** 2026-07-28  
+**Next Immediate Task:** A.2 — Complete State Machine Transitions (5 missing transitions)  
+**Previous Version:** v4.0 (archived at `docs/archive/MOZA_EXECUTION_PLAN_v4.md`)
+
+This Execution Plan retains all v4.0 implementation steps, timelines, and technical specifications. The Governance Notice above establishes the hierarchy. All future updates to this document must comply with the Master Plan's Evolution Governance rules (Section 18).
+
+---
+
 # MOZA AI Operating System — Final Execution Blueprint v4.0
 
 ## Evolution Levels Architecture | Build on Existing | Zero Regression | Incremental Evolution

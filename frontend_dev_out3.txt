@@ -1,0 +1,20 @@
+
+> moza-frontend@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use by process 14416, using available port 3003 instead.
+   ▲ Next.js 15.5.22
+   - Local:        http://localhost:3003
+   - Network:      http://10.2.0.2:3003
+
+ ✓ Starting...
+ ✓ Ready in 6.8s
+ ○ Compiling / ...
+ ✓ Compiled / in 2.9s (1095 modules)
+ GET / 200 in 4211ms
+ GET / 200 in 91ms
+ GET / 200 in 77ms
+ GET / 200 in 164ms
+ GET / 200 in 114ms
+ GET / 200 in 171ms
+ ✓ Compiled in 6.6s (1109 modules)

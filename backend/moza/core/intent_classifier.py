@@ -5,8 +5,10 @@ Bypasses the LLM tool-calling loop entirely for conversational input.
 The Orchestrator MUST call classify_intent() BEFORE dispatching to any agent.
 """
 
+import random
 import re
 from enum import Enum
+from typing import Any
 
 
 class IntentType(str, Enum):
@@ -114,6 +116,18 @@ _ARABIC_REPLIES: list[str] = [
     "السلام عليكم! كيف أستطيع مساعدتك؟",
 ]
 
+_HOW_ARE_YOU_REPLIES: list[str] = [
+    "I'm doing great, thanks for asking! What can I help you with today?",
+    "All good here! Ready to help. What do you need?",
+    "I'm doing well! How can I assist you?",
+]
+
+_RETURN_GREETING_REPLIES: list[str] = [
+    "Nice to see you again! What would you like to work on today?",
+    "Welcome back! How can I assist you this time?",
+    "Good to see you! What's on your mind?",
+]
+
 _ENGLISH_REPLIES: list[str] = [
     "Hello! How can I help you today?",
     "Hi there! I'm MOZA, your AI operating system. What can I do for you?",
@@ -142,12 +156,61 @@ def classify_intent(user_input: str) -> IntentType:
     return IntentType.TASK
 
 
-def get_conversational_reply(user_input: str) -> str:
+def _prior_user_messages(history: list[Any]) -> list[str]:
+    """Extract user messages from execution history."""
+    msgs: list[str] = []
+    for ev in history:
+        if ev is None:
+            continue
+        if isinstance(ev, dict):
+            payload = ev.get("payload", {}) or {}
+        else:
+            payload = getattr(ev, "payload", {}) or {}
+        desc = payload.get("description")
+        if isinstance(desc, str) and desc.strip():
+            msgs.append(desc)
+    return msgs
+
+
+def _has_prior_greeting(history: list[Any]) -> bool:
+    """Check if there's a prior greeting in the history (excluding the current message)."""
+    prior = _prior_user_messages(history)
+    if not prior:
+        return False
+    # Check all but the last (which is the current message)
+    for msg in prior[:-1]:
+        if _is_direct_greeting(msg) or _is_conversational_phrase(msg) or _has_arabic_greeting(msg):
+            return True
+    return False
+
+
+def get_conversational_reply(user_input: str, history: list[Any] | None = None) -> str:
+    """Return a contextual conversational reply."""
     text = user_input.strip()
+    lower = text.lower()
+
+    # Arabic greeting
     for g in _GREETING_AR:
         try:
             if g in text:
-                return _ARABIC_REPLIES[0]
+                return random.choice(_ARABIC_REPLIES)
         except Exception:
             pass
-    return _ENGLISH_REPLIES[0]
+
+    # "how are you" variants → respond about self, then offer help
+    if any(p in lower for p in (
+        "how are you", "how's it going", "how are things", "how are you doing",
+        "كيف حالك", "كيفك", "كيف الحال", "عامل ايه", "شلونك", "ازيك", "اخبارك", "شو اخبارك"
+    )):
+        return random.choice(_HOW_ARE_YOU_REPLIES)
+
+    # Return greeting (prior greeting in this session)
+    if history and _has_prior_greeting(history):
+        return random.choice(_RETURN_GREETING_REPLIES)
+
+    # Direct greeting / short ack / conversational phrase
+    if _is_direct_greeting(text) or _is_short_ack(text) or _is_conversational_phrase(text):
+        return random.choice(_ENGLISH_REPLIES)
+
+    # Fallback
+    return random.choice(_ENGLISH_REPLIES)

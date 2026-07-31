@@ -8,7 +8,6 @@ import MessageBubble from "@/components/ui/MessageBubble";
 
 import InputArea from "@/components/chat/InputArea";
 import BrowserVisualizer from "@/components/browser/BrowserVisualizer";
-import ProviderSelector from "@/components/ui/ProviderSelector";
 
 const TerminalComponent = dynamic(
   () => import("@/components/terminal/TerminalComponent"),
@@ -343,7 +342,6 @@ async function handleSubmit(e: FormEvent | string) {
   /* ── Build left panel content ───────────────────────────────── */
   const leftPanel = (
     <>
-      <ProviderSelector />
       {!hasContent && <WelcomeCard onChipClick={(text) => handleSubmit(text)} />}
       {conversation.map((msg, i) => (
         <MessageBubble

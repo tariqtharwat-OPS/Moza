@@ -369,22 +369,14 @@ class LLMRouter:
                 model = last_call.get("model", "unknown")
                 rank = last_call.get("rank", 0)
             else:
-                # Fall back to top-ranked provider from root constitution.yaml (SSOT)
-                try:
-                    import yaml
-                    from pathlib import Path
-                    _project_root = Path(__file__).resolve().parent.parent.parent.parent
-                    constitution = yaml.safe_load((_project_root / "constitution.yaml").read_text())
-                    ranking = (constitution or {}).get("provider_ranking", [])
-                    if ranking:
-                        provider = f"{ranking[0].get('provider', 'unknown')}/{ranking[0].get('model', 'unknown')}"
-                        model = ranking[0].get("model", "unknown")
-                        rank = ranking[0].get("rank", 1)
-                    else:
-                        provider = "unknown"
-                        model = "unknown"
-                        rank = 0
-                except Exception:
+                # Fall back to top-ranked provider from the live orchestrator ranking (config.json)
+                ranking = self._orchestrator.ranking or []
+                if ranking:
+                    top = ranking[0]
+                    provider = f"{top.get('provider', 'unknown')}/{top.get('model', 'unknown')}"
+                    model = top.get("model", "unknown")
+                    rank = top.get("rank", 1)
+                else:
                     provider = "unknown"
                     model = "unknown"
                     rank = 0

@@ -109,7 +109,7 @@ class Orchestrator:
         try:
             intent = classify_intent(task.description)
             if intent == IntentType.CONVERSATIONAL:
-                reply = get_conversational_reply(task.description)
+                reply = get_conversational_reply(task.description, session.execution_history)
                 thinking = Event(
                     session_id=session_id,
                     task_id=task.id,

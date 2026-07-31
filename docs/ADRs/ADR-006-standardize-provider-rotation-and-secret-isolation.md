@@ -100,7 +100,7 @@ Each phase must pass all 94+ existing tests and 5 frozen benchmarks before proce
 - [x] Migration plan included (breaking change — 5 phases)
 - [x] Interfaces updated (new `RotationManager` interface in Phase 3)
 - [x] Tests updated (Phase 1: 8 new secret-loading unit tests in `backend/tests/unit/test_secret_loading.py`)
-- [ ] Documentation updated (this ADR + constitution.yaml cleanup in Phase 2)
+- [x] Documentation updated (this ADR + constitution.yaml cleanup in Phase 2)
 - [ ] Manager approval obtained (PENDING)
 
 ## Phase 1 Status (2026-07-31)
@@ -108,6 +108,20 @@ Each phase must pass all 94+ existing tests and 5 frozen benchmarks before proce
 - [x] `ENV_KEY_MAP` expanded to cover all 10 providers in config.json apiKeys
 - [x] Log source used (environment vs config.json) and warn when no key found
 - [ ] Remove config.json key loading entirely (planned for Phase 2, per migration table above)
+
+## Phase 2 Status (2026-07-31)
+- [x] Duplicate provider-ranking sections in `constitution.yaml` (lines 75 and 79) consolidated
+- [x] All 26 providers preserved in original order (no ranking changes, backward compatible)
+- [x] YAML validity verified (parsed via `moza.core.constitution.load_constitution`)
+
+### Migration Note — Phase 2
+- **Sections identified:** the root `constitution.yaml` contained two duplicate header blocks before `provider_ranking:` — one dated "real stress test results (2026-07-29)" and one dated "live OpenRouter discovery (2026-07-29)".
+- **Section kept as SSOT:** the `provider_ranking` list itself (26 entries). It already contains every provider referenced by both header blocks (stress-tested `github-models/gpt-4o` from the older block; `qwen3.7-flash`, `qwen3-coder-plus`, `qwen3-coder-flash`, `laguna-s-2.1:free`, `nemotron-nano-omni:free` from the newer block). Both blocks described the same single list, so no provider merge was required — the list was already fully consolidated.
+- **Removed:** the duplicate second header block; the two headers were merged into one.
+- **Comment added:** `# SSOT: Consolidated from duplicate sections per ADR-006 Phase 2` plus a reference to `config.json > ranking` as the live operational source.
+- **Backup:** `constitution.yaml.bak` created in repo root for rollback.
+- **No code changes required:** the removed section was comments only; all consumers (`moza.core.constitution.get_constitution`, `gateway/router.py` summary fallback) still read the `provider_ranking` key, which is unchanged.
+- **Open follow-up (out of scope of this task):** `backend/constitution.yaml` still carries its own separate 19-entry `provider_ranking`. Its only consumer is the `router.py` summary fallback (used only when no calls recorded yet). Consolidating it onto the root file is deferred to a dedicated task.
 
 ## Impact Analysis
 

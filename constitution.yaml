@@ -72,13 +72,13 @@ golden_rules:
     pattern: "multiple_tool_calls_in_one_step"
     enforcement: "guard"
 
+# SSOT: Consolidated from duplicate sections per ADR-006 Phase 2
 # Provider ranking (loaded by MozaOrchestrator)
-# Updated based on real stress test results (2026-07-29)
+# Updated based on real stress test results and live OpenRouter discovery (2026-07-29)
 # Priority: task completion > context window > speed > quality
 # GitHub Models uses Copilot OAuth token for free GPT-4o access
-# Provider ranking (loaded by MozaOrchestrator)
-# Updated based on live OpenRouter discovery (2026-07-29)
 # 4 new high-context/coding models added: qwen3.7-flash, qwen3-coder-plus, qwen3-coder-flash, poolside/laguna-s-2.1:free, nemotron-nano-omni:free
+# Live operational ranking source: packages/moza-orchestrator/config.json > ranking
 provider_ranking:
   - rank: 1
     provider: "groq-moza"

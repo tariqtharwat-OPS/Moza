@@ -70,7 +70,7 @@ Implement a unified `RotationManager` component addressing all 6 gaps through 5 
 | Phase 2 | 1 day | Add env-only mode flag; remove config.json key loading | 94+ existing + benchmark |
 | Phase 3 | 1 day | Consolidate rankings; deduplicate constitution.yaml | 94+ existing + benchmark |
 | Phase 4 | 1–2 days | Merge health tracking; add EventBus sync | 94+ existing + benchmark + new integration tests |
-| Phase 5 | 1–2 days | VPN confirmation; circuit breaker; rate limit cycling | 94+ existing + benchmark + new unit tests |
+| Phase 5 | 1–2 days | Circuit breaker; rate limit key cycling | 110+ existing + new integration test |
 
 Each phase must pass all 94+ existing tests and 5 frozen benchmarks before proceeding.
 
@@ -99,7 +99,7 @@ Each phase must pass all 94+ existing tests and 5 frozen benchmarks before proce
 - [x] Backward compatibility addressed (3-phase migration with deprecation warnings)
 - [x] Migration plan included (breaking change — 5 phases)
 - [x] Interfaces updated (new `RotationManager` interface in Phase 3)
-- [x] Tests updated (Phase 1: 8 secret-loading tests in `test_secret_loading.py`; Phase 3: 13 health-sync tests in `test_health_sync.py`)
+- [x] Tests updated (Phase 1: 8 secret-loading tests in `test_secret_loading.py`; Phase 3: 13 health-sync tests in `test_health_sync.py`; Phase 4: 13 VPN rotation tests in `test_vpn_rotation.py`; Phase 5: 1 circuit breaker workflow test in `test_circuit_breaker_workflow.py`)
 - [x] Documentation updated (this ADR + constitution.yaml cleanup in Phase 2)
 - [ ] Manager approval obtained (PENDING)
 
@@ -140,6 +140,19 @@ Each phase must pass all 94+ existing tests and 5 frozen benchmarks before proce
 ## Phase 4 Status (2026-07-31)
 - [x] VPN rotation with IP-change confirmation (from migration table)
 - [ ] **Deferred from Phase 2:** consolidate `backend/constitution.yaml`'s separate 19-entry `provider_ranking` onto the root `constitution.yaml` (flagged for cleanup here; only consumer is the `router.py` summary fallback)
+
+## Phase 5 Status (2026-07-31)
+- [x] Formal Circuit Breaker states (CLOSED/OPEN/HALF_OPEN) implemented in `HealthTracker` (`backend/moza/gateway/health_tracker.py`)
+- [x] Thresholds: 3 consecutive same-type failures → OPEN; 30s → HALF_OPEN (lazy transition in `get_circuit_state`); 1 success → CLOSED
+- [x] Circuit breaker integrated with existing cooldown mechanism (additive — cooldowns persist independently; HALF_OPEN overrides cooldown to allow the recovery probe)
+- [x] 429 (rate limit) now triggers key cycling: `_handle_rate_limit_cycle` cycles to a non-rate-limited key and retries without tripping the breaker or applying a cooldown; cooldown + circuit breaker only apply when ALL keys fail with 429
+- [x] Per-key rate limit counters (`_rate_limited_keys` dict in orchestrator) track which keys have hit 429 in the current rotation cycle, preventing immediate re-use of a rate-limited key
+- [x] `_try_with_key_retry` wraps every provider entry call; it handles retry-with-next-key within a single request instead of deferring to the next request
+- [x] `HealthTracker` never records a failure without the circuit breaker knowing about it (every `_apply_cooldown` and `record_circuit_failure` feeds the same state machine)
+- [x] Existing failover logic preserved: auth_error/dead still cycle via `_cycle_provider_key` (without in-request retry); ip_blocked, server_error, timeout, etc. still apply immediate cooldown
+- [x] Backward compatible: 110 unit tests pass unchanged; single-key providers behave identically to Pre-Phase-5 (429 → 60s cooldown)
+- [x] Smart workflow test: `backend/tests/integration/test_circuit_breaker_workflow.py` — Provider A (3 keys) all 429 → circuit OPEN → route to Provider B → 200 OK → after 30s HALF_OPEN probe → 200 → CLOSED; asserts EventBus emits `provider_failed` (with circuit_state="open") and `provider_recovered` at correct times
+- [x] Circuit breaker state intentionally preserved across `_clear_provider_cooldowns`/`reset()` — an OPEN circuit survives between user requests so the 30s → HALF_OPEN → probe flow works
 
 ## Impact Analysis
 

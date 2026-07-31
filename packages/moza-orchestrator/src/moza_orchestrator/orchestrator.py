@@ -170,6 +170,9 @@ class MozaOrchestrator:
         self.dead_providers = set()   # permanent failures (auth, dead)
         self.blocked_providers = {}   # provider -> unix_timestamp (IP blocks)
         self.call_history = []
+        # ADR-006 Phase 5: keys that hit 429 in the current rotation cycle,
+        # so we only re-open the circuit / apply cooldown once ALL keys fail.
+        self._rate_limited_keys = {}   # provider -> set of failed keys
 
         self._setup_logging()
 
@@ -586,6 +589,74 @@ class MozaOrchestrator:
             return available[0]
         raise Exception("No available models")
 
+    def _record_circuit_failure(self, provider: str, model: str, error_type: str, defer_open: bool = False) -> None:
+        """Record a circuit-breaker failure on the shared HealthTracker (ADR-006 Phase 5)."""
+        if self._health_tracker is not None:
+            self._health_tracker.record_circuit_failure(provider, model, error_type, defer_open=defer_open)
+
+    def _handle_rate_limit_cycle(self, entry: Dict, error: "FailoverError") -> bool:
+        """Cycle to a fresh API key on a 429 (ADR-006 Phase 5).
+
+        Marks the current key as rate-limited, counts the failure toward the
+        circuit breaker WITHOUT opening it (defer), and selects the next key
+        that has not yet been rate-limited in this rotation cycle.
+
+        Returns True when a fresh key was selected (caller must retry the same
+        entry immediately, without cooldown or circuit breaker). Returns False
+        when every key for the provider has already failed with 429 — the
+        caller then applies the normal cooldown, which opens the circuit at
+        the 3-failure threshold.
+        """
+        provider = entry["provider"]
+        model = entry["model"]
+        keys = self.key_lists.get(provider, [])
+        current_key = self.keys.get(provider, "")
+
+        rl_set = self._rate_limited_keys.setdefault(provider, set())
+        rl_set.add(current_key)
+
+        if len(keys) <= 1:
+            return False
+
+        current_idx = self.key_index.get(provider, 0)
+        for offset in range(1, len(keys) + 1):
+            next_idx = (current_idx + offset) % len(keys)
+            if keys[next_idx] not in rl_set:
+                # Count toward the breaker but keep it closed while keys remain.
+                self._record_circuit_failure(provider, model, "rate_limit", defer_open=True)
+                self.key_index[provider] = next_idx
+                self.keys[provider] = keys[next_idx]
+                logger.warning(
+                    f"RANK {entry['rank']} {provider}/{model} RATE_LIMIT "
+                    f"-> cycled to key index {next_idx}, retrying"
+                )
+                return True
+        return False
+
+    async def _try_with_key_retry(self, entry: Dict, messages: List[Dict], **kwargs) -> str | Dict:
+        """Call an entry, retrying on 429 by cycling API keys (ADR-006 Phase 5).
+
+        On a 429 with a fresh key available, the key is cycled and the same
+        entry is retried immediately without tripping the circuit breaker or
+        applying a cooldown. When every key has failed with 429 the error is
+        re-raised so the caller's normal failover applies (which opens the
+        circuit at the 3-failure threshold). Non-rate-limit errors propagate
+        immediately.
+        """
+        provider = entry["provider"]
+        max_attempts = max(1, len(self.key_lists.get(provider, [])))
+        last_error: Optional[FailoverError] = None
+        for _ in range(max_attempts):
+            try:
+                return await self._try_call(entry, messages, **kwargs)
+            except FailoverError as e:
+                last_error = e
+                if e.error_type == "rate_limit" and self._handle_rate_limit_cycle(entry, e):
+                    continue
+                raise
+        assert last_error is not None
+        raise last_error
+
     async def _try_call(self, entry: Dict, messages: List[Dict], **kwargs) -> str:
         """Call a single model, converting any exception to FailoverError."""
         try:
@@ -604,7 +675,7 @@ class MozaOrchestrator:
         smart_entry = None
         try:
             smart_entry = self._select_best_model(messages, **kwargs)
-            result = await self._try_call(smart_entry, messages, **kwargs)
+            result = await self._try_with_key_retry(smart_entry, messages, **kwargs)
             if self._validate_quality(result):
                 return result
         except Exception as e:
@@ -632,7 +703,7 @@ class MozaOrchestrator:
                     f"Fallback -> {fallback['provider']}/{fallback['model']} "
                     f"({fallback.get('reason','')})"
                 )
-                result = await self._try_call(entry, messages, **kwargs)
+                result = await self._try_with_key_retry(entry, messages, **kwargs)
                 if self._validate_quality(result):
                     return result
                 raise FailoverError(
@@ -665,7 +736,7 @@ class MozaOrchestrator:
         smart_entry = None
         try:
             smart_entry = self._select_best_model(messages, **kwargs)
-            result = await self._try_call(smart_entry, messages, **kwargs)
+            result = await self._try_with_key_retry(smart_entry, messages, **kwargs)
             if isinstance(result, dict):
                 return result
             content = str(result) if not isinstance(result, str) else result
@@ -690,7 +761,7 @@ class MozaOrchestrator:
                 continue
 
             try:
-                result = await self._try_call(entry, messages, **kwargs)
+                result = await self._try_with_key_retry(entry, messages, **kwargs)
                 if isinstance(result, dict):
                     return result
                 content = str(result) if not isinstance(result, str) else result

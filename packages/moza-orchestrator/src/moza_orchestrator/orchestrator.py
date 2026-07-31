@@ -20,9 +20,20 @@ from typing import Any, Dict, List, Optional, Union
 import httpx
 from loguru import logger
 
-# VPN Rotation
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
+# VPN Rotation (ADR-006 Phase 4: IP-change confirmation before retries)
+# Walk up from src/moza_orchestrator to the repo root to find scripts/.
+SCRIPTS_DIR = next(
+    (p / "scripts" for p in [Path(__file__).parents[i] for i in range(6)]
+     if (p / "scripts" / "rotate_vpn.py").exists()),
+    Path(__file__).parents[0] / "scripts",
+)
 ROTATE_VPN_SCRIPT = SCRIPTS_DIR / "rotate_vpn.py"
+
+IP_CHECK_URL = "https://api.ipify.org?format=json"
+IP_CHECK_TIMEOUT = 5
+VPN_ROTATION_TIMEOUT = 30
+VPN_POLL_INTERVAL = 3
+VPN_CHECK_FAILED_DELAY = 5
 
 # Synchronized with config.json (live ranking, routing_rules, fallback_chain)
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "config.json")
@@ -263,21 +274,65 @@ class MozaOrchestrator:
             f"{error.error_type.upper()} -> failover"
         )
 
-    def _maybe_rotate_vpn(self):
-        """Trigger VPN rotation via rotate_vpn.py when IP blocks are detected."""
+    def _get_public_ip(self) -> Optional[str]:
+        """Fetch the current public IP via ipify (None on any failure)."""
+        try:
+            response = httpx.get(
+                IP_CHECK_URL,
+                timeout=IP_CHECK_TIMEOUT,
+                headers=BROWSER_HEADERS,
+            )
+            if response.status_code == 200:
+                return response.json().get("ip")
+        except Exception as e:
+            logger.warning(f"Public IP check failed: {e}")
+        return None
+
+    def _wait_for_ip_change(self, old_ip: str) -> Optional[str]:
+        """Poll the public IP every 3s until it changes or the 30s timeout."""
+        start = time.time()
+        while time.time() - start < VPN_ROTATION_TIMEOUT:
+            time.sleep(VPN_POLL_INTERVAL)
+            new_ip = self._get_public_ip()
+            if new_ip and new_ip != old_ip:
+                logger.info(f"VPN rotated, new IP: {new_ip}")
+                return new_ip
+        return None
+
+    def _maybe_rotate_vpn(self) -> bool:
+        """Rotate VPN and wait for confirmed IP change (ADR-006 Phase 4).
+
+        Returns True if the IP changed (or could not be verified, so we
+        optimistically assume rotation succeeded), False on timeout.
+        """
         blocked_count = sum(
             1 for p, t in self.blocked_providers.items()
             if t > time.time()
         )
-        if blocked_count >= 2 and ROTATE_VPN_SCRIPT.exists():
-            logger.warning(f"{blocked_count} providers IP-blocked, triggering VPN rotation")
-            try:
-                subprocess.Popen(
-                    ["python", str(ROTATE_VPN_SCRIPT), "--skip", "openvpn", "proxy", "manual"],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                )
-            except Exception as e:
-                logger.error(f"VPN rotation trigger failed: {e}")
+        if blocked_count < 2 or not ROTATE_VPN_SCRIPT.exists():
+            return False
+
+        logger.warning(f"{blocked_count} providers IP-blocked, triggering VPN rotation")
+        old_ip = self._get_public_ip()
+        if old_ip is None:
+            logger.warning("Could not verify public IP; assuming rotation may have worked")
+            time.sleep(VPN_CHECK_FAILED_DELAY)
+            return True
+
+        try:
+            subprocess.Popen(
+                ["python", str(ROTATE_VPN_SCRIPT), "--skip", "openvpn", "proxy", "manual"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except Exception as e:
+            logger.error(f"VPN rotation trigger failed: {e}")
+            return False
+
+        new_ip = self._wait_for_ip_change(old_ip)
+        if new_ip is None:
+            logger.warning("VPN rotation timed out, IP unchanged; forcing fallback to next provider")
+            return False
+        return True
 
     def _cycle_provider_key(self, provider: str) -> bool:
         """Cycle to the next API key for a provider. Returns True if successful."""

@@ -138,7 +138,7 @@ Each phase must pass all 94+ existing tests and 5 frozen benchmarks before proce
 - **Failover behaviour preserved:** error-type cooldown durations (rate_limit 60s, auth_error 3600s, ip_blocked 300s, etc.), key-cycling on auth errors, `dead_providers`, and `blocked_providers` (VPN rotation trigger) all unchanged — only the storage of cooldown deadlines moved.
 
 ## Phase 4 Status (2026-07-31)
-- [ ] VPN rotation with IP-change confirmation (from migration table)
+- [x] VPN rotation with IP-change confirmation (from migration table)
 - [ ] **Deferred from Phase 2:** consolidate `backend/constitution.yaml`'s separate 19-entry `provider_ranking` onto the root `constitution.yaml` (flagged for cleanup here; only consumer is the `router.py` summary fallback)
 
 ## Impact Analysis

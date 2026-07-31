@@ -28,15 +28,18 @@ ROTATE_VPN_SCRIPT = SCRIPTS_DIR / "rotate_vpn.py"
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "config.json")
 
 # Mapping: config.json provider name -> environment variable name
+# Phase 1 of ADR-006: env var takes precedence over config.json
 ENV_KEY_MAP = {
-    "groq-moza": "GROQ_MOZA_API_KEY",
-    "groq-youssef": "GROQ_YOUSSEF_API_KEY",
-    "github-models": "GITHUB_MODELS_API_KEY",
-    "openrouter-youssef": "OPENROUTER_API_KEY",
+    "groq": "GROQ_API_KEY",
+    "github": "GITHUB_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
     "mistral": "MISTRAL_API_KEY",
     "sambanova": "SAMBANOVA_API_KEY",
     "nvidia": "NVIDIA_API_KEY",
-    "glm-zhipu": "GLM_ZHIPU_API_KEY",
+    "zhipu": "ZHIPU_API_KEY",
+    "cerebras": "CEREBRAS_API_KEY",
+    "cloudflare": "CLOUDFLARE_API_KEY",
+    "opencode-zen": "OPENCODE_ZEN_API_KEY",
 }
 
 # Browser-like headers to reduce Cloudflare WAF blocks
@@ -100,34 +103,39 @@ class MozaOrchestrator:
         self.key_index = {}  # provider -> current index
         
         for provider, key_data in raw_keys.items():
+            # Phase 1 of ADR-006: check env var first (env takes precedence)
+            env_var = ENV_KEY_MAP.get(provider)
+            env_val = os.environ.get(env_var) if env_var else None
+
+            if env_val:
+                self.key_lists[provider] = [env_val]
+                self.keys[provider] = env_val
+                self.key_index[provider] = 0
+                logger.info(f"Loaded key for {provider} from environment ({env_var})")
+                continue
+
+            # Fallback to config.json (deprecated — Phase 2 will remove)
             if isinstance(key_data, str):
                 self.key_lists[provider] = [key_data]
                 self.keys[provider] = key_data
                 self.key_index[provider] = 0
+                logger.info(f"Loaded key for {provider} from config.json (deprecated)")
             elif isinstance(key_data, dict):
-                # Named accounts: extract all valid keys
                 key_list = []
                 for name, val in key_data.items():
                     if isinstance(val, str) and val.startswith(("sk-", "gsk_", "github_", "nvapi-", "csk-", "cfut_")):
                         key_list.append(val)
                     elif isinstance(val, dict) and "token" in val:
-                        # Cloudflare style: store account_id|token
                         key_list.append(f"{val.get('account_id','')}|{val.get('token','')}")
                 if key_list:
                     self.key_lists[provider] = key_list
                     self.keys[provider] = key_list[0]
                     self.key_index[provider] = 0
+                    logger.info(f"Loaded key for {provider} from config.json (deprecated)")
+            if provider not in self.keys:
+                logger.warning(f"No key found for provider {provider} (no env var, no valid config entry)")
 
         self.urls = cfg.get("baseURLs", {})
-
-        # Override with env vars (secrets must never be hardcoded)
-        for provider, env_var in ENV_KEY_MAP.items():
-            env_val = os.environ.get(env_var)
-            if env_val:
-                self.keys[provider] = env_val
-                if provider not in self.key_lists:
-                    self.key_lists[provider] = [env_val]
-                    self.key_index[provider] = 0
 
         self.routing_rules = cfg.get("routing_rules", [])
         self.fallback_chain = cfg.get("fallback_chain", [])

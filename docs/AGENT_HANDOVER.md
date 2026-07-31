@@ -95,21 +95,23 @@ python -m pytest tests/integration -v
 ```
 
 ---
-
+ 
 ## Git Log
-
+ 
 ```
+5481e86  fix: update MozaLauncher to start backend on port 8001 to match frontend expectations
 119cca7  feat(gateway): complete ADR-006 Phase 5 - formal circuit breaker and rate-limit key cycling with workflow test
 ab4d691  feat(gateway): implement Phase 4 of ADR-006 - VPN rotation with IP confirmation
 ... (earlier commits)
 ```
-
+ 
 ---
-
+ 
 ## Key Files Reference
-
+ 
 | File | Purpose |
 |------|---------|
+| `D:\Moza\MozaLauncher.exe` | **CRITICAL: Always use this to start the system.** Starts backend on port 8001, frontend on 3000, opens Chrome. |
 | `backend/moza/gateway/health_tracker.py` | Health tracking + circuit breaker implementation |
 | `packages/moza-orchestrator/src/moza_orchestrator/orchestrator.py` | Orchestrator with failover + key cycling |
 | `backend/moza/gateway/router.py` | Router wiring HealthTracker → Orchestrator |

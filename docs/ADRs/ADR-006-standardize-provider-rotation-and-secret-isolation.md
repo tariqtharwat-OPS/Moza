@@ -1,7 +1,7 @@
 # ADR-006: Standardize Provider Rotation and Secret Isolation Strategy
 
 ## Status
-**Proposed**
+**Partially Implemented (Phases 1–5 complete)**
 
 ## Date
 2026-07-31

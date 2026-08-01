@@ -1,12 +1,41 @@
 # AGENT HANDOVER — Moza Project Status
 
 > **Generated:** 2026-08-01  
-> **Last commit:** `a3c6980` — `fix: remove ProviderSelector, contextual greetings, reconcile provider display (Issue #3)`  
+> **Last commit:** `97cd39f` — `feat: live browser preview with screenshots, browser_started/action events (Issue #2)`  
 > **Branch:** `main`  
 > **Remote:** `origin` (`https://github.com/tariqtharwat-OPS/Moza.git`)
 
 ---
 
+## Phase 2 — UX/Performance Fixes (Issues #4, #5, #6, #2) — COMPLETE
+
+### Issue #4 — Stop Button (commit `b64af9d`)
+- Backend: `POST /v1/task/{task_id}/cancel` route in `backend/moza/api/routes/chat.py` → `task_service.cancel_task()`; SSE `event_stream()` calls cancel when `request.is_disconnected()`; 404 for unknown task.
+- Frontend: red Stop button in `InputArea.tsx` while streaming; `cancelTask(taskId)` helper in `api.ts`; `handleStop()` in `ChatInterface.tsx` with `currentTaskId` tracking.
+- Tests: `test_cancel_nonexistent_task_returns_404`, `test_cancel_flow_via_orchestrator` (slow agent, RUNNING → CANCELLED).
+
+### Issue #5 — Queue Indication (commit `e94aefb`)
+- `ChatInterface.tsx`: `messageQueue` state + `processingRef` guard; queued messages drained sequentially in `finally`; amber "Queued: N message(s)" badge; dynamic placeholder text.
+
+### Issue #6 — Slow Responses (commit `aefd1bd`)
+- `packages/moza-orchestrator/src/moza_orchestrator/orchestrator.py`: `_make_request_raw` converted to async (`httpx.AsyncClient`); `_make_request`/`_call_model` now async; `_call_streaming` made tool-aware (accumulates `tool_fragments` → returns `{"content", "tool_calls"}`). Provider timeouts capped: nvidia/sambanova/openrouter-youssef 15s, default 8s.
+- `backend/moza/gateway/router.py`: `complete_with_tools(..., stream=True)` for fast first-token.
+- `packages/moza-orchestrator/config.json`: `fallback_chain` pruned from 33 → 7 healthy providers.
+- Tests: `test_circuit_breaker_workflow.py` upgraded to `_patch_async_post` helper (patches `httpx.AsyncClient`); streaming-with-tools verified via manual script (tool_fragments + plain content both pass).
+
+### Issue #2 — Browser Preview (commit `97cd39f`)
+- `browser_tool.py`: `screenshot_base64`/`url`/`title` now kept in tool-result metadata (was stripped); screenshot_path dropped.
+- `litellm_tool_agent.py`: emits `BROWSER_STARTED` (once) + `BROWSER_ACTION` (per browser tool call) events; `_browser_started` flag.
+- `BrowserVisualizer.tsx`: rewrote with working screenshot-based live view, View/Actions tabs, expand/fullscreen, LIVE indicator; removed broken iframe fallback.
+
+### Phase 2 Commits
+- `9621700` — `docs: update AGENT_HANDOVER.md after Phase 1 UX fixes completion`
+- `b64af9d` — `feat: add Stop button and task cancellation (Issue #4)`
+- `e94aefb` — `feat: add client-side message queue with badge and sequential processing (Issue #5)`
+- `aefd1bd` — `perf: cap provider timeouts, async httpx, streaming with tools, prune fallback chain (Issue #6)`
+- `97cd39f` — `feat: live browser preview with screenshots, browser_started/action events (Issue #2)`
+
+---
 ## Phase 1 — UX Fixes (Issues #1, #3, #7) — COMPLETE
 
 ### Issue #1 — Launcher Terminal Closes
@@ -96,38 +125,40 @@
 
 ## Last Completed Action
 
-- Phase 1 implementation, testing, and push to GitHub (Issues #1, #3, #7 complete).
+- Phase 2 implementation, testing, and push to GitHub (Issues #4, #5, #6, #2 complete).
 
 ## Next Immediate Step
 
-- Phase 2: Issue #4 (Stop button), #5 (Queue indication), #6 (Slow responses), #2 (Browser preview).
+- Manual smoke test via `MozaLauncher.exe`: browser live preview (send a browsing task), Stop button, queue badge, and response speed. Then delete the 2 locked backend logs from PID 7484 after restart.
 
 ## Known Issues
 
-- 21 pre-existing Windows `tmp_path` test errors in `tests/unit` (unrelated to UX fixes).
-- Browser preview still broken (Phase 2 Issue #2).
+- `tests/integration/test_e2e_flow.py::TestSSEStream::test_sse_event_order` fails (pre-existing, unrelated to Phase 2): the SSE fixture wires `agent_type="mock"` → `MockAgent`, which emits `tool_selected` → `llm_finished` and never `tool_result`; `_E2ETestAgent` (which does) is dead code only used in orchestrator-level tests.
+- 21 pre-existing Windows `tmp_path` test errors in `tests/unit` (unrelated to UX fixes); workaround: set `$env:TEMP`/`$env:TMP` to `C:\Users\eg_di\AppData\Local\Temp\opencode`.
 - 2 active backend log files locked by running backend (PID 7484) — delete after backend restart.
+- A pre-existing git stash `stash@{0}` ("broken-ui-attempt-pre-recovery Task1") holds a prior UI attempt for `BrowserVisualizer.tsx`/`browser_tool.py`/`ChatInterface.tsx` — superseded by the committed Issue #2 work; may be dropped.
 
-## Pre-Commit Checklist (Phase 1)
+## Pre-Commit Checklist (Phase 2)
 
 - [x] Phase 1 fixes implemented
 - [x] Backend tests pass (89/89 relevant)
 - [x] AGENT_HANDOVER.md updated
-- [ ] Phase 2 fixes pending
+- [x] Phase 2 fixes implemented (Issues #4, #5, #6, #2) and pushed
+- [ ] Manual smoke test via MozaLauncher.exe pending
 
 ---
 
 ## Test Results
 
 ```
-$ python -m pytest tests/unit -q
-110 passed in 4.83s
+$env:TEMP="C:\Users\eg_di\AppData\Local\Temp\opencode"; $env:TMP="C:\Users\eg_di\AppData\Local\Temp\opencode"
 
-$ python -m pytest tests/integration/test_circuit_breaker_workflow.py -v
-1 passed in 0.36s
+# After Phase 2:
+$ python -m pytest tests/unit tests/integration/test_circuit_breaker_workflow.py tests/integration/test_e2e_flow.py -q
+124 passed, 1 failed (test_sse_event_order - pre-existing, MockAgent never emits tool_result)
 
-$ python -m pytest tests/unit tests/integration -q
-128 passed, 1 failed (test_sse_event_order - pre-existing flaky)
+$ python -m pytest tests/unit tests/integration -k "browser or tool or agent" -q
+25 passed
 
 # After Phase 1:
 $ python -m pytest tests/unit/ -q
@@ -152,6 +183,11 @@ python -m pytest tests/integration -v
 ## Git Log
  
 ```
+97cd39f  feat: live browser preview with screenshots, browser_started/action events (Issue #2)
+aefd1bd  perf: cap provider timeouts, async httpx, streaming with tools, prune fallback chain (Issue #6)
+e94aefb  feat: add client-side message queue with badge and sequential processing (Issue #5)
+b64af9d  feat: add Stop button and task cancellation (Issue #4)
+9621700  docs: update AGENT_HANDOVER.md after Phase 1 UX fixes completion
 a3c6980  fix: remove ProviderSelector, contextual greetings, reconcile provider display (Issue #3)
 32a53d9  fix(launcher): resolve real python in frozen mode, show live logs, add exit guard (Issue #1)
 af1ba0a  chore: delete test artifacts from E2E/manual testing (Issue #7)
@@ -170,12 +206,21 @@ ab4d691  feat(gateway): implement Phase 4 of ADR-006 - VPN rotation with IP conf
 | `D:\Moza\MozaLauncher.exe` | **CRITICAL: Always use this to start the system.** Starts backend on port 8001, frontend on 3000, opens Chrome. |
 | `D:\Moza\launch_moza.py` | Launcher source (frozen-python resolve, live logs, ENTER exit guard). |
 | `backend/moza/gateway/health_tracker.py` | Health tracking + circuit breaker implementation |
-| `packages/moza-orchestrator/src/moza_orchestrator/orchestrator.py` | Orchestrator with failover + key cycling |
-| `backend/moza/gateway/router.py` | Router wiring HealthTracker → Orchestrator |
+| `packages/moza-orchestrator/src/moza_orchestrator/orchestrator.py` | Orchestrator with failover + key cycling + async httpx + streaming w/ tools |
+| `backend/moza/gateway/router.py` | Router wiring HealthTracker → Orchestrator (stream=True for fast first-token) |
+| `backend/moza/api/routes/chat.py` | `/v1/task/{task_id}/cancel` route + SSE disconnect cancel |
+| `backend/moza/agents/litellm_tool_agent.py` | Emits BROWSER_STARTED/BROWSER_ACTION events; browser_mode |
+| `backend/moza/tools/browser_tool.py` | Keeps screenshot_base64/url/title in metadata for live preview |
+| `frontend/src/components/browser/BrowserVisualizer.tsx` | Live browser preview (screenshots, View/Actions tabs, fullscreen) |
+| `frontend/src/components/chat/ChatInterface.tsx` | Stop button, message queue + badge, browser/terminal panels |
+| `frontend/src/components/chat/InputArea.tsx` | Send/Stop button toggle |
+| `frontend/src/lib/api.ts` | `streamTask`, `cancelTask`, WebSocket helpers |
+| `packages/moza-orchestrator/config.json` | Ranking + 7-entry fallback_chain + API keys |
 | `backend/moza/core/event_bus.py` | EventBus (SYSTEM_SESSION, publish_nowait) |
-| `backend/moza/core/models.py` | EventType (PROVIDER_FAILED, PROVIDER_RECOVERED) |
+| `backend/moza/core/models.py` | EventType (TOOL_RESULT, BROWSER_STARTED, BROWSER_ACTION) |
 | `backend/moza/core/intent_classifier.py` | Contextual conversational replies |
 | `backend/tests/unit/test_health_sync.py` | Health sync unit tests (fixture patterns) |
 | `backend/tests/unit/test_vpn_rotation.py` | VPN rotation unit tests (FakeClock pattern) |
-| `backend/tests/integration/test_circuit_breaker_workflow.py` | Phase 5 workflow integration test |
+| `backend/tests/integration/test_circuit_breaker_workflow.py` | Phase 5 workflow integration test (async httpx patch) |
+| `backend/tests/integration/test_e2e_flow.py` | SSE event order + cancel flow tests |
 | `docs/ADRs/ADR-006-standardize-provider-rotation-and-secret-isolation.md` | ADR-006 status and specs |

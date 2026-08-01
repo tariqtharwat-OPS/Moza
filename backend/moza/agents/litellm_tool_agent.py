@@ -37,6 +37,7 @@ class LiteLLMToolAgent(AgentInterface):
         self._router = LLMRouter(config) if config else None
         self._force_tool_choice: str | None = None
         self._hallucination_count: int = 0
+        self._browser_started: bool = False
 
     # ── tool schema construction ──────────────────────────────────────────
 
@@ -753,6 +754,22 @@ class LiteLLMToolAgent(AgentInterface):
                         "requires_confirmation": False,
                     },
                 )
+
+                if fn_name == "browser":
+                    if not self._browser_started:
+                        self._browser_started = True
+                        yield Event(
+                            session_id=sid, task_id=task_id,
+                            type=EventType.BROWSER_STARTED,
+                            source="litellm_tool_agent",
+                            payload={"url": fn_args.get("url", ""), "action": fn_args.get("action")},
+                        )
+                    yield Event(
+                        session_id=sid, task_id=task_id,
+                        type=EventType.BROWSER_ACTION,
+                        source="litellm_tool_agent",
+                        payload={"action": fn_args.get("action"), "url": fn_args.get("url")},
+                    )
 
                 try:
                     result = await registry.execute_tool(fn_name, **fn_args)

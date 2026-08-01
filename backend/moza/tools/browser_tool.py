@@ -97,14 +97,14 @@ class BrowserTool(BaseTool):
             result = await self._dispatch(engine, action, kwargs)
             self._sync_state()
             elapsed = (time.monotonic() - start) * 1000
-            # Strip binary data from metadata before storing
+            # Keep url/title and screenshot data in metadata so the frontend
+            # browser visualizer can render a live preview. The LLM context is
+            # sanitized separately (see LiteLLMToolAgent._sanitize_tool_result).
             meta = {}
             for k, v in result.items():
                 if k == "stdout":
                     continue
-                if k in ("screenshot_base64", "screenshot_path", "image_data", "image", "base64"):
-                    continue
-                if "screenshot" in k.lower() or "image" in k.lower() or "png" in k.lower():
+                if k in ("screenshot_path",):
                     continue
                 meta[k] = v
             return ToolResultPayload.ok(
@@ -123,10 +123,11 @@ class BrowserTool(BaseTool):
                 result = await self._dispatch(self._engine, action, kwargs)
                 self._sync_state()
                 elapsed = (time.monotonic() - start) * 1000
+                meta = {k: v for k, v in result.items() if k not in ("stdout", "screenshot_path")}
                 return ToolResultPayload.ok(
                     stdout=result.get("stdout", ""),
                     duration_ms=elapsed,
-                    metadata={k: v for k, v in result.items() if k != "stdout"},
+                    metadata=meta,
                 ).model_dump()
             except Exception as e2:
                 elapsed = (time.monotonic() - start) * 1000

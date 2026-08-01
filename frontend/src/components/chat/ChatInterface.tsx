@@ -192,6 +192,8 @@ export default function ChatInterface() {
   const [agentStatus, setAgentStatus] = useState("Idle");
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [toolLogOpen, setToolLogOpen] = useState(false);
+  const [messageQueue, setMessageQueue] = useState<string[]>([]);
+  const processingRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -200,16 +202,26 @@ export default function ChatInterface() {
 
   const hasContent = events.length > 0 || conversation.length > 0 || !!streamingContent;
 
-async function handleSubmit(e: FormEvent | string) {
+  function handleSubmit(e: FormEvent | string) {
         const trimmed = typeof e === "string" ? e : input.trim();
-        if (!trimmed || streaming) return;
+        if (!trimmed) return;
 
         if (typeof e !== "string") {
             e.preventDefault();
         }
 
-        const userMsg = trimmed;
+        if (processingRef.current) {
+            setMessageQueue((prev) => [...prev, trimmed]);
+            setInput("");
+            return;
+        }
+
         setInput("");
+        void processMessage(trimmed);
+    }
+
+    async function processMessage(userMsg: string) {
+        processingRef.current = true;
         setStreaming(true);
         setAgentStatus("Thinking");
         setEvents([]);
@@ -223,7 +235,7 @@ async function handleSubmit(e: FormEvent | string) {
         let sid = sessionId;
 
         try {
-            for await (const event of streamTask(trimmed, sid || undefined)) {
+            for await (const event of streamTask(userMsg, sid || undefined)) {
                 if (!sid) {
                     sid = event.session_id;
                     setSessionId(sid);
@@ -313,6 +325,15 @@ async function handleSubmit(e: FormEvent | string) {
             setWaitingApproval(null);
             setCurrentTaskId(null);
             scrollToBottom();
+
+            processingRef.current = false;
+            setMessageQueue((prev) => {
+                const [next, ...rest] = prev;
+                if (next) {
+                    void processMessage(next);
+                }
+                return rest;
+            });
         }
     }
 
@@ -371,6 +392,14 @@ async function handleSubmit(e: FormEvent | string) {
             <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
           </span>
           <span>MOZA is processing task...</span>
+        </div>
+      )}
+      {messageQueue.length > 0 && (
+        <div className="flex items-center gap-2 text-xs text-amber-300 p-2 bg-amber-950/30 rounded-lg w-fit border border-amber-800/40">
+          <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          <span>Queued: {messageQueue.length} message(s)</span>
         </div>
       )}
       {waitingApproval && (
@@ -437,7 +466,15 @@ async function handleSubmit(e: FormEvent | string) {
           onSubmit={(e) => handleSubmit(e)}
           onStop={handleStop}
           isProcessing={streaming}
-          placeholder={streaming ? "MOZA is processing... (Stop to cancel)" : "Ask MOZA to perform a task..."}
+          placeholder={
+            agentStatus === "Error"
+              ? "Something went wrong. Try again."
+              : streaming
+                ? messageQueue.length > 0
+                  ? `MOZA is processing... (${messageQueue.length} queued)`
+                  : "MOZA is processing..."
+                : "Ask MOZA to perform a task..."
+          }
         />
       }
       agentStatus={agentStatus}

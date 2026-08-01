@@ -18,12 +18,12 @@ export default function InputArea({ value, onChange, onSubmit, onStop, isProcess
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        if (value.trim() && !isProcessing) {
+        if (value.trim()) {
           onSubmit(e as unknown as FormEvent);
         }
       }
     },
-    [value, onSubmit, isProcessing]
+    [value, onSubmit]
   );
 
   const adjustHeight = useCallback(() => {
@@ -47,9 +47,8 @@ export default function InputArea({ value, onChange, onSubmit, onStop, isProcess
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder || "Ask MOZA to perform a task..."}
-            disabled={isProcessing}
             rows={3}
-            className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 pr-12 text-sm leading-relaxed text-zinc-100 placeholder-zinc-500 outline-none transition-colors focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 disabled:opacity-60"
+            className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 pr-12 text-sm leading-relaxed text-zinc-100 placeholder-zinc-500 outline-none transition-colors focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
           />
         </div>
         {isProcessing ? (

@@ -62,9 +62,9 @@ BROWSER_HEADERS = {
 
 # Per-provider timeout overrides (some providers are slower)
 PROVIDER_TIMEOUTS = {
-    "nvidia": 30,
-    "sambanova": 20,
-    "openrouter-youssef": 20,
+    "nvidia": 15,
+    "sambanova": 15,
+    "openrouter-youssef": 15,
 }
 
 
@@ -387,8 +387,8 @@ class MozaOrchestrator:
         if self._health_tracker is not None:
             self._health_tracker.record_success(entry["provider"], entry["model"], duration)
 
-    def _make_request(self, entry: Dict, messages: List[Dict], **kwargs) -> str | Dict:
-        result = self._make_request_raw(entry, messages, **kwargs)
+    async def _make_request(self, entry: Dict, messages: List[Dict], **kwargs) -> str | Dict:
+        result = await self._make_request_raw(entry, messages, **kwargs)
         if isinstance(result, str):
             return result
         tool_calls = result.get("tool_calls", [])
@@ -396,20 +396,20 @@ class MozaOrchestrator:
             return result
         return result.get("content", "")
 
-    def _make_request_with_tools(self, entry: Dict, messages: List[Dict], **kwargs) -> Dict:
-        return self._make_request_raw(entry, messages, **kwargs)
+    async def _make_request_with_tools(self, entry: Dict, messages: List[Dict], **kwargs) -> Dict:
+        return await self._make_request_raw(entry, messages, **kwargs)
 
     def _build_client_kwargs(self, entry: Dict, **kwargs) -> Dict:
         """Build httpx request kwargs with proxy and timeout support."""
         provider = entry["provider"]
         client_kwargs: Dict = {
-            "timeout": kwargs.get("timeout") or PROVIDER_TIMEOUTS.get(provider, 12),
+            "timeout": kwargs.get("timeout") or PROVIDER_TIMEOUTS.get(provider, 8),
         }
         if self._proxy:
             client_kwargs["proxies"] = self._proxy
         return client_kwargs
 
-    def _make_request_raw(self, entry: Dict, messages: List[Dict], **kwargs) -> str | Dict:
+    async def _make_request_raw(self, entry: Dict, messages: List[Dict], **kwargs) -> str | Dict:
         """Make HTTP request to provider. Returns content string or dict with tool_calls."""
         provider = entry["provider"]
         model = entry["model"]
@@ -464,90 +464,91 @@ class MozaOrchestrator:
 
         start_time = time.time()
         try:
-            response = httpx.post(url, headers=headers, json=payload, **client_kwargs)
-            duration = time.time() - start_time
-
-            # Handle all HTTP status codes explicitly
-            if response.status_code == 402:
-                raise FailoverError(
-                    provider, model, "insufficient_credits",
-                    f"Insufficient credits: {response.text[:200]}"
-                )
-
-            if response.status_code == 403:
-                raise FailoverError(
-                    provider, model, "ip_blocked",
-                    f"IP blocked / access denied: {response.text[:200]}"
-                )
-
-            if response.status_code == 429:
-                retry_after = int(response.headers.get("retry-after", 60))
-                raise FailoverError(
-                    provider, model, "rate_limit",
-                    f"Rate limited. Retry after {retry_after}s"
-                )
-
-            if response.status_code == 401:
-                raise FailoverError(
-                    provider, model, "auth_error",
-                    f"Authentication failed: {response.text[:200]}"
-                )
-
-            if response.status_code in (400, 422) and tools:
-                logger.warning(f"{provider}/{model} does not support tools, retrying without")
-                kwargs.pop("tools", None)
-                kwargs.pop("tool_schemas", None)
-                payload.pop("tools", None)
-                payload.pop("tool_choice", None)
-                response = httpx.post(url, headers=headers, json=payload, **client_kwargs)
+            async with httpx.AsyncClient(**client_kwargs) as client:
+                response = await client.post(url, headers=headers, json=payload)
                 duration = time.time() - start_time
 
+                # Handle all HTTP status codes explicitly
+                if response.status_code == 402:
+                    raise FailoverError(
+                        provider, model, "insufficient_credits",
+                        f"Insufficient credits: {response.text[:200]}"
+                    )
+
                 if response.status_code == 403:
-                    raise FailoverError(provider, model, "ip_blocked",
-                                        f"IP blocked: {response.text[:200]}")
-                if response.status_code in (401,):
-                    raise FailoverError(provider, model, "auth_error",
-                                        f"Authentication failed: {response.text[:200]}")
+                    raise FailoverError(
+                        provider, model, "ip_blocked",
+                        f"IP blocked / access denied: {response.text[:200]}"
+                    )
+
+                if response.status_code == 429:
+                    retry_after = int(response.headers.get("retry-after", 60))
+                    raise FailoverError(
+                        provider, model, "rate_limit",
+                        f"Rate limited. Retry after {retry_after}s"
+                    )
+
+                if response.status_code == 401:
+                    raise FailoverError(
+                        provider, model, "auth_error",
+                        f"Authentication failed: {response.text[:200]}"
+                    )
+
+                if response.status_code in (400, 422) and tools:
+                    logger.warning(f"{provider}/{model} does not support tools, retrying without")
+                    kwargs.pop("tools", None)
+                    kwargs.pop("tool_schemas", None)
+                    payload.pop("tools", None)
+                    payload.pop("tool_choice", None)
+                    response = await client.post(url, headers=headers, json=payload)
+                    duration = time.time() - start_time
+
+                    if response.status_code == 403:
+                        raise FailoverError(provider, model, "ip_blocked",
+                                            f"IP blocked: {response.text[:200]}")
+                    if response.status_code in (401,):
+                        raise FailoverError(provider, model, "auth_error",
+                                            f"Authentication failed: {response.text[:200]}")
+                    if response.status_code >= 500:
+                        raise FailoverError(provider, model, "server_error",
+                                            f"Server error: {response.status_code}")
+                    if response.status_code >= 400:
+                        raise FailoverError(provider, model, "http_error",
+                                            f"HTTP {response.status_code}: {response.text[:200]}")
+                    result = response.json()
+                    if "choices" in result and len(result["choices"]) > 0:
+                        content = result["choices"][0]["message"].get("content", "") or ""
+                        tokens = result.get("usage", {}).get("total_tokens", 0)
+                        self._record_success(entry, duration, tokens)
+                        return content
+                    else:
+                        raise FailoverError(provider, model, "invalid_response",
+                                            "No choices in response after retry")
+
                 if response.status_code >= 500:
                     raise FailoverError(provider, model, "server_error",
                                         f"Server error: {response.status_code}")
+
                 if response.status_code >= 400:
                     raise FailoverError(provider, model, "http_error",
                                         f"HTTP {response.status_code}: {response.text[:200]}")
+
                 result = response.json()
+
+                if kwargs.get("stream", False):
+                    return result
+
                 if "choices" in result and len(result["choices"]) > 0:
                     content = result["choices"][0]["message"].get("content", "") or ""
                     tokens = result.get("usage", {}).get("total_tokens", 0)
+                    tool_calls = self._try_extract_tool_calls(result)
                     self._record_success(entry, duration, tokens)
+                    if tools and tool_calls:
+                        return {"content": content, "tool_calls": tool_calls}
                     return content
                 else:
                     raise FailoverError(provider, model, "invalid_response",
-                                        "No choices in response after retry")
-
-            if response.status_code >= 500:
-                raise FailoverError(provider, model, "server_error",
-                                    f"Server error: {response.status_code}")
-
-            if response.status_code >= 400:
-                raise FailoverError(provider, model, "http_error",
-                                    f"HTTP {response.status_code}: {response.text[:200]}")
-
-            result = response.json()
-
-            if kwargs.get("stream", False):
-                return result
-
-            if "choices" in result and len(result["choices"]) > 0:
-                content = result["choices"][0]["message"].get("content", "") or ""
-                tokens = result.get("usage", {}).get("total_tokens", 0)
-                tool_calls = self._try_extract_tool_calls(result)
-                self._record_success(entry, duration, tokens)
-                if tools and tool_calls:
-                    return {"content": content, "tool_calls": tool_calls}
-                return content
-            else:
-                raise FailoverError(provider, model, "invalid_response",
-                                    "No choices in response")
+                                        "No choices in response")
 
         except httpx.TimeoutException:
             raise FailoverError(provider, model, "timeout", "Request timed out")
@@ -726,7 +727,7 @@ class MozaOrchestrator:
         """Call a specific model with error handling."""
         if kwargs.get("stream", False):
             return await self._call_streaming(entry, messages, **kwargs)
-        return self._make_request(entry, messages, **kwargs)
+        return await self._make_request(entry, messages, **kwargs)
 
     async def complete_with_tools(self, messages: List[Dict], **kwargs) -> Dict:
         """Complete request and return structured response (with auto-fallback)."""
@@ -801,8 +802,13 @@ class MozaOrchestrator:
             })
         return normalized
 
-    async def _call_streaming(self, entry: Dict, messages: List[Dict], **kwargs) -> str:
-        """Handle streaming requests with seamless failover."""
+    async def _call_streaming(self, entry: Dict, messages: List[Dict], **kwargs) -> str | Dict:
+        """Handle streaming requests with seamless failover.
+
+        Returns the accumulated content string when the stream carries no
+        tool calls, otherwise a ``{"content": ..., "tool_calls": [...]}`` dict
+        so callers (complete_with_tools) can dispatch tool execution.
+        """
         provider = entry["provider"]
         model = entry["model"]
         base_url = self.urls.get(provider, "")
@@ -818,6 +824,8 @@ class MozaOrchestrator:
             **BROWSER_HEADERS,
         }
 
+        tools = kwargs.get("tools") or kwargs.get("tool_schemas")
+
         payload = {
             "model": model,
             "messages": messages,
@@ -827,13 +835,18 @@ class MozaOrchestrator:
             "stream_options": {"include_usage": True},
         }
 
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = kwargs.get("tool_choice", "auto")
+
         client_kwargs = {
-            "timeout": kwargs.get("timeout") or PROVIDER_TIMEOUTS.get(provider, 12),
+            "timeout": kwargs.get("timeout") or PROVIDER_TIMEOUTS.get(provider, 8),
         }
         if self._proxy:
             client_kwargs["proxies"] = self._proxy
 
         try:
+            start_time = time.time()
             async with httpx.AsyncClient(**client_kwargs) as client:
                 async with client.stream(
                     "POST",
@@ -864,6 +877,8 @@ class MozaOrchestrator:
                                             f"HTTP {response.status_code}")
 
                     full_content = ""
+                    # Accumulate tool_call fragments by index (OpenAI streaming delta shape)
+                    tool_fragments: Dict[int, Dict] = {}
                     async for line in response.aiter_lines():
                         if line.startswith("data: "):
                             data = line[6:]
@@ -876,9 +891,42 @@ class MozaOrchestrator:
                                     content = delta.get("content", "")
                                     if content:
                                         full_content += content
+                                    for tc in delta.get("tool_calls") or []:
+                                        idx = tc.get("index", 0)
+                                        frag = tool_fragments.setdefault(idx, {})
+                                        if tc.get("id"):
+                                            frag["id"] = tc["id"]
+                                        if tc.get("type"):
+                                            frag["type"] = tc["type"]
+                                        fn = tc.get("function") or {}
+                                        func = frag.setdefault("function", {})
+                                        if fn.get("name"):
+                                            func["name"] = fn["name"]
+                                        if fn.get("arguments"):
+                                            func["arguments"] = func.get("arguments", "") + fn["arguments"]
                             except json.JSONDecodeError:
                                 continue
 
+                    if tool_fragments:
+                        tool_calls = []
+                        for idx in sorted(tool_fragments):
+                            frag = tool_fragments[idx]
+                            tool_calls.append({
+                                "id": frag.get("id", f"call_{idx}"),
+                                "type": frag.get("type", "function"),
+                                "function": {
+                                    "name": frag.get("function", {}).get("name", ""),
+                                    "arguments": frag.get("function", {}).get("arguments", ""),
+                                },
+                            })
+                        duration = time.time() - start_time
+                        tokens = full_content.count(" ") + 1
+                        self._record_success(entry, duration, tokens)
+                        return {"content": full_content, "tool_calls": tool_calls}
+
+                    duration = time.time() - start_time
+                    tokens = full_content.count(" ") + 1
+                    self._record_success(entry, duration, tokens)
                     return full_content
 
         except httpx.TimeoutException:

@@ -1,6 +1,6 @@
 import os
 import time
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -18,6 +18,20 @@ class FakeResponse:
 
     def json(self):
         return self._json
+
+
+def _patch_async_post(fake_post):
+    """Patch httpx.AsyncClient so .post() returns fake_post's sync response."""
+    client = MagicMock()
+
+    async def _post(*args, **kwargs):
+        return fake_post(*args, **kwargs)
+
+    client.post = _post
+    cm = MagicMock()
+    cm.__aenter__ = AsyncMock(return_value=client)
+    cm.__aexit__ = AsyncMock(return_value=False)
+    return patch("moza_orchestrator.orchestrator.httpx.AsyncClient", return_value=cm)
 
 
 def _config():
@@ -78,7 +92,7 @@ async def test_circuit_breaker_workflow(event_bus):
         # --- Request 1: Provider A all 3 keys 429 -> circuit OPEN -> Provider B 200 ---
         call_count = {"provider_a": 0, "provider_b": 0}
 
-        def fake_post(url, headers, json, timeout, **kwargs):
+        def fake_post(url, headers=None, json=None, **kwargs):
             if "provider-a.example" in str(url):
                 call_count["provider_a"] += 1
                 return FakeResponse(
@@ -97,7 +111,7 @@ async def test_circuit_breaker_workflow(event_bus):
                 )
             return FakeResponse(500, {})
 
-        with patch("moza_orchestrator.orchestrator.httpx.post", side_effect=fake_post):
+        with _patch_async_post(fake_post):
             result = await orch.complete_with_tools(
                 [{"role": "user", "content": "test"}]
             )
@@ -121,7 +135,7 @@ async def test_circuit_breaker_workflow(event_bus):
         call_count["provider_a"] = 0
         call_count["provider_b"] = 0
 
-        with patch("moza_orchestrator.orchestrator.httpx.post", side_effect=fake_post):
+        with _patch_async_post(fake_post):
             result2 = await orch.complete_with_tools(
                 [{"role": "user", "content": "test2"}]
             )
@@ -141,7 +155,7 @@ async def test_circuit_breaker_workflow(event_bus):
         call_count["provider_a"] = 0
         call_count["provider_b"] = 0
 
-        def fake_post_a_ok(url, headers, json, timeout, **kwargs):
+        def fake_post_a_ok(url, headers=None, json=None, **kwargs):
             if "provider-a.example" in str(url):
                 call_count["provider_a"] += 1
                 return FakeResponse(
@@ -162,7 +176,7 @@ async def test_circuit_breaker_workflow(event_bus):
                 )
             return FakeResponse(500, {})
 
-        with patch("moza_orchestrator.orchestrator.httpx.post", side_effect=fake_post_a_ok):
+        with _patch_async_post(fake_post_a_ok):
             result3 = await orch.complete_with_tools(
                 [{"role": "user", "content": "test3"}]
             )

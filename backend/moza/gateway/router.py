@@ -268,10 +268,10 @@ class LLMRouter:
             if tool_choice:
                 kwargs["tool_choice"] = tool_choice
             
-            # Make request through orchestrator
+            # Make request through orchestrator (streaming for fast first-token)
             start = time.monotonic()
             orch_result = await self._orchestrator.complete_with_tools(
-                orchestrator_messages, **kwargs
+                orchestrator_messages, stream=True, **kwargs
             )
             latency = time.monotonic() - start
             

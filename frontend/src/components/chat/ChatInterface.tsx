@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, useRef, useCallback, useEffect, type FormEvent } from "react";
-import { streamTask, approveTask, rejectTask, type MozaEvent } from "@/lib/api";
+import { streamTask, approveTask, rejectTask, cancelTask, type MozaEvent } from "@/lib/api";
 import MainLayout from "@/components/Layout/MainLayout";
 import MessageBubble from "@/components/ui/MessageBubble";
 
@@ -190,6 +190,7 @@ export default function ChatInterface() {
     description: string;
   } | null>(null);
   const [agentStatus, setAgentStatus] = useState("Idle");
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [toolLogOpen, setToolLogOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -226,6 +227,9 @@ async function handleSubmit(e: FormEvent | string) {
                 if (!sid) {
                     sid = event.session_id;
                     setSessionId(sid);
+                }
+                if (event.task_id) {
+                    setCurrentTaskId(event.task_id);
                 }
 
                 if (event.type === "llm_token") {
@@ -307,6 +311,7 @@ async function handleSubmit(e: FormEvent | string) {
             setStreaming(false);
             setAgentStatus("Idle");
             setWaitingApproval(null);
+            setCurrentTaskId(null);
             scrollToBottom();
         }
     }
@@ -321,6 +326,13 @@ async function handleSubmit(e: FormEvent | string) {
     if (!waitingApproval) return;
     setWaitingApproval((prev) => prev ? { ...prev, description: "rejecting..." } : null);
     await rejectTask(waitingApproval.taskId);
+  }
+
+  async function handleStop() {
+    if (!currentTaskId) return;
+    await cancelTask(currentTaskId);
+    setStreaming(false);
+    setAgentStatus("Idle");
   }
 
   function renderEvent(event: MozaEvent, idx: number) {
@@ -423,8 +435,9 @@ async function handleSubmit(e: FormEvent | string) {
           value={input}
           onChange={setInput}
           onSubmit={(e) => handleSubmit(e)}
+          onStop={handleStop}
           isProcessing={streaming}
-          placeholder={streaming ? "Type to interrupt or guide MOZA..." : "Ask MOZA to perform a task..."}
+          placeholder={streaming ? "MOZA is processing... (Stop to cancel)" : "Ask MOZA to perform a task..."}
         />
       }
       agentStatus={agentStatus}

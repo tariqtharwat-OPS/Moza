@@ -64,6 +64,7 @@ async def task_execute(request: Request, body: TaskRequest):
                 )
                 if request.client is not None and await request.is_disconnected():
                     get_task.cancel()
+                    await task_service.cancel_task(task.id)
                     break
                 event = await get_task
                 if event is None:
@@ -101,3 +102,12 @@ async def reject_tool(task_id: str):
     if not ok:
         raise HTTPException(status_code=404, detail=f"No pending approval for task {task_id}")
     return {"ok": True, "task_id": task_id, "action": "rejected"}
+
+
+@router.post("/task/{task_id}/cancel")
+async def cancel_task(task_id: str):
+    task_service = get_task_service()
+    ok = await task_service.cancel_task(task_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"No running task {task_id}")
+    return {"ok": True, "task_id": task_id, "action": "cancelled"}

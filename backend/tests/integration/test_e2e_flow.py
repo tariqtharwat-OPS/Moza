@@ -313,6 +313,46 @@ class TestApprovalServiceE2E:
             resp = await client.post("/v1/task/bogus-id/reject")
             assert resp.status_code == 404
 
+    async def test_cancel_nonexistent_task_returns_404(self, e2e_app):
+        transport = ASGITransport(app=e2e_app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            resp = await client.post("/v1/task/bogus-id/cancel")
+            assert resp.status_code == 404
+
+    async def test_cancel_flow_via_orchestrator(self, fresh_orchestrator):
+        orch = fresh_orchestrator
+
+        class _SlowAgent(AgentInterface):
+            async def execute(self, context):
+                session = context.session
+                task = session.tasks[-1]
+                yield Event(
+                    session_id=session.id, task_id=task.id,
+                    type=EventType.AGENT_STARTED, source="slow_agent",
+                    payload={"description": task.description},
+                )
+                await asyncio.sleep(5)
+                yield Event(
+                    session_id=session.id, task_id=task.id,
+                    type=EventType.LLM_FINISHED, source="slow_agent",
+                    payload={"content": "should not finish"},
+                )
+
+        orch.set_agent(_SlowAgent())
+
+        session_id = "e2e-cancel"
+        env = Environment()
+        task = Task(session_id=session_id, description="Cancel me")
+
+        await orch.submit_task(session_id, task, env)
+        await asyncio.sleep(0.2)
+
+        ok = await orch.cancel_task(task.id)
+        assert ok is True
+
+        await asyncio.sleep(0.3)
+        assert task.status == TaskStatus.CANCELLED
+
 
 class TestEventRecorder:
     """Verify EventRecorder persists all emitted events to JSONL."""

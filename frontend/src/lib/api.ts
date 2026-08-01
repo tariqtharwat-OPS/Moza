@@ -146,6 +146,13 @@ export async function rejectTask(taskId: string): Promise<boolean> {
   return res.ok;
 }
 
+export async function cancelTask(taskId: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/task/${taskId}/cancel`, {
+    method: "POST",
+  });
+  return res.ok;
+}
+
 export interface OrchestratorInfo {
   enabled: boolean;
   current_provider?: string;

@@ -16,9 +16,11 @@ However, a comprehensive Gap Analysis conducted on 2026-07-31 against the Level 
 
 | Status | Count | Deliverables |
 |--------|-------|-------------|
-| ✅ COMPLETE | 4 | Constitution Loader, Event Sourcing, Golden Rules Guards, Plugin Architecture |
-| ⚠️ PARTIAL | 5 | State Machine, Certification Framework, Configuration Manager, Health Checker, Circuit Breaker |
+| ✅ COMPLETE | 8 | Constitution Loader, Event Sourcing, Golden Rules Guards, Plugin Architecture, **LLM Gateway & Provider Rotation, Circuit Breaker + Fallback, Configuration Manager, Health Checker** |
+| ⚠️ PARTIAL | 1 | Certification Framework |
 | ❌ MISSING | 10 | Secrets Manager, Audit Logger, Backup Manager, API Versioning, Rate Limiter, Schema Migration, DI Container, Feature Flags, Empty Interfaces (x4), Security Baseline |
+
+**Update (2026-08-01):** The 4 ⚠️ PARTIAL items marked **bold** above were certified COMPLETE via Live E2E Testing and Smart Workflow Integration Tests (see `ADR-006` Status: COMPLETE and the deliverable table in `LEVEL_A_CLOSURE_AUDIT.md`). The remaining ⚠️ PARTIAL (Certification Framework) and ❌ MISSING items are tracked for the next phase.
 
 **The contradiction:** The Closure Audit claims Level A is ready for closure, but 15 of 19 deliverables are either incomplete or missing. The audit only examined a narrow slice (semantic hallucination guard, UI synchronization, response normalization, dead code) — it did not verify against the full Section 14.1 deliverable list.
 

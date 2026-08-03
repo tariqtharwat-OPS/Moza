@@ -6,6 +6,23 @@
 
 ---
 
+## Level A Key Deliverable Status (Section 14.1) — Updated 2026-08-01
+
+The following Level A key deliverables (Master Plan Section 14.1) are now **COMPLETE**:
+
+| Deliverable | Status | Evidence |
+|-------------|--------|----------|
+| LLM Gateway & Provider Rotation | ✅ COMPLETE | Live E2E testing; `config.json` ranking SSOT; env-first secret loading per Principle 12.5 |
+| Circuit Breaker + Fallback | ✅ COMPLETE | `test_circuit_breaker_workflow.py` — CLOSED/OPEN/HALF_OPEN states, 3-strike threshold, 429 key cycling |
+| Configuration Manager (env var loading) | ✅ COMPLETE | `ENV_KEY_MAP` covers all 10 providers; env vars take precedence over `config.json` |
+| Health Checker (unified tracking) | ✅ COMPLETE | `HealthTracker` master source of truth; EventBus `provider_failed`/`provider_recovered` events; 13 tests in `test_health_sync.py` |
+
+**Certified via Live E2E Testing and Smart Workflow Integration Tests. All UX issues resolved.**
+
+See `docs/ADRs/ADR-006-standardize-provider-rotation-and-secret-isolation.md` (Status: COMPLETE) for the full ADR-006 closure record.
+
+---
+
 ## Section 1: Architectural Verification (CAT-001)
 
 ### 1.1 Semantic Hallucination Guard

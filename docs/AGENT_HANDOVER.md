@@ -1,7 +1,7 @@
 # AGENT HANDOVER — Moza Project Status
 
 > **Generated:** 2026-08-01  
-> **Last commit:** `97cd39f` — `feat: live browser preview with screenshots, browser_started/action events (Issue #2)`  
+> **Last commit:** `996b6d0` — `docs: officially close ADR-006, update project state, and prepare for next phase`  
 > **Branch:** `main`  
 > **Remote:** `origin` (`https://github.com/tariqtharwat-OPS/Moza.git`)
 
@@ -125,11 +125,24 @@
 
 ## Last Completed Action
 
-- Phase 2 implementation, testing, and push to GitHub (Issues #4, #5, #6, #2 complete).
+- Phase 2 UX fixes complete (Issues #4, #5, #6, #2).
+- All 7 UX issues resolved (Issues #1-7).
+- ADR-006 officially closed (Status: COMPLETE — all 5 phases + certification).
+- LEVEL_A_CLOSURE_AUDIT.md deliverable table updated (4 deliverables → COMPLETE).
+
+## Current State
+
+- ADR-006: COMPLETE (all 5 phases + 7 UX fixes)
+- System: Stable, ports aligned (8001), MozaLauncher.exe working
+- UX: All critical issues fixed (Stop button, Queue indication, Fast responses, Browser preview, No internal state leaks)
+- Tests: 89 unit tests passing
 
 ## Next Immediate Step
 
-- Manual smoke test via `MozaLauncher.exe`: browser live preview (send a browsing task), Stop button, queue badge, and response speed. Then delete the 2 locked backend logs from PID 7484 after restart.
+- PENDING MANAGER DECISION:
+  - Option A: Level B UI Modernization (ChatGPT/Manus-level interface)
+  - Option B: Complete remaining Level A components (Secrets Manager, Audit Logger, Backup Manager, etc.)
+  - Option C: Add new Tools/Capabilities (advanced file operations, web search, etc.)
 
 ## Known Issues
 
@@ -137,14 +150,15 @@
 - 21 pre-existing Windows `tmp_path` test errors in `tests/unit` (unrelated to UX fixes); workaround: set `$env:TEMP`/`$env:TMP` to `C:\Users\eg_di\AppData\Local\Temp\opencode`.
 - 2 active backend log files locked by running backend (PID 7484) — delete after backend restart.
 - A pre-existing git stash `stash@{0}` ("broken-ui-attempt-pre-recovery Task1") holds a prior UI attempt for `BrowserVisualizer.tsx`/`browser_tool.py`/`ChatInterface.tsx` — superseded by the committed Issue #2 work; may be dropped.
+- Remaining Level A components (Secrets Manager, Audit Logger, Backup Manager, Certification Framework) pending — relevant if Option B is chosen.
 
 ## Pre-Commit Checklist (Phase 2)
 
-- [x] Phase 1 fixes implemented
-- [x] Backend tests pass (89/89 relevant)
+- [x] All UX fixes implemented and tested
+- [x] ADR-006 status: COMPLETE
+- [x] LEVEL_A_CLOSURE_AUDIT.md updated
 - [x] AGENT_HANDOVER.md updated
-- [x] Phase 2 fixes implemented (Issues #4, #5, #6, #2) and pushed
-- [ ] Manual smoke test via MozaLauncher.exe pending
+- [x] Test artifacts cleaned
 
 ---
 
@@ -183,6 +197,8 @@ python -m pytest tests/integration -v
 ## Git Log
  
 ```
+996b6d0  docs: officially close ADR-006, update project state, and prepare for next phase
+9430647  docs: update AGENT_HANDOVER.md after Phase 2 completion (Issues #4, #5, #6, #2)
 97cd39f  feat: live browser preview with screenshots, browser_started/action events (Issue #2)
 aefd1bd  perf: cap provider timeouts, async httpx, streaming with tools, prune fallback chain (Issue #6)
 e94aefb  feat: add client-side message queue with badge and sequential processing (Issue #5)

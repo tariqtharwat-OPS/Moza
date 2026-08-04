@@ -67,6 +67,28 @@ app_state: AppState | None = None
 @app.on_event("startup")
 async def startup():
     global app_state
+
+    # ADR-007 Phase 2: Auto-migrate .env keys to encrypted vault (non-fatal).
+    try:
+        from moza.core.secrets_manager import SecretsManager
+        from moza.core.secrets_migration import SecretsMigration
+
+        secrets_manager = SecretsManager(str(_BACKEND_DIR / "secrets.enc"))
+        secrets_manager.initialize()
+        migration = SecretsMigration(secrets_manager, env_path=str(_BACKEND_DIR / ".env"))
+        summary = migration.run_full_migration(comment_out=True)
+        if summary["migrated"] > 0:
+            logger.info(
+                f"Secrets migrated: {summary['migrated']} keys moved to vault, "
+                f"{summary['commented_out']} commented in .env"
+            )
+        elif summary["skipped"] > 0:
+            logger.info(f"Secrets migration: {summary['skipped']} keys already in vault")
+        elif summary["keys_found"] > 0:
+            logger.info(f"Secrets migration: {summary['keys_found']} keys found, none migrated")
+    except Exception as e:
+        logger.warning(f"Secrets migration failed (non-critical): {e}")
+
     config = MOZAConfig.from_yaml(_PROJECT_DIR / "config.yaml")
     logger.info(f"Loaded config with providers: {list(config.providers.keys())}")
 

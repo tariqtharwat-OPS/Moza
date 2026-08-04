@@ -1,34 +1,30 @@
 # AGENT HANDOVER — Moza Project Status
 
 > **Generated:** 2026-08-04  
-> **Last commit:** `07694d6` — `docs: add ADR-007 for Secrets Manager with AES-256 encryption`  
+> **Last commit:** `5cc6b9b` — `feat(secrets): implement ADR-007 Phase 1 - Secrets Manager with AES-256-GCM encryption`  
 > **Branch:** `main`  
 > **Remote:** `origin` (`https://github.com/tariqtharwat-OPS/Moza.git`)
 
 ---
 
-## ADR-007 — Secrets Manager with AES-256-GCM — Phase 1 COMPLETE
+## ADR-007 — Secrets Manager with AES-256-GCM — Phase 2 COMPLETE
 
-### What Was Implemented (Phase 1: Dual-Read Encrypted Vault)
+### What Was Implemented (Phase 2: Auto-Migrate .env Keys to Vault on Startup)
 
-- **`backend/moza/core/secrets_manager.py`** — new `SecretsManager` component implementing ADR-007:
-  - **AES-256-GCM** authenticated encryption (confidentiality + integrity) via `cryptography` `AESGCM`.
-  - **PBKDF2-HMAC-SHA256** master-key derivation, **100,000 iterations**, per-installation random salt stored in the vault envelope (reused across instances so multiple instances decrypt the same vault).
-  - Vault is a single JSON envelope (`version`, `kdf`, `iterations`, `cipher`, `salt`, `nonce`, `ciphertext`) written to `backend/secrets.enc` (gitignored).
-  - API: `initialize()`, `encrypt_secret(key, value)`, `decrypt_secret(key)`, `rotate_secret(key, new_value)`, `get_secret(key, env_var=None)` (dual-read: vault first, then env var), `migrate_from_env(env_key_map)`, `is_vault_encrypted`.
-  - **Dual-read precedence (Phase 1): encrypted vault > environment var > config.json.**
-  - Machine-bound key derivation: `wmic csproduct get UUID` → `/etc/machine-id` → hostname.
-  - Audit logging (`moza.secrets`) for every encrypt/decrypt/rotate operation; values redacted.
-- **`packages/moza-orchestrator/src/moza_orchestrator/orchestrator.py`** — guarded import of `SecretsManager` (falls back gracefully when the backend package is absent → env/config loading untouched). `__init__` lazily initializes the manager **only when a vault file exists**, so an absent vault keeps ADR-006 Phase 1 env precedence intact. Key lookup now routes through `secrets_manager.get_secret(provider, env_var)`.
-- **`backend/tests/integration/test_secrets_manager_workflow.py`** — 8-scenario workflow test: 3-key roundtrip, no plaintext in vault, vault-over-env precedence, env fallback, `migrate_from_env` (+ skip existing), rotate, gitignore guard.
-- **`.gitignore`** — added `backend/secrets.enc` (`.env`, `*.key`, `*.secret` already ignored).
+- **`backend/moza/core/secrets_migration.py`** — new `SecretsMigration` component:
+  - `detect_env_file()` / `read_env_keys()` — parses `backend/.env`; `ENV_TO_VAULT_MAP` maps each orchestrator provider to its env var name. **Note:** the map covers both legacy names (`GROQ_API_KEY`, `GITHUB_PAT`, `ZHIPU_API_KEY`) and the real names found in `backend/.env` (`GROQ_MOZA_API_KEY`, `GITHUB_MODELS_API_KEY`, `GLM_ZHIPU_API_KEY`, …) — first match wins, so migration works with the real file.
+  - `migrate_keys()` — encrypts each detected key into the vault; skips keys already present (`skipped_exists`).
+  - `comment_out_migrated_keys()` — comments migrated lines in `.env` as `# VAR=value  # Migrated to encrypted vault (ADR-007)` (line endings preserved, reversible; never deleted).
+  - `run_full_migration(comment_out=True)` — end-to-end summary dict (`env_detected`, `keys_found`, `migrated`, `skipped`, `failed`, `commented_out`).
+- **`backend/moza/main.py`** — startup hook runs the migration **before** config load; fully wrapped in try/except (graceful degradation — never blocks startup).
+- **`backend/tests/integration/test_secrets_migration_workflow.py`** — 7-scenario workflow test: real var-name detection, missing-env handling, full roundtrip (7 keys), no-plaintext in vault, re-run skips existing + no duplicates, line-ending preservation, migration-map covers all orchestrator providers.
 
-### Verification
-- Live: created a real vault at `backend/secrets.enc`, encrypted a key, confirmed `is_vault_encrypted=True` and `MozaOrchestrator.keys["groq"]` read it from the vault (env var absent). Vault deleted after test (no real secrets were encrypted).
-- 8/8 workflow tests, 8/8 `test_secret_loading.py`, 8/8 `test_groq_config.py`, 27/27 circuit-breaker/health/vpn tests pass (with TEMP workaround).
+### Verification (LIVE)
+- Ran migration against a **copy of the real `backend/.env`**: 7 real keys detected (`groq`, `openrouter`, `mistral`, `sambanova`, `nvidia`, `github`, `zhipu`) → all 7 migrated + commented out; vault confirmed AES-256-GCM encrypted (`is_vault_encrypted=True`). Original `.env` untouched.
+- 7/7 migration workflow, 8/8 secrets manager workflow, 8/8 `test_secret_loading.py`, 8/8 `test_groq_config.py`, 27/27 circuit-breaker/health/vpn tests pass; `moza.main` imports cleanly.
 
-### Phase 1 Commits
-- `feat(secrets): implement ADR-007 Phase 1 - Secrets Manager with AES-256-GCM encryption`
+### Phase 2 Commit
+- `feat(secrets): implement ADR-007 Phase 2 - auto-migrate .env keys to encrypted vault`
 
 ---
 
@@ -150,22 +146,23 @@
 
 ## Last Completed Action
 
-- ADR-007 approved by manager; Phase 1 (Secrets Manager with AES-256-GCM, dual-read vault) implemented, tested live, and committed.
+- ADR-007 approved by manager; Phase 1 (Secrets Manager with AES-256-GCM, dual-read vault) and **Phase 2 (auto-migrate .env → encrypted vault on startup)** implemented, live-tested, and committed.
 - Phase 2 UX fixes complete (Issues #4, #5, #6, #2).
 - All 7 UX issues resolved (Issues #1-7).
 
 ## Current State
 
 - ADR-006: COMPLETE (all 5 phases + 7 UX fixes)
-- ADR-007: In Progress — Phase 1 (Secrets Manager, dual-read) COMPLETE; Phase 2 (auto-migration on startup) next
+- ADR-007: In Progress — Phase 1 (dual-read vault) + Phase 2 (auto-migration on startup) COMPLETE; Phase 3 (deprecate .env loading with warning) next
 - System: Stable, all UX issues fixed, ports aligned (8001), MozaLauncher.exe working
 - UX: All critical issues fixed (Stop button, Queue indication, Fast responses, Browser preview, No internal state leaks)
 - Tests: 89+ unit tests passing
 
 ## Next Immediate Step
 
-- Implement ADR-007 Phase 2 (auto-migrate `.env` secrets into the vault on startup via `migrate_from_env`), then flip vault to primary source.
-- Once ADR-007 is complete, revisit the pending decision:
+- Implement ADR-007 Phase 3: deprecate `.env` loading with a warning (vault becomes primary source; env read for backward compatibility only).
+- OR: move to next Level A component (Audit Logger).
+- After ADR-007 is complete, revisit the pending decision:
   - Option A: Level B UI Modernization (ChatGPT/Manus-level interface)
   - Option B: Complete remaining Level A components (Audit Logger, Backup Manager, Certification Framework, etc.)
   - Option C: Add new Tools/Capabilities (advanced file operations, web search, etc.)
@@ -185,7 +182,8 @@
 - [x] All UX fixes implemented and tested
 - [x] ADR-007 created
 - [x] ADR-007 approved; Phase 1 (Secrets Manager dual-read) implemented + live-tested
-- [ ] ADR-007 Phase 2 (auto-migrate .env → vault on startup) pending
+- [x] ADR-007 Phase 2 (auto-migrate .env → vault on startup) implemented + live-tested
+- [ ] ADR-007 Phase 3 (deprecate .env loading with warning) pending
 
 ---
 
@@ -224,7 +222,8 @@ python -m pytest tests/integration -v
 ## Git Log
  
 ```
-feat(secrets): implement ADR-007 Phase 1 - Secrets Manager with AES-256-GCM encryption
+feat(secrets): implement ADR-007 Phase 2 - auto-migrate .env keys to encrypted vault
+5cc6b9b  feat(secrets): implement ADR-007 Phase 1 - Secrets Manager with AES-256-GCM encryption
 07694d6  docs: add ADR-007 for Secrets Manager with AES-256 encryption
 c18c384  docs: fix commit hash references in AGENT_HANDOVER after ADR-006 closure
 56769f1  docs: officially close ADR-006, update project state, and prepare for next phase
@@ -266,7 +265,10 @@ ab4d691  feat(gateway): implement Phase 4 of ADR-006 - VPN rotation with IP conf
 | `backend/moza/core/models.py` | EventType (TOOL_RESULT, BROWSER_STARTED, BROWSER_ACTION) |
 | `backend/moza/core/intent_classifier.py` | Contextual conversational replies |
 | `backend/moza/core/secrets_manager.py` | ADR-007 Secrets Manager: AES-256-GCM vault, PBKDF2 dual-read, migrate_from_env |
+| `backend/moza/core/secrets_migration.py` | ADR-007 Phase 2: auto-migrate .env keys to vault, comment-out migrated lines |
 | `backend/tests/integration/test_secrets_manager_workflow.py` | ADR-007 Phase 1 workflow test (8 scenarios) |
+| `backend/tests/integration/test_secrets_migration_workflow.py` | ADR-007 Phase 2 workflow test (7 scenarios) |
+| `backend/moza/main.py` | Startup hook runs SecretsMigration (non-fatal) before config load |
 | `backend/tests/unit/test_health_sync.py` | Health sync unit tests (fixture patterns) |
 | `backend/tests/unit/test_vpn_rotation.py` | VPN rotation unit tests (FakeClock pattern) |
 | `backend/tests/integration/test_circuit_breaker_workflow.py` | Phase 5 workflow integration test (async httpx patch) |

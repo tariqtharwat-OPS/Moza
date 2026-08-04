@@ -146,6 +146,7 @@
 
 ## Last Completed Action
 
+- ADR-008 created (Immutable Audit Logger with Hash Chaining, Status: Proposed) awaiting manager approval.
 - ADR-007 approved by manager; Phase 1 (Secrets Manager with AES-256-GCM, dual-read vault) and **Phase 2 (auto-migrate .env → encrypted vault on startup)** implemented, live-tested, and committed.
 - Phase 2 UX fixes complete (Issues #4, #5, #6, #2).
 - All 7 UX issues resolved (Issues #1-7).
@@ -154,15 +155,16 @@
 
 - ADR-006: COMPLETE (all 5 phases + 7 UX fixes)
 - ADR-007: In Progress — Phase 1 (dual-read vault) + Phase 2 (auto-migration on startup) COMPLETE; Phase 3 (deprecate .env loading with warning) next
+- ADR-008: Proposed (Immutable Audit Logger with Hash Chaining) — awaiting manager approval
 - System: Stable, all UX issues fixed, ports aligned (8001), MozaLauncher.exe working
 - UX: All critical issues fixed (Stop button, Queue indication, Fast responses, Browser preview, No internal state leaks)
 - Tests: 89+ unit tests passing
 
 ## Next Immediate Step
 
-- Implement ADR-007 Phase 3: deprecate `.env` loading with a warning (vault becomes primary source; env read for backward compatibility only).
-- OR: move to next Level A component (Audit Logger).
-- After ADR-007 is complete, revisit the pending decision:
+- Review and approve ADR-008 (Immutable Audit Logger with Hash Chaining).
+- After approval: implement ADR-008 Phase 1 (AuditLogger core: JSONL append + SHA-256 hash chaining + verify_chain), then Phase 2 (EventBus subscription + async queue).
+- When ADR-008 is complete, revisit the pending decision:
   - Option A: Level B UI Modernization (ChatGPT/Manus-level interface)
   - Option B: Complete remaining Level A components (Audit Logger, Backup Manager, Certification Framework, etc.)
   - Option C: Add new Tools/Capabilities (advanced file operations, web search, etc.)
@@ -183,6 +185,8 @@
 - [x] ADR-007 created
 - [x] ADR-007 approved; Phase 1 (Secrets Manager dual-read) implemented + live-tested
 - [x] ADR-007 Phase 2 (auto-migrate .env → vault on startup) implemented + live-tested
+- [x] ADR-008 created (Audit Logger proposal)
+- [ ] ADR-008 implementation pending (awaiting manager approval)
 - [ ] ADR-007 Phase 3 (deprecate .env loading with warning) pending
 
 ---
@@ -222,7 +226,8 @@ python -m pytest tests/integration -v
 ## Git Log
  
 ```
-feat(secrets): implement ADR-007 Phase 2 - auto-migrate .env keys to encrypted vault
+docs: add ADR-008 proposal for Immutable Audit Logger with Hash Chaining
+728593c  feat(secrets): implement ADR-007 Phase 2 - auto-migrate .env keys to encrypted vault
 5cc6b9b  feat(secrets): implement ADR-007 Phase 1 - Secrets Manager with AES-256-GCM encryption
 07694d6  docs: add ADR-007 for Secrets Manager with AES-256 encryption
 c18c384  docs: fix commit hash references in AGENT_HANDOVER after ADR-006 closure
@@ -269,6 +274,7 @@ ab4d691  feat(gateway): implement Phase 4 of ADR-006 - VPN rotation with IP conf
 | `backend/tests/integration/test_secrets_manager_workflow.py` | ADR-007 Phase 1 workflow test (8 scenarios) |
 | `backend/tests/integration/test_secrets_migration_workflow.py` | ADR-007 Phase 2 workflow test (7 scenarios) |
 | `backend/moza/main.py` | Startup hook runs SecretsMigration (non-fatal) before config load |
+| `docs/ADRs/ADR-008-immutable-audit-logger-with-hash-chaining.md` | ADR-008 proposal: immutable audit logger (hash-chained JSONL) |
 | `backend/tests/unit/test_health_sync.py` | Health sync unit tests (fixture patterns) |
 | `backend/tests/unit/test_vpn_rotation.py` | VPN rotation unit tests (FakeClock pattern) |
 | `backend/tests/integration/test_circuit_breaker_workflow.py` | Phase 5 workflow integration test (async httpx patch) |

@@ -18,6 +18,7 @@ node_modules/
 # Secrets
 .env
 *.backup
+backend/secrets.enc
 
 # Logs / runtime
 frontend_dev_port.txt

@@ -1,9 +1,34 @@
 # AGENT HANDOVER — Moza Project Status
 
-> **Generated:** 2026-08-01  
+> **Generated:** 2026-08-04  
 > **Last commit:** `07694d6` — `docs: add ADR-007 for Secrets Manager with AES-256 encryption`  
 > **Branch:** `main`  
 > **Remote:** `origin` (`https://github.com/tariqtharwat-OPS/Moza.git`)
+
+---
+
+## ADR-007 — Secrets Manager with AES-256-GCM — Phase 1 COMPLETE
+
+### What Was Implemented (Phase 1: Dual-Read Encrypted Vault)
+
+- **`backend/moza/core/secrets_manager.py`** — new `SecretsManager` component implementing ADR-007:
+  - **AES-256-GCM** authenticated encryption (confidentiality + integrity) via `cryptography` `AESGCM`.
+  - **PBKDF2-HMAC-SHA256** master-key derivation, **100,000 iterations**, per-installation random salt stored in the vault envelope (reused across instances so multiple instances decrypt the same vault).
+  - Vault is a single JSON envelope (`version`, `kdf`, `iterations`, `cipher`, `salt`, `nonce`, `ciphertext`) written to `backend/secrets.enc` (gitignored).
+  - API: `initialize()`, `encrypt_secret(key, value)`, `decrypt_secret(key)`, `rotate_secret(key, new_value)`, `get_secret(key, env_var=None)` (dual-read: vault first, then env var), `migrate_from_env(env_key_map)`, `is_vault_encrypted`.
+  - **Dual-read precedence (Phase 1): encrypted vault > environment var > config.json.**
+  - Machine-bound key derivation: `wmic csproduct get UUID` → `/etc/machine-id` → hostname.
+  - Audit logging (`moza.secrets`) for every encrypt/decrypt/rotate operation; values redacted.
+- **`packages/moza-orchestrator/src/moza_orchestrator/orchestrator.py`** — guarded import of `SecretsManager` (falls back gracefully when the backend package is absent → env/config loading untouched). `__init__` lazily initializes the manager **only when a vault file exists**, so an absent vault keeps ADR-006 Phase 1 env precedence intact. Key lookup now routes through `secrets_manager.get_secret(provider, env_var)`.
+- **`backend/tests/integration/test_secrets_manager_workflow.py`** — 8-scenario workflow test: 3-key roundtrip, no plaintext in vault, vault-over-env precedence, env fallback, `migrate_from_env` (+ skip existing), rotate, gitignore guard.
+- **`.gitignore`** — added `backend/secrets.enc` (`.env`, `*.key`, `*.secret` already ignored).
+
+### Verification
+- Live: created a real vault at `backend/secrets.enc`, encrypted a key, confirmed `is_vault_encrypted=True` and `MozaOrchestrator.keys["groq"]` read it from the vault (env var absent). Vault deleted after test (no real secrets were encrypted).
+- 8/8 workflow tests, 8/8 `test_secret_loading.py`, 8/8 `test_groq_config.py`, 27/27 circuit-breaker/health/vpn tests pass (with TEMP workaround).
+
+### Phase 1 Commits
+- `feat(secrets): implement ADR-007 Phase 1 - Secrets Manager with AES-256-GCM encryption`
 
 ---
 
@@ -125,26 +150,24 @@
 
 ## Last Completed Action
 
-- ADR-007 created (Secrets Manager with AES-256 encryption, Status: Proposed) awaiting manager approval.
+- ADR-007 approved by manager; Phase 1 (Secrets Manager with AES-256-GCM, dual-read vault) implemented, tested live, and committed.
 - Phase 2 UX fixes complete (Issues #4, #5, #6, #2).
 - All 7 UX issues resolved (Issues #1-7).
-- ADR-006 officially closed (Status: COMPLETE — all 5 phases + certification).
-- LEVEL_A_CLOSURE_AUDIT.md deliverable table updated (4 deliverables → COMPLETE).
 
 ## Current State
 
 - ADR-006: COMPLETE (all 5 phases + 7 UX fixes)
-- ADR-007: Proposed (Secrets Manager with AES-256 encryption)
+- ADR-007: In Progress — Phase 1 (Secrets Manager, dual-read) COMPLETE; Phase 2 (auto-migration on startup) next
 - System: Stable, all UX issues fixed, ports aligned (8001), MozaLauncher.exe working
 - UX: All critical issues fixed (Stop button, Queue indication, Fast responses, Browser preview, No internal state leaks)
-- Tests: 89 unit tests passing
+- Tests: 89+ unit tests passing
 
 ## Next Immediate Step
 
-- Implement ADR-007 Phase 1 (Secrets Manager with AES-256) — pending manager approval
-- Once ADR-007 is approved and implemented, revisit the pending decision:
+- Implement ADR-007 Phase 2 (auto-migrate `.env` secrets into the vault on startup via `migrate_from_env`), then flip vault to primary source.
+- Once ADR-007 is complete, revisit the pending decision:
   - Option A: Level B UI Modernization (ChatGPT/Manus-level interface)
-  - Option B: Complete remaining Level A components (Secrets Manager, Audit Logger, Backup Manager, etc.)
+  - Option B: Complete remaining Level A components (Audit Logger, Backup Manager, Certification Framework, etc.)
   - Option C: Add new Tools/Capabilities (advanced file operations, web search, etc.)
 
 ## Known Issues
@@ -161,7 +184,8 @@
 - [x] LEVEL_A_CLOSURE_AUDIT.md updated
 - [x] All UX fixes implemented and tested
 - [x] ADR-007 created
-- [ ] Secrets Manager implementation pending (awaiting ADR-007 approval)
+- [x] ADR-007 approved; Phase 1 (Secrets Manager dual-read) implemented + live-tested
+- [ ] ADR-007 Phase 2 (auto-migrate .env → vault on startup) pending
 
 ---
 
@@ -200,6 +224,7 @@ python -m pytest tests/integration -v
 ## Git Log
  
 ```
+feat(secrets): implement ADR-007 Phase 1 - Secrets Manager with AES-256-GCM encryption
 07694d6  docs: add ADR-007 for Secrets Manager with AES-256 encryption
 c18c384  docs: fix commit hash references in AGENT_HANDOVER after ADR-006 closure
 56769f1  docs: officially close ADR-006, update project state, and prepare for next phase
@@ -240,6 +265,8 @@ ab4d691  feat(gateway): implement Phase 4 of ADR-006 - VPN rotation with IP conf
 | `backend/moza/core/event_bus.py` | EventBus (SYSTEM_SESSION, publish_nowait) |
 | `backend/moza/core/models.py` | EventType (TOOL_RESULT, BROWSER_STARTED, BROWSER_ACTION) |
 | `backend/moza/core/intent_classifier.py` | Contextual conversational replies |
+| `backend/moza/core/secrets_manager.py` | ADR-007 Secrets Manager: AES-256-GCM vault, PBKDF2 dual-read, migrate_from_env |
+| `backend/tests/integration/test_secrets_manager_workflow.py` | ADR-007 Phase 1 workflow test (8 scenarios) |
 | `backend/tests/unit/test_health_sync.py` | Health sync unit tests (fixture patterns) |
 | `backend/tests/unit/test_vpn_rotation.py` | VPN rotation unit tests (FakeClock pattern) |
 | `backend/tests/integration/test_circuit_breaker_workflow.py` | Phase 5 workflow integration test (async httpx patch) |

@@ -53,6 +53,23 @@ ENV_KEY_MAP = {
     "opencode-zen": "OPENCODE_ZEN_API_KEY",
 }
 
+# ADR-007 Phase 1: Encrypted Secrets Vault (AES-256-GCM).
+# Guarded import so the package remains importable standalone.
+try:
+    from moza.core.secrets_manager import SecretsManager
+except ImportError:  # backend package not on PYTHONPATH
+    SecretsManager = None
+
+# Resolve the vault next to the backend (repo-root/backend/secrets.enc).
+# Anchored to the repo root (same walk that locates scripts/) so the vault
+# path is independent of the caller's CWD.
+_BACKEND_DIR = next(
+    (p / "backend" for p in [Path(__file__).parents[i] for i in range(6)]
+     if (p / "backend").is_dir()),
+    Path("backend"),
+)
+VAULT_PATH = _BACKEND_DIR / "secrets.enc"
+
 # Browser-like headers to reduce Cloudflare WAF blocks
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
@@ -115,11 +132,24 @@ class MozaOrchestrator:
         # ADR-006 Phase 3: unified health state. When a HealthTracker is
         # provided it becomes the master source of truth for cooldowns.
         self._health_tracker = health_tracker
+
+        # ADR-007 Phase 1: encrypted vault (AES-256-GCM) takes precedence when
+        # present. Lazy init — an absent vault keeps env/config loading intact.
+        self._secrets = SecretsManager(str(VAULT_PATH)) if SecretsManager else None
+        if self._secrets and self._secrets.vault_path.exists():
+            try:
+                self._secrets.initialize()
+            except Exception as exc:
+                logger.warning(f"SecretsManager init failed; falling back to env vars: {exc}")
+                self._secrets = None
         
         for provider, key_data in raw_keys.items():
             # Phase 1 of ADR-006: check env var first (env takes precedence)
             env_var = ENV_KEY_MAP.get(provider)
-            env_val = os.environ.get(env_var) if env_var else None
+            env_val = (
+                self._secrets.get_secret(provider, env_var)
+                if self._secrets else (os.environ.get(env_var) if env_var else None)
+            )
 
             if env_val:
                 self.key_lists[provider] = [env_val]

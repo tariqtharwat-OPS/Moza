@@ -155,7 +155,7 @@
 
 - ADR-006: COMPLETE (all 5 phases + 7 UX fixes)
 - ADR-007: In Progress — Phase 1 (dual-read vault) + Phase 2 (auto-migration on startup) COMPLETE; Phase 3 (deprecate .env loading with warning) next
-- ADR-008: Proposed (Immutable Audit Logger with Hash Chaining) — awaiting manager approval
+- ADR-008: Phase 1 COMPLETE (Immutable Audit Logger with SHA-256 hash chaining, tamper detection, EventBus integration)
 - System: Stable, all UX issues fixed, ports aligned (8001), MozaLauncher.exe working
 - UX: All critical issues fixed (Stop button, Queue indication, Fast responses, Browser preview, No internal state leaks)
 - Tests: 89+ unit tests passing

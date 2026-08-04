@@ -19,6 +19,9 @@
   - Phase 1: Immutable JSONL with SHA-256 hash chaining
   - EventBus integration (secret/provider/tool events)
   - Tamper detection verification tool
+  - Phase 2: Log rotation at 5MB threshold, encrypted archives, retention policy
+- ADR-009 (Rate Limiter): COMPLETE
+  - Phase 1: Token Bucket rate limiter middleware for API protection
 - LLM Ranking: Updated to actual configured providers (Top 3: nvidia, openrouter, mistral)
 - System Stability: High (ports aligned on 8001, MozaLauncher.exe working)
 
@@ -32,7 +35,7 @@
 
 ## Next Immediate Step
 
-- **Complete ADR-008 Phase 2** (Log Rotation + Encryption) or
+- **Implement ADR-010 Phase 1** (Backup Manager) or
 - **Begin Level B UI Modernization** (ChatGPT/Manus-level interface).
 
 ---

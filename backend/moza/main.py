@@ -127,9 +127,13 @@ async def startup():
                 logger.error(f"Plugin activation failed: {p['name']}: {e}")
     else:
         logger.info("No plugins discovered (plugins/ directory may not exist)")
+from moza.api.routes.chat import router as chat_router
+from moza.core.rate_limiter import rate_limiter
 
-    from moza.api.routes.chat import router as chat_router
-    app.include_router(chat_router)
+# Add rate limiter middleware
+app.middleware("http")(rate_limiter)
+
+app.include_router(chat_router)
 
     from moza.api.routes.test_chat import router as test_chat_router
     app.include_router(test_chat_router)

@@ -22,6 +22,7 @@
   - Phase 2: Log rotation at 5MB threshold, encrypted archives, retention policy
 - ADR-009 (Rate Limiter): COMPLETE
   - Phase 1: Token Bucket rate limiter middleware for API protection
+- ADR-010 (Backup Manager): Proposed (Secure backup manager with encryption)
 - LLM Ranking: Updated to actual configured providers (Top 3: nvidia, openrouter, mistral)
 - System Stability: High (ports aligned on 8001, MozaLauncher.exe working)
 
@@ -35,7 +36,7 @@
 
 ## Next Immediate Step
 
-- **Implement ADR-010 Phase 1** (Backup Manager) or
+- **Implement ADR-010 Phase 1** (Secure Backup Manager with encryption) or
 - **Begin Level B UI Modernization** (ChatGPT/Manus-level interface).
 
 ---

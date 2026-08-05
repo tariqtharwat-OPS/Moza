@@ -3,16 +3,21 @@ Rate Limiter for Moza API protection using Token Bucket algorithm.
 """
 
 import time
+import logging
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 
 # Default rate limits
 DEFAULT_IP_LIMIT = 60  # requests per minute
 DEFAULT_IP_WINDOW = 60  # seconds
 DEFAULT_USER_LIMIT = 10  # requests per minute for authenticated users
 DEFAULT_USER_WINDOW = 60  # seconds
+
+
 
 # In-memory storage for rate limits
 rate_limits: Dict[str, Dict] = {}
@@ -21,15 +26,18 @@ class RateLimiter:
     """Token Bucket rate limiter implementation."""
     
     def __init__(self, ip_limit: int = DEFAULT_IP_LIMIT, ip_window: int = DEFAULT_IP_WINDOW,
-                 user_limit: int = DEFAULT_USER_LIMIT, user_window: int = DEFAULT_USER_WINDOW):
+                  user_limit: int = DEFAULT_USER_LIMIT, user_window: int = DEFAULT_USER_WINDOW):
         self.ip_limit = ip_limit
         self.ip_window = ip_window
         self.user_limit = user_limit
         self.user_window = user_window
+        
+
     
     def _get_client_key(self, request: Request) -> str:
         """Extract client IP or session ID for rate limiting."""
-        client_ip = request.client.host
+        client_ip = request.client.host if request.client else "unknown"
+        
         if request.headers.get("Authorization"):
             # Use session ID if authenticated
             return f"user_{client_ip}"
@@ -43,7 +51,7 @@ class RateLimiter:
                 "last_updated": datetime.now(),
                 "requests": 0
             }
-        
+            
         now = datetime.now()
         elapsed = (now - rate_limits[client_key]["last_updated"]).total_seconds()
         
@@ -75,20 +83,24 @@ class RateLimiter:
     
     async def __call__(self, request: Request, call_next):
         """FastAPI middleware to enforce rate limiting."""
-        client_key = self._get_client_key(request)
-        
-        # Exempt health check endpoints
-        if request.url.path == "/health":
-            return await call_next(request)
+        try:
+            client_key = self._get_client_key(request)
             
-        self._update_rate_limit(client_key)
-        if rate_limits[client_key]["tokens"] <= 0:
-            retry_after = self.ip_window - (datetime.now() - rate_limits[client_key]["last_updated"]).total_seconds()
-            raise HTTPException(status_code=429, detail="Too Many Requests", headers={
-                "Retry-After": str(int(retry_after))
-            })
-        
-        return await call_next(request)
+            # Exempt health check endpoints
+            if request.url.path == "/health":
+                return await call_next(request)
+                
+            self._update_rate_limit(client_key)
+            if rate_limits[client_key]["tokens"] <= 0:
+                retry_after = self.ip_window - (datetime.now() - rate_limits[client_key]["last_updated"]).total_seconds()
+                raise HTTPException(status_code=429, detail="Too Many Requests", headers={
+                    "Retry-After": str(int(retry_after))
+                })
+            
+            return await call_next(request)
+        except Exception as e:
+            logger.error(f"Rate limiter error: {e}")
+            return await call_next(request)
 
 # Initialize rate limiter
 rate_limiter = RateLimiter()

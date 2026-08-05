@@ -112,50 +112,32 @@ class BackupManager:
         if not files:
             return None
         
-        # Create a temporary tar.gz file
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        temp_tar_path = Path(tempfile.mkdtemp()) / f"backup_{timestamp}.tar.gz"
-        
-        with tarfile.open(temp_tar_path, "w:gz") as tar:
-            for file_path, file_content in files:
-                tarinfo = tarfile.TarInfo(file_path)
-                tarinfo.size = len(file_content)
-                tarinfo.mode = 0o644  # Set file permissions
-                tar.addfile(tarinfo, io.BytesIO(file_content))
-        
-        # Encrypt the backup
-        # Create a temporary tar.gz file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         temp_tar_path = Path(tempfile.mkstemp(suffix='.tar.gz')[1])
         
-        with tarfile.open(temp_tar_path, "w:gz") as tar:
-            for file_path, file_content in files:
-                tarinfo = tarfile.TarInfo(file_path)
-                tarinfo.size = len(file_content)
-                tarinfo.mode = 0o644  # Set file permissions
-                tar.addfile(tarinfo, io.BytesIO(file_content))
-        
-        encrypted_path = self._encrypt_backup(temp_tar_path, self._create_manifest(files))
-        
-        # Move encrypted backup to the backups directory
-        backup_filename = f"backup_{timestamp}.tar.gz.enc"
-        backup_path = self.backups_dir / backup_filename
-        
-        # Ensure the encrypted file has the correct name
-        shutil.move(encrypted_path, backup_path)
-        
-        # Clean up temporary file
         try:
-            import time
-            time.sleep(0.1)
-            os.remove(temp_tar_path)
-        except:
-            pass
-        
-        # Clean up temporary file
-        temp_tar_path.unlink()
-        
-        return backup_path
+            with tarfile.open(temp_tar_path, "w:gz") as tar:
+                for file_path, file_content in files:
+                    tarinfo = tarfile.TarInfo(file_path)
+                    tarinfo.size = len(file_content)
+                    tarinfo.mode = 0o644
+                    tar.addfile(tarinfo, io.BytesIO(file_content))
+            
+            encrypted_path = self._encrypt_backup(temp_tar_path, self._create_manifest(files))
+            
+            backup_filename = f"backup_{timestamp}.tar.gz.enc"
+            backup_path = self.backups_dir / backup_filename
+            
+            shutil.move(encrypted_path, backup_path)
+            
+            return backup_path
+        finally:
+            try:
+                import time
+                time.sleep(0.1)
+                temp_tar_path.unlink(missing_ok=True)
+            except:
+                pass
     
     def cleanup_old_backups(self) -> None:
         """Clean up old backups based on retention policy."""
@@ -181,4 +163,6 @@ class BackupManager:
         return asyncio.create_task(backup_task())
 
 # Initialize BackupManager
-backup_manager = BackupManager()
+import os
+_backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+backup_manager = BackupManager(base_dir=_backend_dir)

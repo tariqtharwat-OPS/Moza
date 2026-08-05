@@ -4,6 +4,7 @@ from collections import defaultdict
 from loguru import logger
 
 from moza.core.event_recorder import get_recorder
+from moza.core.audit_logger import get_audit_logger
 from moza.core.models import Event
 
 # Reserved session for system-wide (non-user) events, e.g. provider health sync
@@ -14,6 +15,7 @@ class EventBus:
     def __init__(self) -> None:
         self._queues: dict[str, list[asyncio.Queue[Event | None]]] = defaultdict(list)
         self._recorder = get_recorder()
+        self._audit_logger = get_audit_logger()
 
     def subscribe(self, session_id: str) -> asyncio.Queue[Event | None]:
         queue: asyncio.Queue[Event | None] = asyncio.Queue()
@@ -29,6 +31,17 @@ class EventBus:
     async def publish(self, session_id: str, event: Event) -> None:
         try:
             self._recorder.record(event)
+            
+            # Emit audit event for all events
+            self._audit_logger.emit(
+                event_type=f"event_{event.type.value}",
+                details={
+                    "session_id": event.session_id,
+                    "task_id": event.task_id,
+                    "source": event.source,
+                    "payload": event.payload
+                }
+            )
         except Exception as e:
             logger.warning(f"EventBus: recorder failed for event {event.id}: {e}")
         for queue in self._queues.get(session_id, []):

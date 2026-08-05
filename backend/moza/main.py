@@ -67,7 +67,17 @@ app_state: AppState | None = None
 @app.on_event("startup")
 async def startup():
     global app_state
-
+    
+    # Initialize audit logger
+    from moza.core.audit_logger import get_audit_logger
+    audit_logger = get_audit_logger()
+    
+    # Emit startup event
+    audit_logger.emit(
+        event_type="system_startup",
+        details={"version": "0.1.0", "backend_path": str(_BACKEND_DIR)}
+    )
+    
     # ADR-007 Phase 2: Auto-migrate .env keys to encrypted vault (non-fatal).
     try:
         from moza.core.secrets_manager import SecretsManager
@@ -135,14 +145,17 @@ app.middleware("http")(rate_limiter)
 
 app.include_router(chat_router)
 
-    from moza.api.routes.test_chat import router as test_chat_router
-    app.include_router(test_chat_router)
+from moza.api.routes.test_chat import router as test_chat_router
+app.include_router(test_chat_router)
 
-    from moza.api.routes.replay import router as replay_router
-    app.include_router(replay_router)
+from moza.api.routes.replay import router as replay_router
+app.include_router(replay_router)
 
-    from moza.api.routes.orchestrator import router as orchestrator_router
-    app.include_router(orchestrator_router)
+from moza.api.routes.orchestrator import router as orchestrator_router
+app.include_router(orchestrator_router)
+
+from moza.api.routes.admin import router as admin_router
+app.include_router(admin_router)
 
 
 @app.websocket("/ws")
@@ -184,4 +197,4 @@ async def shutdown():
 
 
 if __name__ == "__main__":
-    uvicorn.run("moza.main:app", host="0.0.0.0", port=8001, reload=False)
+    uvicorn.run("moza.main:app", host="0.0.0.0", port=8001, reload=True)

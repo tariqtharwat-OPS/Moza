@@ -22,6 +22,7 @@ from moza.tools.terminal_tool import TerminalTool
 from moza.plugins import PluginManager
 from moza.plugins.registry import get_plugin_registry
 from moza.core.constitution import load_constitution
+from moza.core.di_container import container
 
 # Windows asyncio subprocess support (required for Playwright browser launch)
 if sys.platform == "win32":
@@ -61,29 +62,47 @@ class AppState:
     constitution: dict
 
 
+def register_core_services() -> None:
+    """Wire core services into the DI container."""
+    from moza.core.audit_logger import AuditLogger, get_audit_logger
+    from moza.core.backup_manager import BackupManager
+    from moza.core.event_bus import EventBus
+    from moza.core.secrets_manager import SecretsManager
+
+    container.register(SecretsManager, lambda c: SecretsManager(str(_BACKEND_DIR / "secrets.enc")))
+    container.register(AuditLogger, lambda c: get_audit_logger())
+    container.register(BackupManager, lambda c: BackupManager(base_dir=str(_BACKEND_DIR)))
+    container.register(EventBus, lambda c: EventBus())
+
+
 app_state: AppState | None = None
 
 
 @app.on_event("startup")
 async def startup():
     global app_state
-    
-    # Initialize audit logger
-    from moza.core.audit_logger import get_audit_logger
-    audit_logger = get_audit_logger()
-    
+
+    register_core_services()
+
+    # Initialize audit logger (singleton via DI container)
+    from moza.core.audit_logger import AuditLogger
+    from moza.core.backup_manager import BackupManager
+    from moza.core.event_bus import EventBus
+    audit_logger = container.resolve(AuditLogger)
+
     # Emit startup event
     audit_logger.emit(
         event_type="system_startup",
         details={"version": "0.1.0", "backend_path": str(_BACKEND_DIR)}
     )
-    
+
     # ADR-007 Phase 2: Auto-migrate .env keys to encrypted vault (non-fatal).
     try:
         from moza.core.secrets_manager import SecretsManager
         from moza.core.secrets_migration import SecretsMigration
 
-        secrets_manager = SecretsManager(str(_BACKEND_DIR / "secrets.enc"))
+        secrets_manager = container.resolve(SecretsManager)
+        app.state.secrets_manager = secrets_manager
         secrets_manager.initialize()
         migration = SecretsMigration(secrets_manager, env_path=str(_BACKEND_DIR / ".env"))
         summary = migration.run_full_migration(comment_out=True)
@@ -112,6 +131,9 @@ async def startup():
     app.state.llm = llm
     app.state.router = router
     app.state.constitution = constitution
+    app.state.audit_logger = audit_logger
+    app.state.event_bus = container.resolve(EventBus)
+    app.state.backup_manager = container.resolve(BackupManager)
     app_state = AppState(config=config, llm=llm, constitution=constitution)
 
     registry = get_tool_registry()
@@ -137,16 +159,21 @@ async def startup():
                 logger.error(f"Plugin activation failed: {p['name']}: {e}")
     else:
         logger.info("No plugins discovered (plugins/ directory may not exist)")
-from moza.api.routes.chat import router as chat_router
+from moza.api import v1_router, v2_router
 from moza.core.rate_limiter import rate_limiter
 
 # Add rate limiter middleware
 app.middleware("http")(rate_limiter)
 
-app.include_router(chat_router)
+# Include v1 and v2 routers
+app.include_router(v1_router)
+app.include_router(v2_router)
 
 from moza.api.routes.test_chat import router as test_chat_router
 app.include_router(test_chat_router)
+
+from moza.api.routes.chat import router as chat_router
+app.include_router(chat_router)
 
 from moza.api.routes.replay import router as replay_router
 app.include_router(replay_router)
